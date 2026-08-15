@@ -28,11 +28,12 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 const statusCopy: Record<string, string> = {
-  queued: "Enrichment queued",
-  running: "Enriching…",
-  done: "Enriched",
-  failed: "Enrichment failed",
+  queued: "Signals queued",
+  running: "Reading brand…",
+  done: "Signals ready",
+  failed: "Signals failed",
 };
+
 
 const solid =
   "rounded-xl bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60";
