@@ -20,17 +20,17 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(marketplaceQuery),
   head: () => ({
     meta: [
-      { title: "GTM Hackathons — Consumer brand purpose identities" },
+      { title: "Vira — Remix trending ads into your own brand's version" },
       {
         name: "description",
         content:
-          "A marketplace of consumer-product companies with purpose identities built from trending advertising signals across the web.",
+          "Vira maps 100 trending ad prescripts to your category and remixes them into shoot-ready ads, so small brands compete with big ad budgets.",
       },
-      { property: "og:title", content: "GTM Hackathons — Consumer brand purpose identities" },
+      { property: "og:title", content: "Vira — Remix trending ads into your own brand's version" },
       {
         property: "og:description",
         content:
-          "Browse consumer brands, their missions, and the advertising themes powering their go-to-market.",
+          "Trending ad formats, mapped to your category and rewritten in your brand voice.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -68,19 +68,19 @@ function Home() {
     <div className="mx-auto w-full max-w-6xl px-4 py-12">
       <section className="max-w-3xl">
         <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
-          Consumer products marketplace
+          Viral ad remixing for early-stage brands
         </p>
         <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl">
-          Every brand has a purpose. We read it from their advertising.
+          Cut through the noise. Remix the ads that are already winning.
         </h1>
         <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-          GTM Hackathons collects trending advertising signals from across the web and turns them
-          into a purpose identity for each consumer-product company: positioning, tone, keywords and
-          the ad themes they actually run on.
+          Vira reads the ads trending across TikTok, Instagram, YouTube and Facebook, maps 100
+          proven ad prescripts to the category your company serves, and rewrites them around your
+          own mission and positioning — so you can ship your first campaign without an agency.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button asChild>
-            <Link to="/auth">List your company</Link>
+            <Link to="/auth">Start remixing</Link>
           </Button>
           <Button asChild variant="outline">
             <Link to="/auth">Sign in</Link>

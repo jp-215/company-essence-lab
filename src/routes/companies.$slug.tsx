@@ -17,8 +17,8 @@ export const Route = createFileRoute("/companies/$slug")({
     const description =
       loaderData?.insight?.summary ??
       loaderData?.company.bio ??
-      "A consumer-product brand on the GTM Hackathons marketplace.";
-    const title = `${name} — purpose identity | GTM Hackathons`;
+      "A consumer-product brand on the Vira marketplace.";
+    const title = `${name} — purpose identity | Vira`;
     return {
       meta: [
         { title },

@@ -80,16 +80,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "GTM Hackathons — Consumer brand purpose identities" },
+      { title: "Vira — Remix viral ads into your brand's own version" },
       {
         name: "description",
         content:
-          "A marketplace of consumer-product companies with purpose identities built from trending advertising signals.",
+          "Vira turns trending ads across TikTok, Instagram, YouTube and Facebook into remixable ad scripts so early-stage brands can get to market fast.",
       },
-      { property: "og:title", content: "GTM Hackathons Marketplace" },
+      { property: "og:title", content: "Vira" },
       {
         property: "og:description",
-        content: "Consumer brands, their missions, and the advertising themes behind them.",
+        content: "Trending ad prescripts mapped to your category, remixed into your brand voice.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -148,7 +148,7 @@ function RootComponent() {
         </main>
         <footer className="border-t border-border py-8">
           <div className="mx-auto max-w-6xl px-4 text-xs text-muted-foreground">
-            GTM Hackathons — purpose identities built from public advertising signals.
+            Vira — viral ad intelligence and remixing for early-stage brands.
           </div>
         </footer>
       </div>

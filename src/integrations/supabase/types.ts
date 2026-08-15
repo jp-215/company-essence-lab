@@ -38,6 +38,45 @@ export type Database = {
         }
         Relationships: []
       }
+      category_prescripts: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          prescript_key: string
+          relevance_rank: number
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          prescript_key: string
+          relevance_rank?: number
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          prescript_key?: string
+          relevance_rank?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_prescripts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_prescripts_prescript_key_fkey"
+            columns: ["prescript_key"]
+            isOneToOne: false
+            referencedRelation: "prescripts"
+            referencedColumns: ["prescript_key"]
+          },
+        ]
+      }
       companies: {
         Row: {
           bio: string
@@ -221,6 +260,111 @@ export type Database = {
           },
         ]
       }
+      company_remixes: {
+        Row: {
+          caption: string
+          company_id: string
+          created_at: string
+          differentiator: string
+          hashtags: string[]
+          hook: string
+          id: string
+          owner_id: string
+          platform: string
+          prescript_key: string
+          script: string
+          updated_at: string
+        }
+        Insert: {
+          caption?: string
+          company_id: string
+          created_at?: string
+          differentiator?: string
+          hashtags?: string[]
+          hook?: string
+          id?: string
+          owner_id: string
+          platform?: string
+          prescript_key: string
+          script?: string
+          updated_at?: string
+        }
+        Update: {
+          caption?: string
+          company_id?: string
+          created_at?: string
+          differentiator?: string
+          hashtags?: string[]
+          hook?: string
+          id?: string
+          owner_id?: string
+          platform?: string
+          prescript_key?: string
+          script?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_remixes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_remixes_prescript_key_fkey"
+            columns: ["prescript_key"]
+            isOneToOne: false
+            referencedRelation: "prescripts"
+            referencedColumns: ["prescript_key"]
+          },
+        ]
+      }
+      prescripts: {
+        Row: {
+          angle: string
+          created_at: string
+          cta: string
+          format: string
+          hook: string
+          id: string
+          platform: string
+          prescript_key: string
+          rationale: string
+          script: string
+          title: string
+          trend_score: number
+        }
+        Insert: {
+          angle: string
+          created_at?: string
+          cta?: string
+          format: string
+          hook: string
+          id?: string
+          platform: string
+          prescript_key: string
+          rationale?: string
+          script: string
+          title: string
+          trend_score?: number
+        }
+        Update: {
+          angle?: string
+          created_at?: string
+          cta?: string
+          format?: string
+          hook?: string
+          id?: string
+          platform?: string
+          prescript_key?: string
+          rationale?: string
+          script?: string
+          title?: string
+          trend_score?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -250,6 +394,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      company_prescripts: {
+        Args: { _company_id: string; _limit?: number }
+        Returns: {
+          angle: string
+          cta: string
+          format: string
+          hook: string
+          platform: string
+          prescript_key: string
+          rationale: string
+          relevance_rank: number
+          script: string
+          title: string
+          trend_score: number
+        }[]
+      }
       match_company_knowledge: {
         Args: {
           exclude_company?: string

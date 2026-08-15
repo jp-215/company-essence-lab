@@ -11,7 +11,7 @@ export const Route = createFileRoute("/categories/$slug")({
   },
   head: ({ loaderData }) => {
     const name = loaderData?.category.name ?? "Category";
-    const title = `${name} brands | GTM Hackathons Marketplace`;
+    const title = `${name} brands | Vira`;
     const description =
       loaderData?.category.description ||
       `Browse ${name.toLowerCase()} companies and their purpose identities.`;

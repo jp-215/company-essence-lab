@@ -14,12 +14,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Brand dashboard — GTM Hackathons" },
+      { title: "Brand dashboard — Vira" },
       {
         name: "description",
         content: "Manage your company listings and run advertising-signal enrichment.",
       },
-      { property: "og:title", content: "Brand dashboard — GTM Hackathons" },
+      { property: "og:title", content: "Brand dashboard — Vira" },
       { property: "og:description", content: "Manage listings and brand enrichment." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -79,9 +79,14 @@ function Dashboard() {
             One owner, many companies. Each company keeps its own purpose identity.
           </p>
         </div>
-        <Button asChild>
-          <Link to="/studio/new">Add a company</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/remix">Remix studio</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/studio/new">Add a company</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="mt-8 space-y-4">
@@ -129,6 +134,9 @@ function Dashboard() {
                     {enrichMutation.isPending && enrichMutation.variables === company.id
                       ? "Scraping…"
                       : "Run enrichment"}
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/remix">Remix ads</Link>
                   </Button>
                   <Button asChild size="sm" variant="outline">
                     <Link to="/studio/$id" params={{ id: company.id }}>

@@ -14,13 +14,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — GTM Hackathons Marketplace" },
+      { title: "Sign in — Vira" },
       {
         name: "description",
         content:
-          "Sign in or create an account to list your consumer-product company on the GTM Hackathons marketplace.",
+          "Sign in or create an account to list your consumer-product company on the Vira marketplace.",
       },
-      { property: "og:title", content: "Sign in — GTM Hackathons Marketplace" },
+      { property: "og:title", content: "Sign in — Vira" },
       {
         property: "og:description",
         content: "Access your brand dashboard and publish your company profile.",
