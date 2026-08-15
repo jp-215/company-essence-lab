@@ -130,6 +130,32 @@ function RemixStudio() {
     onError: (error) => toast.error(error instanceof Error ? error.message : "Remix failed."),
   });
 
+  const videoMutation = useMutation({
+    mutationFn: () => {
+      const trendKeys = [...selected.keys()];
+      void logTaps({
+        data: { companyId: companyId!, surface: "remix", action: "remix", trendKeys },
+      }).catch(() => undefined);
+      return startRender({
+        data: {
+          companyId: companyId!,
+          lane: "founder-story",
+          mode: "fast",
+          product: selectedCompany?.name,
+          influences: [...selected.values()].map((line) => line.slice(0, 300)),
+        },
+      });
+    },
+    onSuccess: (accepted) => {
+      toast.success(`Rendering your video — about ${accepted.estimated_seconds}s.`);
+      setSelected(new Map());
+      void navigate({ to: "/ads" });
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Render failed."),
+  });
+
+
+
   const selectedCompany = companies.data?.find((company) => company.id === companyId) ?? null;
   const all = (mode === "foryou" ? recommended.data : trends.data) ?? [];
   const feedLoading = mode === "foryou" ? recommended.isLoading : trends.isLoading;
