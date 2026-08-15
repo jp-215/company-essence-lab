@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
-const marketplaceQuery = queryOptions({
+export const marketplaceQuery = queryOptions({
   queryKey: ["marketplace"],
   queryFn: async () => {
     const [categories, companies, trends] = await Promise.all([
