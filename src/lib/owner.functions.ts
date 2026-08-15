@@ -10,6 +10,7 @@ import {
   updateCompanyRow,
 } from "./owner.server";
 import { indexCompanyKnowledge } from "./knowledge-sync.server";
+import { isEntitled } from "./billing-types";
 
 const companyInputSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -36,6 +37,14 @@ export const createCompany = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => companyInputSchema.parse(input))
   .handler(async ({ context, data }) => {
+    const { data: sub } = await context.supabase
+      .from("subscriptions")
+      .select("subscription_status")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!isEntitled(sub?.subscription_status)) {
+      throw new Error("An active Vira subscription is required to create a company.");
+    }
     const created = await insertCompany(context.supabase, context.userId, data);
     await indexCompanyKnowledge(context.supabase, context.userId, created.id);
     return created;

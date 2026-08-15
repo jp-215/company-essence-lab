@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as TrendsRouteImport } from './routes/trends'
 import { Route as AuthenticatedAdsRouteImport } from './routes/_authenticated/ads'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
@@ -22,6 +23,7 @@ import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as CompaniesSlugRouteImport } from './routes/companies.$slug'
 import { Route as AuthenticatedStudioIdRouteImport } from './routes/_authenticated/studio.$id'
 import { Route as AuthenticatedStudioNewRouteImport } from './routes/_authenticated/studio.new'
+import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,6 +47,11 @@ const TrendsRoute = TrendsRouteImport.update({
 const AuthenticatedAdsRoute = AuthenticatedAdsRouteImport.update({
   id: '/ads',
   path: '/ads',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
@@ -87,12 +94,18 @@ const AuthenticatedStudioNewRoute = AuthenticatedStudioNewRouteImport.update({
   path: '/studio/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
+  id: '/api/public/stripe-webhook',
+  path: '/api/public/stripe-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/trends': typeof TrendsRoute
   '/ads': typeof AuthenticatedAdsRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
@@ -101,12 +114,14 @@ export interface FileRoutesByFullPath {
   '/companies/$slug': typeof CompaniesSlugRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
+  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/trends': typeof TrendsRoute
   '/ads': typeof AuthenticatedAdsRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
@@ -115,6 +130,7 @@ export interface FileRoutesByTo {
   '/companies/$slug': typeof CompaniesSlugRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
+  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -123,6 +139,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/trends': typeof TrendsRoute
   '/_authenticated/ads': typeof AuthenticatedAdsRoute
+  '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
@@ -131,6 +148,7 @@ export interface FileRoutesById {
   '/companies/$slug': typeof CompaniesSlugRoute
   '/_authenticated/studio/$id': typeof AuthenticatedStudioIdRoute
   '/_authenticated/studio/new': typeof AuthenticatedStudioNewRoute
+  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -139,6 +157,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/trends'
     | '/ads'
+    | '/billing'
     | '/chat'
     | '/dashboard'
     | '/knowledge'
@@ -147,12 +166,14 @@ export interface FileRouteTypes {
     | '/companies/$slug'
     | '/studio/$id'
     | '/studio/new'
+    | '/api/public/stripe-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/trends'
     | '/ads'
+    | '/billing'
     | '/chat'
     | '/dashboard'
     | '/knowledge'
@@ -161,6 +182,7 @@ export interface FileRouteTypes {
     | '/companies/$slug'
     | '/studio/$id'
     | '/studio/new'
+    | '/api/public/stripe-webhook'
   id:
     | '__root__'
     | '/'
@@ -168,6 +190,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/trends'
     | '/_authenticated/ads'
+    | '/_authenticated/billing'
     | '/_authenticated/chat'
     | '/_authenticated/dashboard'
     | '/_authenticated/knowledge'
@@ -176,6 +199,7 @@ export interface FileRouteTypes {
     | '/companies/$slug'
     | '/_authenticated/studio/$id'
     | '/_authenticated/studio/new'
+    | '/api/public/stripe-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -185,6 +209,7 @@ export interface RootRouteChildren {
   TrendsRoute: typeof TrendsRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   CompaniesSlugRoute: typeof CompaniesSlugRoute
+  ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -222,6 +247,13 @@ declare module '@tanstack/react-router' {
       path: '/ads'
       fullPath: '/ads'
       preLoaderRoute: typeof AuthenticatedAdsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/chat': {
@@ -280,11 +312,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudioNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/stripe-webhook': {
+      id: '/api/public/stripe-webhook'
+      path: '/api/public/stripe-webhook'
+      fullPath: '/api/public/stripe-webhook'
+      preLoaderRoute: typeof ApiPublicStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdsRoute: typeof AuthenticatedAdsRoute
+  AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
@@ -295,6 +335,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdsRoute: AuthenticatedAdsRoute,
+  AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedChatRoute: AuthenticatedChatRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
@@ -313,6 +354,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrendsRoute: TrendsRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   CompaniesSlugRoute: CompaniesSlugRoute,
+  ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
