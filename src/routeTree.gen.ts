@@ -12,12 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
-<<<<<<< HEAD
 import { Route as TrendsRouteImport } from './routes/trends'
-import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
-=======
 import { Route as AuthenticatedAdsRouteImport } from './routes/_authenticated/ads'
->>>>>>> origin/main
+import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedRemixRouteImport } from './routes/_authenticated/remix'
@@ -40,20 +37,19 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-<<<<<<< HEAD
 const TrendsRoute = TrendsRouteImport.update({
   id: '/trends',
   path: '/trends',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-=======
 const AuthenticatedAdsRoute = AuthenticatedAdsRouteImport.update({
   id: '/ads',
   path: '/ads',
->>>>>>> origin/main
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -95,12 +91,9 @@ const AuthenticatedStudioNewRoute = AuthenticatedStudioNewRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-<<<<<<< HEAD
   '/trends': typeof TrendsRoute
-  '/chat': typeof AuthenticatedChatRoute
-=======
   '/ads': typeof AuthenticatedAdsRoute
->>>>>>> origin/main
+  '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/remix': typeof AuthenticatedRemixRoute
@@ -112,12 +105,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-<<<<<<< HEAD
   '/trends': typeof TrendsRoute
-  '/chat': typeof AuthenticatedChatRoute
-=======
   '/ads': typeof AuthenticatedAdsRoute
->>>>>>> origin/main
+  '/chat': typeof AuthenticatedChatRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/remix': typeof AuthenticatedRemixRoute
@@ -131,12 +121,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-<<<<<<< HEAD
   '/trends': typeof TrendsRoute
-  '/_authenticated/chat': typeof AuthenticatedChatRoute
-=======
   '/_authenticated/ads': typeof AuthenticatedAdsRoute
->>>>>>> origin/main
+  '/_authenticated/chat': typeof AuthenticatedChatRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/remix': typeof AuthenticatedRemixRoute
@@ -150,12 +137,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-<<<<<<< HEAD
     | '/trends'
-    | '/chat'
-=======
     | '/ads'
->>>>>>> origin/main
+    | '/chat'
     | '/dashboard'
     | '/knowledge'
     | '/remix'
@@ -167,12 +151,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-<<<<<<< HEAD
     | '/trends'
-    | '/chat'
-=======
     | '/ads'
->>>>>>> origin/main
+    | '/chat'
     | '/dashboard'
     | '/knowledge'
     | '/remix'
@@ -185,12 +166,9 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
-<<<<<<< HEAD
     | '/trends'
-    | '/_authenticated/chat'
-=======
     | '/_authenticated/ads'
->>>>>>> origin/main
+    | '/_authenticated/chat'
     | '/_authenticated/dashboard'
     | '/_authenticated/knowledge'
     | '/_authenticated/remix'
@@ -232,7 +210,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-<<<<<<< HEAD
     '/trends': {
       id: '/trends'
       path: '/trends'
@@ -240,18 +217,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrendsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/chat': {
-      id: '/_authenticated/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof AuthenticatedChatRouteImport
-=======
     '/_authenticated/ads': {
       id: '/_authenticated/ads'
       path: '/ads'
       fullPath: '/ads'
       preLoaderRoute: typeof AuthenticatedAdsRouteImport
->>>>>>> origin/main
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chat': {
+      id: '/_authenticated/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AuthenticatedChatRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -307,11 +284,8 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
-<<<<<<< HEAD
-  AuthenticatedChatRoute: typeof AuthenticatedChatRoute
-=======
   AuthenticatedAdsRoute: typeof AuthenticatedAdsRoute
->>>>>>> origin/main
+  AuthenticatedChatRoute: typeof AuthenticatedChatRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedRemixRoute: typeof AuthenticatedRemixRoute
@@ -320,11 +294,8 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-<<<<<<< HEAD
-  AuthenticatedChatRoute: AuthenticatedChatRoute,
-=======
   AuthenticatedAdsRoute: AuthenticatedAdsRoute,
->>>>>>> origin/main
+  AuthenticatedChatRoute: AuthenticatedChatRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedRemixRoute: AuthenticatedRemixRoute,
