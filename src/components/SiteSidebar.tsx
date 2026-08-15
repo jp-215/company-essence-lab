@@ -1,16 +1,18 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
 const navLink =
-  "rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-card hover:text-foreground";
-const activeProps = { className: "bg-card text-foreground" } as const;
+  "relative rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-card hover:text-foreground";
+const navLinkActive =
+  "bg-card text-foreground font-semibold before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-foreground";
 const solid =
   "rounded-xl bg-foreground px-3 py-2 text-center text-sm font-medium text-background transition-opacity hover:opacity-90";
 const outline =
   "rounded-xl border border-border bg-card px-3 py-2 text-center text-sm font-medium text-foreground transition-colors hover:border-ring";
+
 
 export function SiteSidebar() {
   const { user, loading } = useAuth();
