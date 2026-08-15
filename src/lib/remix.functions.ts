@@ -8,6 +8,8 @@ import {
   loadCompanyContext,
   remixTrend,
   saveRemix,
+  saveSourcedRemix,
+  getWomAsTrend,
 } from "./remix.server";
 import { getTrendByKey } from "./recommendations.server";
 
@@ -49,4 +51,58 @@ export const generateRemix = createServerFn({ method: "POST" })
       trend,
       output,
     });
+  });
+
+/**
+ * Batch hand-off: turns a multi-select of feed items (TikTok trends and Reddit
+ * chatter) into saved remixes ready for video generation.
+ */
+export const generateRemixBatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        companyId: z.string().uuid(),
+        items: z
+          .array(
+            z.object({
+              kind: z.enum(["video", "chatter"]),
+              key: z.string().trim().min(3).max(80),
+            }),
+          )
+          .min(1)
+          .max(6),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const company = await loadCompanyContext(context.supabase, context.userId, data.companyId);
+    const created: string[] = [];
+    const failed: string[] = [];
+
+    for (const item of data.items) {
+      try {
+        const trend =
+          item.kind === "video"
+            ? await getTrendByKey(context.supabase, item.key)
+            : await getWomAsTrend(context.supabase, item.key);
+        if (!trend) {
+          failed.push(item.key);
+          continue;
+        }
+        const output = await remixTrend({ trend, company });
+        const saved = await saveSourcedRemix(context.supabase, context.userId, {
+          companyId: data.companyId,
+          kind: item.kind,
+          trend,
+          output,
+        });
+        created.push(saved.id);
+      } catch (error) {
+        console.error("Batch remix failed", item.key, error);
+        failed.push(item.key);
+      }
+    }
+
+    return { created, failed };
   });
