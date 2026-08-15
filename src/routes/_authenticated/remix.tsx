@@ -373,80 +373,23 @@ function RemixStudio() {
               )}
             </section>
 
-            <section className="mt-16">
-              <h2 className="font-serif text-3xl font-bold tracking-tight text-foreground">
-                Your remixes
-              </h2>
-              {remixes.isLoading ? (
-                <Skeleton className="mt-4 h-40 w-full" />
-              ) : !remixes.data?.length ? (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  No remixes yet. Pick a trend above to generate your first ad.
+            <section className="mt-16 flex flex-wrap items-center justify-between gap-6 rounded-2xl border border-border bg-card p-8">
+              <div>
+                <h2 className="font-serif text-3xl font-bold tracking-tight text-foreground">
+                  Create ads
+                </h2>
+                <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                  {remixes.data?.length
+                    ? `${remixes.data.length} concept${remixes.data.length === 1 ? "" : "s"} ready for ${selectedCompany?.name ?? "your product"}.`
+                    : "Turn your remixes into finished ad concepts for your product."}
                 </p>
-              ) : (
-                <div className="mt-6 space-y-4">
-                  {remixes.data.map((remix) => (
-                    <Card key={remix.id} className="rounded-2xl">
-                      <CardContent className="space-y-3 p-6">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-                            {remix.trendKey}
-                          </span>
-                          <Badge variant="outline">{remix.platform}</Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(remix.createdAt).toLocaleString()}
-                          </span>
-                        </div>
-                        {remix.trendTitle ? (
-                          <p className="text-xs text-muted-foreground">
-                            Remixed from: {remix.trendTitle}
-                            {remix.sourceUrl ? (
-                              <>
-                                {" · "}
-                                <a
-                                  href={remix.sourceUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="underline underline-offset-4"
-                                >
-                                  original
-                                </a>
-                              </>
-                            ) : null}
-                          </p>
-                        ) : null}
-                        <p className="font-serif text-xl font-semibold leading-snug">{remix.hook}</p>
-                        <pre className="whitespace-pre-wrap rounded-xl bg-secondary p-4 text-sm leading-relaxed text-foreground">
-                          {remix.script}
-                        </pre>
-                        {remix.caption ? (
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">Caption: </span>
-                            {remix.caption}
-                          </p>
-                        ) : null}
-                        {remix.differentiator ? (
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">
-                              Why it differentiates:{" "}
-                            </span>
-                            {remix.differentiator}
-                          </p>
-                        ) : null}
-                        {remix.hashtags.length ? (
-                          <div className="flex flex-wrap gap-2">
-                            {remix.hashtags.map((tag) => (
-                              <Badge key={tag} variant="secondary">
-                                #{tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : null}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              </div>
+              <Button
+                asChild
+                className="h-14 rounded-2xl bg-foreground px-8 text-base font-semibold text-background hover:bg-foreground/90"
+              >
+                <Link to="/ads">Create ads →</Link>
+              </Button>
             </section>
           </>
         )}
