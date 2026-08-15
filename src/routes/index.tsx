@@ -128,7 +128,7 @@ function Home() {
         </div>
 
         <div className="lg:pt-6">
-          <StatRow className="grid-cols-1">
+          <StatRow className="grid-cols-1 divide-x-0 divide-y">
             <Stat label="Brands listed" value={String(data.companies.length)} />
             <Stat label="Categories mapped" value={String(data.categories.length)} />
             <Stat label="Trending views" value={compact.format(totalViews)} />
