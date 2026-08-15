@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const searchSchema = z.object({
   category: z.string().max(80).optional(),
-  source: z.enum(["video", "wom"]).optional(),
+  source: z.enum(["mix", "video", "wom"]).optional(),
 });
 
 const trendsQuery = (categorySlug?: string) =>
@@ -66,7 +66,9 @@ function TrendingPage() {
   const { category, source } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const { data } = useSuspenseQuery(trendsQuery(category));
-  const activeSource = source ?? "video";
+  const activeSource = source ?? "mix";
+  // Balanced default: TikTok video trends alternating with word-of-mouth chatter.
+  const balanced = interleave(data.trends, data.wordOfMouth, 36);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-12">
@@ -88,6 +90,13 @@ function TrendingPage() {
       />
 
       <div className="mt-10 flex flex-wrap items-center gap-2">
+        <Button
+          variant={activeSource === "mix" ? "default" : "outline"}
+          size="sm"
+          onClick={() => navigate({ search: (prev) => ({ ...prev, source: "mix" }) })}
+        >
+          Balanced mix ({balanced.length})
+        </Button>
         <Button
           variant={activeSource === "video" ? "default" : "outline"}
           size="sm"
@@ -124,7 +133,76 @@ function TrendingPage() {
         ))}
       </div>
 
-      {activeSource === "wom" ? (
+      {activeSource === "mix" ? (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {balanced.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nothing trending in this category yet.</p>
+          ) : (
+            balanced.map((item) =>
+              "trendKey" in item ? (
+                <Card key={item.trendKey} className="h-full">
+                  <CardContent className="flex h-full flex-col gap-3 py-5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                        video trend
+                      </span>
+                      <Badge variant="outline">{item.platform}</Badge>
+                    </div>
+                    <h3 className="line-clamp-2 font-medium leading-snug text-foreground">
+                      {item.title || item.caption.slice(0, 70)}
+                    </h3>
+                    <p className="line-clamp-3 text-sm text-muted-foreground">{item.caption}</p>
+                    <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                      <span className="text-xs text-muted-foreground">
+                        {compact.format(item.views)} views · {compact.format(item.likes)} likes
+                      </span>
+                      {item.sourceUrl ? (
+                        <a
+                          href={item.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground"
+                        >
+                          View original
+                        </a>
+                      ) : null}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card key={item.womKey} className="h-full">
+                  <CardContent className="flex h-full flex-col gap-3 py-5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                        word of mouth
+                      </span>
+                      <Badge variant="outline">{item.platform}</Badge>
+                    </div>
+                    <p className="line-clamp-5 text-sm leading-relaxed text-foreground">
+                      {item.content || item.title}
+                    </p>
+                    <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                      <span className="text-xs text-muted-foreground">
+                        {compact.format(item.likes)} likes · {compact.format(item.reposts)} reposts
+                      </span>
+                      {item.sourceUrl ? (
+                        <a
+                          href={item.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground"
+                        >
+                          View post
+                        </a>
+                      ) : null}
+                    </div>
+                  </CardContent>
+                </Card>
+              ),
+            )
+          )}
+        </div>
+      ) : activeSource === "wom" ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.wordOfMouth.length === 0 ? (
             <p className="text-sm text-muted-foreground">
