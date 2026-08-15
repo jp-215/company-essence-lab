@@ -13,6 +13,8 @@ type TrendPreviewProps = {
   sourceUrl: string | null;
   platform: string;
   title: string;
+  /** Explicit still-image URL (ImageBase/Reddit); TikTok resolves its own cover. */
+  imageUrl?: string | null;
   className?: string;
   children?: React.ReactNode;
 };
@@ -25,6 +27,7 @@ export function TrendPreview({
   sourceUrl,
   platform,
   title,
+  imageUrl,
   className,
   children,
 }: TrendPreviewProps) {
@@ -33,18 +36,21 @@ export function TrendPreview({
 
   const isTikTok = platform === "tiktok" && !!sourceUrl;
   const videoId = sourceUrl ? tiktokVideoId(sourceUrl) : null;
-  const thumbSrc =
-    isTikTok && !thumbFailed
+  const thumbSrc = thumbFailed
+    ? null
+    : isTikTok
       ? `/api/public/tiktok-thumb?url=${encodeURIComponent(sourceUrl!)}`
-      : null;
+      : imageUrl
+        ? `/api/public/image-proxy?url=${encodeURIComponent(imageUrl)}`
+        : null;
 
-  const overlay = (
+  const overlay = thumbSrc && !isTikTok ? null : (
     <>
       <span className="flex size-14 items-center justify-center rounded-full border border-border bg-card transition-colors group-hover:border-ring">
         <Play className="size-5 text-foreground" />
       </span>
       <span className="mt-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-        {sourceUrl ? "Watch original" : "Video thumbnail"}
+        {sourceUrl ? (isTikTok ? "Watch original" : "View original") : "Preview"}
       </span>
     </>
   );
@@ -60,14 +66,16 @@ export function TrendPreview({
           className="absolute inset-0 size-full object-cover"
         />
       ) : null}
-      <div
-        className={cn(
-          "relative z-10 flex flex-col items-center justify-center",
-          thumbSrc && "rounded-2xl bg-card/70 px-6 py-5 backdrop-blur-sm",
-        )}
-      >
-        {overlay}
-      </div>
+      {overlay ? (
+        <div
+          className={cn(
+            "relative z-10 flex flex-col items-center justify-center",
+            thumbSrc && "rounded-2xl bg-card/70 px-6 py-5 backdrop-blur-sm",
+          )}
+        >
+          {overlay}
+        </div>
+      ) : null}
       {children}
     </>
   );

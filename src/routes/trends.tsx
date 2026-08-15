@@ -7,6 +7,7 @@ import { z } from "zod";
 import { listCategories } from "@/lib/companies.functions";
 import { listTrendingNow } from "@/lib/trends.functions";
 import { listWordOfMouth } from "@/lib/wom.functions";
+import { listImageAssets } from "@/lib/images.functions";
 import { listMyCompanies } from "@/lib/owner.functions";
 import { getChatterRecommendations, getRecommendations } from "@/lib/recommendations.functions";
 import { getTrendIndexStatus } from "@/lib/trend-embeddings.functions";
@@ -16,10 +17,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TrendPreview } from "@/components/TrendPreview";
 
 const searchSchema = z.object({
   category: z.string().max(80).optional(),
-  source: z.enum(["mix", "video", "wom"]).optional(),
+  source: z.enum(["mix", "video", "wom", "images"]).optional(),
 });
 
 const trendsQuery = (categorySlug?: string) =>
@@ -27,7 +29,7 @@ const trendsQuery = (categorySlug?: string) =>
     queryKey: ["trending-page", categorySlug ?? "all"],
     // One flaky RPC shouldn't blank the whole page: degrade to an empty section instead.
     queryFn: async () => {
-      const [categories, trends, wordOfMouth] = await Promise.all([
+      const [categories, trends, wordOfMouth, images] = await Promise.all([
         listCategories().catch(() => []),
         listTrendingNow({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }).catch(
           () => [],
@@ -35,8 +37,11 @@ const trendsQuery = (categorySlug?: string) =>
         listWordOfMouth({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }).catch(
           () => [],
         ),
+        listImageAssets({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }).catch(
+          () => [] as Awaited<ReturnType<typeof listImageAssets>>,
+        ),
       ]);
-      return { categories, trends, wordOfMouth };
+      return { categories, trends, wordOfMouth, images };
     },
     retry: 2,
   });
@@ -117,6 +122,13 @@ function TrendingPage() {
         >
           Word of mouth ({data.wordOfMouth.length})
         </Button>
+        <Button
+          variant={activeSource === "images" ? "default" : "outline"}
+          size="sm"
+          onClick={() => navigate({ search: (prev) => ({ ...prev, source: "images" }) })}
+        >
+          ImageBase ({data.images.length})
+        </Button>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -139,14 +151,73 @@ function TrendingPage() {
         ))}
       </div>
 
-      {activeSource === "mix" ? (
+      {activeSource === "images" ? (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {data.images.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No ImageBase assets for this category yet — we're still ingesting Instagram.
+            </p>
+          ) : (
+            data.images.map((asset) => (
+              <Card key={asset.imageKey} className="h-full overflow-hidden">
+                <TrendPreview
+                  sourceUrl={asset.sourceUrl}
+                  platform={asset.platform}
+                  title={asset.title || asset.caption}
+                  imageUrl={asset.imageUrl}
+                  className="aspect-[4/5] border-b border-border"
+                />
+                <CardContent className="flex h-full flex-col gap-3 py-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {asset.authorHandle ? `@${asset.authorHandle}` : asset.author}
+                    </span>
+                    <Badge variant="outline">{asset.platform}</Badge>
+                  </div>
+                  <p className="line-clamp-3 text-sm leading-relaxed text-foreground">
+                    {asset.caption || asset.title}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {asset.hashtags.slice(0, 3).map((tag) => (
+                      <Badge key={tag} variant="secondary">
+                        #{tag}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                    <span className="text-xs text-muted-foreground">
+                      {compact.format(asset.likes)} likes · {compact.format(asset.comments)} comments
+                    </span>
+                    {asset.sourceUrl ? (
+                      <a
+                        href={asset.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground"
+                      >
+                        View original
+                      </a>
+                    ) : null}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      ) : activeSource === "mix" ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {balanced.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nothing trending in this category yet.</p>
           ) : (
             balanced.map((item) =>
               "trendKey" in item ? (
-                <Card key={item.trendKey} className="h-full">
+                <Card key={item.trendKey} className="h-full overflow-hidden">
+                  <TrendPreview
+                    sourceUrl={item.sourceUrl}
+                    platform={item.platform}
+                    title={item.title || item.caption}
+                    className="aspect-[4/5] border-b border-border"
+                  />
                   <CardContent className="flex h-full flex-col gap-3 py-5">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -258,7 +329,13 @@ function TrendingPage() {
             <p className="text-sm text-muted-foreground">No trends in this category yet.</p>
           ) : (
             data.trends.map((trend) => (
-              <Card key={trend.trendKey} className="h-full">
+              <Card key={trend.trendKey} className="h-full overflow-hidden">
+                <TrendPreview
+                  sourceUrl={trend.sourceUrl}
+                  platform={trend.platform}
+                  title={trend.title || trend.caption}
+                  className="aspect-[4/5] border-b border-border"
+                />
                 <CardContent className="flex h-full flex-col gap-3 py-5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">

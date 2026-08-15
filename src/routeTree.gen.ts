@@ -26,6 +26,7 @@ import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedReviewsIdRouteImport } from './routes/_authenticated/reviews.$id'
 import { Route as AuthenticatedStudioIdRouteImport } from './routes/_authenticated/studio.$id'
 import { Route as AuthenticatedStudioNewRouteImport } from './routes/_authenticated/studio.new'
+import { Route as ApiPublicImageProxyRouteImport } from './routes/api/public/image-proxy'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 import { Route as ApiPublicTiktokThumbRouteImport } from './routes/api/public/tiktok-thumb'
 import { Route as TeracRTokenRouteImport } from './routes/terac/r/$token'
@@ -115,6 +116,11 @@ const AuthenticatedStudioNewRoute = AuthenticatedStudioNewRouteImport.update({
   path: '/studio/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicImageProxyRoute = ApiPublicImageProxyRouteImport.update({
+  id: '/api/public/image-proxy',
+  path: '/api/public/image-proxy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
   id: '/api/public/stripe-webhook',
   path: '/api/public/stripe-webhook',
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
+  '/api/public/image-proxy': typeof ApiPublicImageProxyRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/tiktok-thumb': typeof ApiPublicTiktokThumbRoute
   '/terac/r/$token': typeof TeracRTokenRoute
@@ -168,6 +175,7 @@ export interface FileRoutesByTo {
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
+  '/api/public/image-proxy': typeof ApiPublicImageProxyRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/tiktok-thumb': typeof ApiPublicTiktokThumbRoute
   '/terac/r/$token': typeof TeracRTokenRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/_authenticated/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/_authenticated/studio/$id': typeof AuthenticatedStudioIdRoute
   '/_authenticated/studio/new': typeof AuthenticatedStudioNewRoute
+  '/api/public/image-proxy': typeof ApiPublicImageProxyRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/tiktok-thumb': typeof ApiPublicTiktokThumbRoute
   '/terac/r/$token': typeof TeracRTokenRoute
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
     | '/reviews/$id'
     | '/studio/$id'
     | '/studio/new'
+    | '/api/public/image-proxy'
     | '/api/public/stripe-webhook'
     | '/api/public/tiktok-thumb'
     | '/terac/r/$token'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/reviews/$id'
     | '/studio/$id'
     | '/studio/new'
+    | '/api/public/image-proxy'
     | '/api/public/stripe-webhook'
     | '/api/public/tiktok-thumb'
     | '/terac/r/$token'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reviews/$id'
     | '/_authenticated/studio/$id'
     | '/_authenticated/studio/new'
+    | '/api/public/image-proxy'
     | '/api/public/stripe-webhook'
     | '/api/public/tiktok-thumb'
     | '/terac/r/$token'
@@ -271,6 +283,7 @@ export interface RootRouteChildren {
   TrendsRoute: typeof TrendsRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   CompaniesSlugRoute: typeof CompaniesSlugRoute
+  ApiPublicImageProxyRoute: typeof ApiPublicImageProxyRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
   ApiPublicTiktokThumbRoute: typeof ApiPublicTiktokThumbRoute
   TeracRTokenRoute: typeof TeracRTokenRoute
@@ -397,6 +410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudioNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/image-proxy': {
+      id: '/api/public/image-proxy'
+      path: '/api/public/image-proxy'
+      fullPath: '/api/public/image-proxy'
+      preLoaderRoute: typeof ApiPublicImageProxyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/stripe-webhook': {
       id: '/api/public/stripe-webhook'
       path: '/api/public/stripe-webhook'
@@ -458,6 +478,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrendsRoute: TrendsRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   CompaniesSlugRoute: CompaniesSlugRoute,
+  ApiPublicImageProxyRoute: ApiPublicImageProxyRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
   ApiPublicTiktokThumbRoute: ApiPublicTiktokThumbRoute,
   TeracRTokenRoute: TeracRTokenRoute,
