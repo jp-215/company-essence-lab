@@ -5,11 +5,10 @@ import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
+import { Eyebrow, PageShell, PageTitle, Panel } from "@/components/Page";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -37,11 +36,16 @@ const credentials = z.object({
   password: z.string().min(8, "Use at least 8 characters."),
 });
 
+const field = "h-14 rounded-xl bg-card text-lg";
+const primary =
+  "w-full rounded-xl bg-foreground px-7 py-4 text-base font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60";
+
 function AuthPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [busy, setBusy] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/dashboard", replace: true });
@@ -109,112 +113,136 @@ function AuthPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-16">
-      <div className="text-center">
-        <h1 className="font-serif text-3xl font-semibold tracking-tight text-foreground">
-          Welcome to the marketplace
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Existing brands sign in. New brands complete the full company profile after signing up.
-        </p>
-      </div>
+    <PageShell width="narrow">
+      <Eyebrow>Onboarding</Eyebrow>
+      <PageTitle className="mt-4">
+        {checkEmail ? "Check your inbox" : mode === "signin" ? "Welcome back" : "Create your account"}
+      </PageTitle>
+      <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
+        {checkEmail
+          ? "We sent a confirmation link. Open it to activate your account, then sign in and finish your company profile."
+          : "Existing brands sign in. New brands complete the full company profile right after signing up."}
+      </p>
 
       {checkEmail ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Check your inbox</CardTitle>
-            <CardDescription>
-              We sent a confirmation link. Open it to activate your account, then sign in and finish
-              your company profile.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full" onClick={() => setCheckEmail(false)}>
-              Back to sign in
-            </Button>
-          </CardContent>
-        </Card>
+        <Panel className="mt-10 max-w-lg p-8">
+          <button
+            type="button"
+            onClick={() => setCheckEmail(false)}
+            className="w-full rounded-xl border border-border bg-card px-7 py-4 text-base font-medium text-foreground transition-colors hover:border-ring"
+          >
+            Back to sign in
+          </button>
+        </Panel>
       ) : (
-        <Tabs defaultValue="signin">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign in</TabsTrigger>
-            <TabsTrigger value="signup">Create account</TabsTrigger>
-          </TabsList>
+        <div className="mt-10 max-w-lg">
+          <div className="flex flex-wrap gap-3">
+            {(["signin", "signup"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setMode(value)}
+                aria-pressed={mode === value}
+                className={cn(
+                  "rounded-full px-6 py-3 text-base font-medium transition-colors",
+                  mode === value
+                    ? "bg-foreground text-background"
+                    : "border border-border bg-card text-foreground hover:border-ring",
+                )}
+              >
+                {value === "signin" ? "Sign in" : "Create account"}
+              </button>
+            ))}
+          </div>
 
-          <TabsContent value="signin">
-            <Card>
-              <CardHeader>
-                <CardTitle>Sign in</CardTitle>
-                <CardDescription>Use the email and password on your brand account.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-4" onSubmit={handleSignIn}>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email">Work email</Label>
-                    <Input id="signin-email" name="email" type="email" autoComplete="email" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
-                    <Input
-                      id="signin-password"
-                      name="password"
-                      type="password"
-                      autoComplete="current-password"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={busy}>
-                    {busy ? "Signing in…" : "Sign in"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="signup">
-            <Card>
-              <CardHeader>
-                <CardTitle>Create your account</CardTitle>
-                <CardDescription>
-                  Step one of onboarding. Next you will add your logo, category, bio and mission.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-4" onSubmit={handleSignUp}>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Your name</Label>
-                    <Input id="signup-name" name="displayName" autoComplete="name" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Work email</Label>
-                    <Input id="signup-email" name="email" type="email" autoComplete="email" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      name="password"
-                      type="password"
-                      autoComplete="new-password"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">At least 8 characters.</p>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={busy}>
-                    {busy ? "Creating account…" : "Create account"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          <Panel className="mt-6 p-8">
+            {mode === "signin" ? (
+              <form className="space-y-6" onSubmit={handleSignIn}>
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email" className="text-base">
+                    Work email
+                  </Label>
+                  <Input
+                    id="signin-email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    className={field}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signin-password" className="text-base">
+                    Password
+                  </Label>
+                  <Input
+                    id="signin-password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    className={field}
+                  />
+                </div>
+                <button type="submit" className={primary} disabled={busy}>
+                  {busy ? "Signing in…" : "Sign in"}
+                </button>
+              </form>
+            ) : (
+              <form className="space-y-6" onSubmit={handleSignUp}>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name" className="text-base">
+                    Your name
+                  </Label>
+                  <Input
+                    id="signup-name"
+                    name="displayName"
+                    autoComplete="name"
+                    required
+                    className={field}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email" className="text-base">
+                    Work email
+                  </Label>
+                  <Input
+                    id="signup-email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    className={field}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password" className="text-base">
+                    Password
+                  </Label>
+                  <Input
+                    id="signup-password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    className={field}
+                  />
+                  <p className="text-sm text-muted-foreground">At least 8 characters.</p>
+                </div>
+                <button type="submit" className={primary} disabled={busy}>
+                  {busy ? "Creating account…" : "Create account"}
+                </button>
+              </form>
+            )}
+          </Panel>
+        </div>
       )}
 
-      <p className="text-center text-sm text-muted-foreground">
-        <Link to="/" className="underline underline-offset-4">
+      <p className="mt-10 text-base text-muted-foreground">
+        <Link to="/" className="underline underline-offset-4 hover:text-foreground">
           Back to the marketplace
         </Link>
       </p>
-    </div>
+    </PageShell>
   );
 }
