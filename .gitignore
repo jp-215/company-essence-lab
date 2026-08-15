@@ -30,3 +30,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets — Lovable manages these in its own env UI, never in the repo
+.env
+.env.*
+!.env.example
+

@@ -21,10 +21,13 @@ import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authentica
 import { Route as AuthenticatedRemixRouteImport } from './routes/_authenticated/remix'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as CompaniesSlugRouteImport } from './routes/companies.$slug'
+import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authenticated/reviews.index'
+import { Route as AuthenticatedReviewsIdRouteImport } from './routes/_authenticated/reviews.$id'
 import { Route as AuthenticatedStudioIdRouteImport } from './routes/_authenticated/studio.$id'
 import { Route as AuthenticatedStudioNewRouteImport } from './routes/_authenticated/studio.new'
 import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 import { Route as ApiPublicTiktokThumbRouteImport } from './routes/api/public/tiktok-thumb'
+import { Route as TeracRTokenRouteImport } from './routes/terac/r/$token'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -85,6 +88,17 @@ const CompaniesSlugRoute = CompaniesSlugRouteImport.update({
   path: '/companies/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedReviewsIndexRoute =
+  AuthenticatedReviewsIndexRouteImport.update({
+    id: '/reviews/',
+    path: '/reviews/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReviewsIdRoute = AuthenticatedReviewsIdRouteImport.update({
+  id: '/reviews/$id',
+  path: '/reviews/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedStudioIdRoute = AuthenticatedStudioIdRouteImport.update({
   id: '/studio/$id',
   path: '/studio/$id',
@@ -105,6 +119,11 @@ const ApiPublicTiktokThumbRoute = ApiPublicTiktokThumbRouteImport.update({
   path: '/api/public/tiktok-thumb',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeracRTokenRoute = TeracRTokenRouteImport.update({
+  id: '/terac/r/$token',
+  path: '/terac/r/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -118,10 +137,13 @@ export interface FileRoutesByFullPath {
   '/remix': typeof AuthenticatedRemixRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/companies/$slug': typeof CompaniesSlugRoute
+  '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/tiktok-thumb': typeof ApiPublicTiktokThumbRoute
+  '/terac/r/$token': typeof TeracRTokenRoute
+  '/reviews/': typeof AuthenticatedReviewsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -135,10 +157,13 @@ export interface FileRoutesByTo {
   '/remix': typeof AuthenticatedRemixRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/companies/$slug': typeof CompaniesSlugRoute
+  '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/tiktok-thumb': typeof ApiPublicTiktokThumbRoute
+  '/terac/r/$token': typeof TeracRTokenRoute
+  '/reviews': typeof AuthenticatedReviewsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -154,10 +179,13 @@ export interface FileRoutesById {
   '/_authenticated/remix': typeof AuthenticatedRemixRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/companies/$slug': typeof CompaniesSlugRoute
+  '/_authenticated/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/_authenticated/studio/$id': typeof AuthenticatedStudioIdRoute
   '/_authenticated/studio/new': typeof AuthenticatedStudioNewRoute
   '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
   '/api/public/tiktok-thumb': typeof ApiPublicTiktokThumbRoute
+  '/terac/r/$token': typeof TeracRTokenRoute
+  '/_authenticated/reviews/': typeof AuthenticatedReviewsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -173,10 +201,13 @@ export interface FileRouteTypes {
     | '/remix'
     | '/categories/$slug'
     | '/companies/$slug'
+    | '/reviews/$id'
     | '/studio/$id'
     | '/studio/new'
     | '/api/public/stripe-webhook'
     | '/api/public/tiktok-thumb'
+    | '/terac/r/$token'
+    | '/reviews/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -190,10 +221,13 @@ export interface FileRouteTypes {
     | '/remix'
     | '/categories/$slug'
     | '/companies/$slug'
+    | '/reviews/$id'
     | '/studio/$id'
     | '/studio/new'
     | '/api/public/stripe-webhook'
     | '/api/public/tiktok-thumb'
+    | '/terac/r/$token'
+    | '/reviews'
   id:
     | '__root__'
     | '/'
@@ -208,10 +242,13 @@ export interface FileRouteTypes {
     | '/_authenticated/remix'
     | '/categories/$slug'
     | '/companies/$slug'
+    | '/_authenticated/reviews/$id'
     | '/_authenticated/studio/$id'
     | '/_authenticated/studio/new'
     | '/api/public/stripe-webhook'
     | '/api/public/tiktok-thumb'
+    | '/terac/r/$token'
+    | '/_authenticated/reviews/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -223,6 +260,7 @@ export interface RootRouteChildren {
   CompaniesSlugRoute: typeof CompaniesSlugRoute
   ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
   ApiPublicTiktokThumbRoute: typeof ApiPublicTiktokThumbRoute
+  TeracRTokenRoute: typeof TeracRTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -311,6 +349,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompaniesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/reviews/': {
+      id: '/_authenticated/reviews/'
+      path: '/reviews'
+      fullPath: '/reviews/'
+      preLoaderRoute: typeof AuthenticatedReviewsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reviews/$id': {
+      id: '/_authenticated/reviews/$id'
+      path: '/reviews/$id'
+      fullPath: '/reviews/$id'
+      preLoaderRoute: typeof AuthenticatedReviewsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/studio/$id': {
       id: '/_authenticated/studio/$id'
       path: '/studio/$id'
@@ -339,6 +391,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTiktokThumbRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terac/r/$token': {
+      id: '/terac/r/$token'
+      path: '/terac/r/$token'
+      fullPath: '/terac/r/$token'
+      preLoaderRoute: typeof TeracRTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -349,8 +408,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedRemixRoute: typeof AuthenticatedRemixRoute
+  AuthenticatedReviewsIdRoute: typeof AuthenticatedReviewsIdRoute
   AuthenticatedStudioIdRoute: typeof AuthenticatedStudioIdRoute
   AuthenticatedStudioNewRoute: typeof AuthenticatedStudioNewRoute
+  AuthenticatedReviewsIndexRoute: typeof AuthenticatedReviewsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -360,8 +421,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedRemixRoute: AuthenticatedRemixRoute,
+  AuthenticatedReviewsIdRoute: AuthenticatedReviewsIdRoute,
   AuthenticatedStudioIdRoute: AuthenticatedStudioIdRoute,
   AuthenticatedStudioNewRoute: AuthenticatedStudioNewRoute,
+  AuthenticatedReviewsIndexRoute: AuthenticatedReviewsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -376,6 +439,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompaniesSlugRoute: CompaniesSlugRoute,
   ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
   ApiPublicTiktokThumbRoute: ApiPublicTiktokThumbRoute,
+  TeracRTokenRoute: TeracRTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
