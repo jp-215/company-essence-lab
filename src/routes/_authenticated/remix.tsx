@@ -47,6 +47,7 @@ type SortKey = "views" | "likes" | "newest";
 
 function RemixStudio() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const fetchCompanies = useServerFn(listMyCompanies);
   const fetchTrends = useServerFn(listCompanyTrends);
   const fetchRemixes = useServerFn(listCompanyRemixes);
