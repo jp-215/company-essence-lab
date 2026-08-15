@@ -11,6 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -143,23 +150,28 @@ function RemixStudio() {
             </div>
 
             {companies.data?.length ? (
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                {companies.data.map((company) => (
-                  <button
-                    key={company.id}
-                    type="button"
-                    onClick={() => setCompanyId(company.id)}
-                    aria-pressed={company.id === companyId}
-                    className={cn(
-                      "rounded-full px-5 py-2 text-sm font-medium transition-colors",
-                      company.id === companyId
-                        ? "bg-foreground text-background"
-                        : "border border-border bg-card text-foreground hover:border-ring",
-                    )}
+              <div className="mt-5 space-y-2">
+                <label
+                  htmlFor="product-select"
+                  className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
+                >
+                  Your product
+                </label>
+                <Select value={companyId ?? ""} onValueChange={(value) => setCompanyId(value)}>
+                  <SelectTrigger
+                    id="product-select"
+                    className="h-14 w-full rounded-xl border-border bg-card text-base"
                   >
-                    {company.name}
-                  </button>
-                ))}
+                    <SelectValue placeholder="Select a product" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.data.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.name} — {company.categoryName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {selectedCompany ? (
                   <p className="text-sm text-muted-foreground">
                     Mapped through category{" "}
