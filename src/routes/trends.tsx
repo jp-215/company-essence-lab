@@ -219,11 +219,19 @@ function TrendingPage() {
 
 
 /** Signed-in users get trends matched to their brand; signed-out users get a CTA. */
-function PersonalizedRail() {
+function PersonalizedRail({
+  activeCategory,
+  onTailor,
+}: {
+  categories: Array<{ slug: string; name: string }>;
+  activeCategory: string | undefined;
+  onTailor: (slug: string) => void;
+}) {
   const { user, loading } = useAuth();
   const fetchCompanies = useServerFn(listMyCompanies);
   const fetchRecommendations = useServerFn(getRecommendations);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [tailored, setTailored] = useState(false);
 
   const companies = useQuery({
     queryKey: ["my-companies"],
@@ -235,11 +243,21 @@ function PersonalizedRail() {
     if (!companyId && companies.data?.length) setCompanyId(companies.data[0]!.id);
   }, [companies.data, companyId]);
 
+  // Default the feed to the selected brand's category so it isn't a generic firehose.
+  useEffect(() => {
+    if (tailored || activeCategory || !companyId) return;
+    const slug = companies.data?.find((company) => company.id === companyId)?.categorySlug;
+    if (!slug) return;
+    setTailored(true);
+    onTailor(slug);
+  }, [activeCategory, companies.data, companyId, onTailor, tailored]);
+
   const recommendations = useQuery({
     queryKey: ["trend-recommendations", companyId],
     queryFn: () => fetchRecommendations({ data: { companyId: companyId!, limit: 8 } }),
     enabled: Boolean(user && companyId),
   });
+
 
   if (loading) return null;
 
