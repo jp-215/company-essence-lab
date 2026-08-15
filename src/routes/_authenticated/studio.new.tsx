@@ -141,9 +141,15 @@ function NewCompany() {
         return;
       }
     }
-    if (step === 2 && !goal) {
-      toast.error("Pick what these ads should do.");
-      return;
+    if (step === 2) {
+      if (!goal) {
+        toast.error("Pick what these ads should do.");
+        return;
+      }
+      if (mission.trim().length < 10) {
+        toast.error("Your mission needs a little more detail.");
+        return;
+      }
     }
     setStep((current) => Math.min(3, current + 1));
   }
