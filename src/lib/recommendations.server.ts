@@ -106,12 +106,12 @@ export async function getRecommendedTrends(
 
   const { data, error } = await client.rpc("recommend_company_trends", {
     _company_id: companyId,
-    _limit: limit,
+    _limit: poolSize,
     ...(queryEmbedding ? { _query_embedding: JSON.stringify(queryEmbedding) } : {}),
   });
   if (error) throw new Error(error.message);
 
-  const semantic: RecommendedTrendDTO[] = (data ?? []).map((row) => ({
+  const pool: RecommendedTrendDTO[] = (data ?? []).map((row) => ({
     trendKey: row.trend_key,
     platform: row.platform,
     title: row.title,
@@ -129,17 +129,30 @@ export async function getRecommendedTrends(
     matchType: "semantic",
   }));
 
-  if (semantic.length >= limit) return semantic.slice(0, limit);
+  // Widen the pool with category matches so the shuffle has more room to move.
+  const seen = new Set(pool.map((trend) => trend.trendKey));
+  if (pool.length < poolSize) {
+    const fallback = await listMappedTrends(client, companyId, poolSize);
+    for (const trend of fallback) {
+      if (seen.has(trend.trendKey)) continue;
+      seen.add(trend.trendKey);
+      pool.push({ ...trend, similarity: 0, matchType: "category" });
+    }
+  }
 
-  const seen = new Set(semantic.map((trend) => trend.trendKey));
-  const fallback = await listMappedTrends(client, companyId, limit * 2);
-  const topUp: RecommendedTrendDTO[] = fallback
-    .filter((trend) => !seen.has(trend.trendKey))
-    .slice(0, limit - semantic.length)
-    .map((trend) => ({ ...trend, similarity: 0, matchType: "category" }));
-
-  return [...semantic, ...topUp];
+  const maxScore = Math.max(1, ...pool.map((t) => t.trendScore));
+  return diversify(pool, {
+    limit,
+    seed,
+    key: (trend) => trend.trendKey,
+    // Semantic similarity leads; virality keeps merely-adjacent matches honest.
+    score: (trend) =>
+      (trend.matchType === "semantic" ? trend.similarity : 0.35) * 0.7 +
+      (trend.trendScore / maxScore) * 0.3,
+    groups: (trend) => [`author:${trend.author}`, `format:${trend.format}`],
+  });
 }
+
 
 export async function getTrendByKey(client: Client, trendKey: string): Promise<TrendDTO | null> {
   const { data, error } = await client
