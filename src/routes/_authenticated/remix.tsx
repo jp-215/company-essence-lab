@@ -65,6 +65,25 @@ function RemixStudio() {
   const [platform, setPlatform] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("views");
+  // Up to six pieces of platform content ride along as influence for one render.
+  const [selected, setSelected] = useState<Map<string, string>>(new Map());
+
+  const toggleSelected = (trendKey: string, line: string) => {
+    setSelected((current) => {
+      const next = new Map(current);
+      if (next.has(trendKey)) {
+        next.delete(trendKey);
+        return next;
+      }
+      if (next.size >= 6) {
+        toast.info("Six is the max influence set for one video.");
+        return current;
+      }
+      next.set(trendKey, line);
+      return next;
+    });
+  };
+
 
   const companies = useQuery({ queryKey: ["my-companies"], queryFn: () => fetchCompanies() });
 
