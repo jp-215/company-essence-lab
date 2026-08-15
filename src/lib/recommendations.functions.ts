@@ -21,3 +21,18 @@ export const getRecommendations = createServerFn({ method: "GET" })
       queryText: data.query,
     }),
   );
+
+export const getChatterRecommendations = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        companyId: z.string().uuid(),
+        limit: z.number().int().min(1).max(24).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const { getRecommendedChatter } = await import("./recommendations.server");
+    return getRecommendedChatter(context.supabase, data.companyId, data.limit ?? 6);
+  });

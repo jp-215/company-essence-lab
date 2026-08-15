@@ -8,7 +8,9 @@ import { listCategories } from "@/lib/companies.functions";
 import { listTrendingNow } from "@/lib/trends.functions";
 import { listWordOfMouth } from "@/lib/wom.functions";
 import { listMyCompanies } from "@/lib/owner.functions";
-import { getRecommendations } from "@/lib/recommendations.functions";
+import { getChatterRecommendations, getRecommendations } from "@/lib/recommendations.functions";
+import { getTrendIndexStatus } from "@/lib/trend-embeddings.functions";
+import { interleave } from "@/lib/feed-mix";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,20 +19,26 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const searchSchema = z.object({
   category: z.string().max(80).optional(),
-  source: z.enum(["video", "wom"]).optional(),
+  source: z.enum(["mix", "video", "wom"]).optional(),
 });
 
 const trendsQuery = (categorySlug?: string) =>
   queryOptions({
     queryKey: ["trending-page", categorySlug ?? "all"],
+    // One flaky RPC shouldn't blank the whole page: degrade to an empty section instead.
     queryFn: async () => {
       const [categories, trends, wordOfMouth] = await Promise.all([
-        listCategories(),
-        listTrendingNow({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }),
-        listWordOfMouth({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }),
+        listCategories().catch(() => []),
+        listTrendingNow({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }).catch(
+          () => [],
+        ),
+        listWordOfMouth({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }).catch(
+          () => [],
+        ),
       ]);
       return { categories, trends, wordOfMouth };
     },
+    retry: 2,
   });
 
 export const Route = createFileRoute("/trends")({
@@ -64,7 +72,9 @@ function TrendingPage() {
   const { category, source } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const { data } = useSuspenseQuery(trendsQuery(category));
-  const activeSource = source ?? "video";
+  const activeSource = source ?? "mix";
+  // Balanced default: TikTok video trends alternating with word-of-mouth chatter.
+  const balanced = interleave(data.trends, data.wordOfMouth, 36);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-12">
@@ -86,6 +96,13 @@ function TrendingPage() {
       />
 
       <div className="mt-10 flex flex-wrap items-center gap-2">
+        <Button
+          variant={activeSource === "mix" ? "default" : "outline"}
+          size="sm"
+          onClick={() => navigate({ search: (prev) => ({ ...prev, source: "mix" }) })}
+        >
+          Balanced mix ({balanced.length})
+        </Button>
         <Button
           variant={activeSource === "video" ? "default" : "outline"}
           size="sm"
@@ -122,7 +139,76 @@ function TrendingPage() {
         ))}
       </div>
 
-      {activeSource === "wom" ? (
+      {activeSource === "mix" ? (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {balanced.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nothing trending in this category yet.</p>
+          ) : (
+            balanced.map((item) =>
+              "trendKey" in item ? (
+                <Card key={item.trendKey} className="h-full">
+                  <CardContent className="flex h-full flex-col gap-3 py-5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                        video trend
+                      </span>
+                      <Badge variant="outline">{item.platform}</Badge>
+                    </div>
+                    <h3 className="line-clamp-2 font-medium leading-snug text-foreground">
+                      {item.title || item.caption.slice(0, 70)}
+                    </h3>
+                    <p className="line-clamp-3 text-sm text-muted-foreground">{item.caption}</p>
+                    <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                      <span className="text-xs text-muted-foreground">
+                        {compact.format(item.views)} views · {compact.format(item.likes)} likes
+                      </span>
+                      {item.sourceUrl ? (
+                        <a
+                          href={item.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground"
+                        >
+                          View original
+                        </a>
+                      ) : null}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card key={item.womKey} className="h-full">
+                  <CardContent className="flex h-full flex-col gap-3 py-5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                        word of mouth
+                      </span>
+                      <Badge variant="outline">{item.platform}</Badge>
+                    </div>
+                    <p className="line-clamp-5 text-sm leading-relaxed text-foreground">
+                      {item.content || item.title}
+                    </p>
+                    <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                      <span className="text-xs text-muted-foreground">
+                        {compact.format(item.likes)} likes · {compact.format(item.reposts)} reposts
+                      </span>
+                      {item.sourceUrl ? (
+                        <a
+                          href={item.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground"
+                        >
+                          View post
+                        </a>
+                      ) : null}
+                    </div>
+                  </CardContent>
+                </Card>
+              ),
+            )
+          )}
+        </div>
+      ) : activeSource === "wom" ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.wordOfMouth.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -231,6 +317,8 @@ function PersonalizedRail({
   const { user, loading } = useAuth();
   const fetchCompanies = useServerFn(listMyCompanies);
   const fetchRecommendations = useServerFn(getRecommendations);
+  const fetchChatter = useServerFn(getChatterRecommendations);
+  const fetchIndexStatus = useServerFn(getTrendIndexStatus);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [tailored, setTailored] = useState(false);
 
@@ -260,6 +348,22 @@ function PersonalizedRail({
     enabled: Boolean(user && companyId),
   });
 
+
+  const chatter = useQuery({
+    queryKey: ["chatter-recommendations", companyId],
+    queryFn: () => fetchChatter({ data: { companyId: companyId!, limit: 6 } }),
+    enabled: Boolean(user && companyId),
+  });
+
+  const indexStatus = useQuery({
+    queryKey: ["trend-index-status"],
+    queryFn: () => fetchIndexStatus(),
+    enabled: Boolean(user),
+  });
+
+  const semanticCount = (recommendations.data ?? []).filter((t) => t.matchType === "semantic").length;
+  // Balanced rail: short-form video trends alternating with social chatter.
+  const mixedFeed = interleave(recommendations.data ?? [], chatter.data ?? [], 10);
 
   if (loading) return null;
 
@@ -303,7 +407,36 @@ function PersonalizedRail({
         ) : null}
       </div>
 
-      {recommendations.isLoading || companies.isLoading ? (
+      <div className="mt-4 grid gap-4 rounded-2xl border border-border bg-card p-5 sm:grid-cols-4">
+        <RagStat
+          label="Semantic matches"
+          value={`${semanticCount}/${(recommendations.data ?? []).length}`}
+          note="Vector hits vs. category fallback"
+        />
+        <RagStat
+          label="Source mix"
+          value={`${(recommendations.data ?? []).length} video / ${(chatter.data ?? []).length} chatter`}
+          note="Video trends balanced with word of mouth"
+        />
+        <RagStat
+          label="Index coverage"
+          value={
+            indexStatus.data ? (indexStatus.data.remaining === 0 ? "Complete" : "Backfilling") : "…"
+          }
+          note={
+            indexStatus.data
+              ? `${indexStatus.data.remaining} posts awaiting embeddings`
+              : "Checking retrieval index"
+          }
+        />
+        <RagStat
+          label="Ranking blend"
+          value="0.8 / 0.2"
+          note="Cosine similarity vs. trend heat"
+        />
+      </div>
+
+      {recommendations.isLoading || chatter.isLoading || companies.isLoading ? (
         <div className="mt-4 flex gap-4 overflow-hidden">
           {[0, 1, 2].map((key) => (
             <Skeleton key={key} className="h-36 w-72 shrink-0" />
@@ -311,31 +444,63 @@ function PersonalizedRail({
         </div>
       ) : (
         <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
-          {(recommendations.data ?? []).map((trend) => (
-            <Card key={trend.trendKey} className="w-72 shrink-0">
-              <CardContent className="flex h-full flex-col gap-2 py-4">
-                <div className="flex items-center justify-between gap-2">
-                  <Badge variant="outline">{trend.platform}</Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {trend.matchType === "semantic"
-                      ? `${Math.round(trend.similarity * 100)}% match`
-                      : "from your category"}
-                  </span>
-                </div>
-                <h3 className="line-clamp-2 text-sm font-medium leading-snug">
-                  {trend.title || trend.caption.slice(0, 70)}
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {compact.format(trend.views)} views · {compact.format(trend.likes)} likes
-                </p>
-                <Button asChild size="sm" variant="secondary" className="mt-auto">
-                  <Link to="/chat">Remix in chat</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+          {mixedFeed.map((item) =>
+            "trendKey" in item ? (
+              <Card key={item.trendKey} className="w-72 shrink-0">
+                <CardContent className="flex h-full flex-col gap-2 py-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant="outline">{item.platform}</Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {item.matchType === "semantic"
+                        ? `${Math.round(item.similarity * 100)}% match`
+                        : "from your category"}
+                    </span>
+                  </div>
+                  <h3 className="line-clamp-2 text-sm font-medium leading-snug">
+                    {item.title || item.caption.slice(0, 70)}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {compact.format(item.views)} views · {compact.format(item.likes)} likes
+                  </p>
+                  <Button asChild size="sm" variant="secondary" className="mt-auto">
+                    <Link to="/chat">Remix in chat</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card key={item.womKey} className="w-72 shrink-0">
+                <CardContent className="flex h-full flex-col gap-2 py-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant="outline">{item.platform}</Badge>
+                    <span className="text-xs text-muted-foreground">word of mouth</span>
+                  </div>
+                  <p className="line-clamp-4 text-sm leading-snug text-foreground">
+                    {item.content || item.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {compact.format(item.likes)} likes · {compact.format(item.replies)} replies
+                  </p>
+                  <Button asChild size="sm" variant="secondary" className="mt-auto">
+                    <Link to="/chat">Remix in chat</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ),
+          )}
         </div>
       )}
     </section>
+  );
+}
+
+function RagStat({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-2 font-serif text-xl font-bold tracking-tight text-foreground">{value}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{note}</p>
+    </div>
   );
 }
