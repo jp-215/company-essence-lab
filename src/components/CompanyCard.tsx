@@ -18,10 +18,28 @@ export function CompanyCard({ company }: { company: CompanyCardDTO }) {
             >
               {company.name}
             </Link>
-            <Badge variant="secondary">{company.categoryName}</Badge>
+            <Link to="/categories/$slug" params={{ slug: company.categorySlug }}>
+              <Badge variant="secondary">{company.categoryName}</Badge>
+            </Link>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">Led by {company.ownerName}</p>
           <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{company.bio}</p>
+          {company.mission ? (
+            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Mission: </span>
+              {company.mission}
+            </p>
+          ) : null}
+          {company.website ? (
+            <a
+              href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground"
+            >
+              {company.website.replace(/^https?:\/\//, "")}
+            </a>
+          ) : null}
         </div>
       </CardContent>
     </Card>

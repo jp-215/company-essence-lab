@@ -3,16 +3,22 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { listCategories, listCompanies } from "@/lib/companies.functions";
+import { listTrendingNow } from "@/lib/trends.functions";
 import { CompanyCard } from "@/components/CompanyCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 const marketplaceQuery = queryOptions({
   queryKey: ["marketplace"],
   queryFn: async () => {
-    const [categories, companies] = await Promise.all([listCategories(), listCompanies({})]);
-    return { categories, companies };
+    const [categories, companies, trends] = await Promise.all([
+      listCategories(),
+      listCompanies({}),
+      listTrendingNow({ data: { limit: 9 } }),
+    ]);
+    return { categories, companies, trends };
   },
 });
 
@@ -24,13 +30,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Vira maps 100 trending ad prescripts to your category and remixes them into shoot-ready ads, so small brands compete with big ad budgets.",
+          "Vira maps thousands of real trending social posts to your category and remixes them into shoot-ready ads, so small brands compete with big ad budgets.",
       },
       { property: "og:title", content: "Vira — Remix trending ads into your own brand's version" },
       {
         property: "og:description",
-        content:
-          "Trending ad formats, mapped to your category and rewritten in your brand voice.",
+        content: "Real viral trends, mapped to your category and rewritten in your brand voice.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -50,6 +55,8 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+const compact = new Intl.NumberFormat("en", { notation: "compact" });
+
 function Home() {
   const { data } = useSuspenseQuery(marketplaceQuery);
   const [search, setSearch] = useState("");
@@ -60,6 +67,8 @@ function Home() {
         (company) =>
           company.name.toLowerCase().includes(query) ||
           company.bio.toLowerCase().includes(query) ||
+          company.mission.toLowerCase().includes(query) ||
+          company.ownerName.toLowerCase().includes(query) ||
           company.categoryName.toLowerCase().includes(query),
       )
     : data.companies;
@@ -74,9 +83,9 @@ function Home() {
           Cut through the noise. Remix the ads that are already winning.
         </h1>
         <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-          Vira reads the ads trending across TikTok, Instagram, YouTube and Facebook, maps 100
-          proven ad prescripts to the category your company serves, and rewrites them around your
-          own mission and positioning — so you can ship your first campaign without an agency.
+          Vira tracks the posts trending across social right now, maps every trend to the category
+          your company serves, and rewrites them around your own mission and positioning — so you
+          can ship your first campaign without an agency.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button asChild>
@@ -91,12 +100,57 @@ function Home() {
       <section className="mt-14">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <h2 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
+            Trending right now
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Live trends, mapped to consumer categories
+          </p>
+        </div>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {data.trends.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No trends loaded yet.</p>
+          ) : (
+            data.trends.map((trend) => (
+              <Card key={trend.trendKey} className="h-full">
+                <CardContent className="flex h-full flex-col gap-3 py-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                      {trend.trendKey}
+                    </span>
+                    <Badge variant="outline">{trend.platform}</Badge>
+                  </div>
+                  <h3 className="line-clamp-2 font-medium leading-snug text-foreground">
+                    {trend.title || trend.caption.slice(0, 70)}
+                  </h3>
+                  <p className="line-clamp-3 text-sm text-muted-foreground">{trend.caption}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {trend.format ? <Badge variant="secondary">{trend.format}</Badge> : null}
+                    {trend.hashtags.slice(0, 2).map((tag) => (
+                      <Badge key={tag} variant="secondary">
+                        #{tag}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="mt-auto text-xs text-muted-foreground">
+                    {compact.format(trend.views)} views · {compact.format(trend.likes)} likes
+                  </p>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      </section>
+
+      <section className="mt-14">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h2 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
             Browse the directory
           </h2>
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search brands, categories, keywords"
+            placeholder="Search brands, owners, missions, categories"
             className="w-full sm:w-72"
             aria-label="Search companies"
           />
