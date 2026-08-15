@@ -77,6 +77,45 @@ export type Database = {
           },
         ]
       }
+      category_trends: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          relevance_rank: number
+          trend_key: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          relevance_rank?: number
+          trend_key: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          relevance_rank?: number
+          trend_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_trends_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_trends_trend_key_fkey"
+            columns: ["trend_key"]
+            isOneToOne: false
+            referencedRelation: "trends"
+            referencedColumns: ["trend_key"]
+          },
+        ]
+      }
       companies: {
         Row: {
           bio: string
@@ -389,6 +428,78 @@ export type Database = {
         }
         Relationships: []
       }
+      trends: {
+        Row: {
+          author: string
+          caption: string
+          comments: number
+          created_at: string
+          engagement_rate: number
+          format: string
+          hashtags: string[]
+          id: string
+          likes: number
+          music: string
+          platform: string
+          posted_at: string | null
+          query: string
+          raw: Json | null
+          shares: number
+          source_url: string
+          title: string
+          trend_key: string
+          trend_score: number
+          updated_at: string
+          views: number
+        }
+        Insert: {
+          author?: string
+          caption?: string
+          comments?: number
+          created_at?: string
+          engagement_rate?: number
+          format?: string
+          hashtags?: string[]
+          id?: string
+          likes?: number
+          music?: string
+          platform?: string
+          posted_at?: string | null
+          query?: string
+          raw?: Json | null
+          shares?: number
+          source_url?: string
+          title?: string
+          trend_key: string
+          trend_score?: number
+          updated_at?: string
+          views?: number
+        }
+        Update: {
+          author?: string
+          caption?: string
+          comments?: number
+          created_at?: string
+          engagement_rate?: number
+          format?: string
+          hashtags?: string[]
+          id?: string
+          likes?: number
+          music?: string
+          platform?: string
+          posted_at?: string | null
+          query?: string
+          raw?: Json | null
+          shares?: number
+          source_url?: string
+          title?: string
+          trend_key?: string
+          trend_score?: number
+          updated_at?: string
+          views?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -408,6 +519,24 @@ export type Database = {
           script: string
           title: string
           trend_score: number
+        }[]
+      }
+      company_trends: {
+        Args: { _company_id: string; _limit?: number }
+        Returns: {
+          author: string
+          caption: string
+          engagement_rate: number
+          format: string
+          hashtags: string[]
+          likes: number
+          platform: string
+          relevance_rank: number
+          source_url: string
+          title: string
+          trend_key: string
+          trend_score: number
+          views: number
         }[]
       }
       match_company_knowledge: {
