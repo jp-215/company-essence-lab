@@ -169,9 +169,8 @@ function NewCompany() {
           ownerName: ownerName.trim(),
           categoryId,
           bio: bio.trim(),
-          mission: mission.trim(),
+          mission: `Goal: ${GOALS.find((item) => item.id === goal)?.label ?? "Grow the audience"}. ${mission.trim()}`,
           website: website.trim() || null,
-          goal: GOALS.find((item) => item.id === goal)?.label ?? null,
           logoPath: photos[0]?.path ?? null,
         },
       });
