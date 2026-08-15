@@ -25,14 +25,20 @@ const searchSchema = z.object({
 const trendsQuery = (categorySlug?: string) =>
   queryOptions({
     queryKey: ["trending-page", categorySlug ?? "all"],
+    // One flaky RPC shouldn't blank the whole page: degrade to an empty section instead.
     queryFn: async () => {
       const [categories, trends, wordOfMouth] = await Promise.all([
-        listCategories(),
-        listTrendingNow({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }),
-        listWordOfMouth({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }),
+        listCategories().catch(() => []),
+        listTrendingNow({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }).catch(
+          () => [],
+        ),
+        listWordOfMouth({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }).catch(
+          () => [],
+        ),
       ]);
       return { categories, trends, wordOfMouth };
     },
+    retry: 2,
   });
 
 export const Route = createFileRoute("/trends")({
