@@ -105,6 +105,7 @@ async function fetchCommunitySignals(companyId: string): Promise<Map<string, Com
     const { data, error } = await supabaseAdmin.rpc("recommend_community_trends", {
       _company_id: companyId,
       _limit: 40,
+      _days: 30,
     });
     if (error) throw new Error(error.message);
     for (const row of data ?? []) {
