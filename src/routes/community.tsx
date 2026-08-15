@@ -1,13 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { listCategories } from "@/lib/companies.functions";
 import { listTrendingNow } from "@/lib/trends.functions";
 import { listWordOfMouth } from "@/lib/wom.functions";
 import { listMyCompanies } from "@/lib/owner.functions";
+import { generateRemixBatch } from "@/lib/remix.functions";
 import { interleave } from "@/lib/feed-mix";
 import { useAuth } from "@/hooks/useAuth";
 import { SwipeFeed } from "@/components/SwipeFeed";
@@ -15,6 +23,10 @@ import { ChatterCard, VideoCard, type FeedItem } from "@/components/feed/FeedCar
 import { Button } from "@/components/ui/button";
 
 const searchSchema = z.object({ category: z.string().max(80).optional() });
+const MAX_BATCH = 6;
+
+const itemKey = (item: FeedItem) => (item.kind === "video" ? item.trendKey : item.womKey);
+
 
 const communityQuery = (categorySlug?: string) =>
   queryOptions({
@@ -69,6 +81,9 @@ function CommunityPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { user } = useAuth();
   const fetchCompanies = useServerFn(listMyCompanies);
+  const runBatch = useServerFn(generateRemixBatch);
+  const queryClient = useQueryClient();
+  const [selected, setSelected] = useState<FeedItem[]>([]);
 
   const { data } = useSuspenseQuery(communityQuery(category));
 
@@ -76,13 +91,14 @@ function CommunityPage() {
   const companies = useQuery({
     queryKey: ["community-companies"],
     queryFn: () => fetchCompanies(),
-    enabled: !!user && !category,
+    enabled: !!user,
   });
 
   const brandCategoryName = companies.data?.[0]?.categoryName;
   const brandCategory = brandCategoryName
     ? data.categories.find((c) => c.name === brandCategoryName)?.slug
     : undefined;
+  const companyId = companies.data?.[0]?.id;
 
   const items = useMemo<FeedItem[]>(() => {
     const videos = data.trends.map((t) => ({ kind: "video" as const, ...t }));
@@ -93,46 +109,90 @@ function CommunityPage() {
   const activeCategoryName =
     data.categories.find((c) => c.slug === category)?.name ?? "All categories";
 
+  const selectedKeys = new Set(selected.map(itemKey));
+
+  function toggleSelect(item: FeedItem) {
+    const key = itemKey(item);
+    setSelected((prev) => {
+      if (prev.some((entry) => itemKey(entry) === key)) {
+        return prev.filter((entry) => itemKey(entry) !== key);
+      }
+      if (prev.length >= MAX_BATCH) {
+        toast.error(`Up to ${MAX_BATCH} picks per batch.`);
+        return prev;
+      }
+      return [...prev, item];
+    });
+  }
+
+  const generate = useMutation({
+    mutationFn: async () => {
+      if (!companyId) throw new Error("Add a company before generating ads.");
+      return runBatch({
+        data: {
+          companyId,
+          items: selected.map((item) => ({ kind: item.kind, key: itemKey(item) })),
+        },
+      });
+    },
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: ["company-remixes"] });
+      setSelected([]);
+      if (result.created.length === 0) {
+        toast.error("None of those could be turned into ads. Try other picks.");
+        return;
+      }
+      toast.success(
+        `${result.created.length} ad concept${result.created.length > 1 ? "s" : ""} queued for video generation.`,
+      );
+      navigate({ to: "/ads" });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+
   return (
     <div className="relative">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-3 px-4 py-3">
-        <div className="pointer-events-auto flex max-w-[70%] gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <Button
-            size="sm"
-            variant={!category ? "default" : "outline"}
-            onClick={() => navigate({ search: {} })}
-          >
-            All
-          </Button>
-          {data.categories.map((item) => (
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-5 py-3 sm:px-8 lg:px-12">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
+          <div className="pointer-events-auto flex max-w-[70%] gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Button
-              key={item.slug}
               size="sm"
-              variant={category === item.slug ? "default" : "outline"}
-              className="shrink-0"
-              onClick={() => navigate({ search: { category: item.slug } })}
+              variant={!category ? "default" : "outline"}
+              onClick={() => navigate({ search: {} })}
             >
-              {item.name}
+              All
             </Button>
-          ))}
+            {data.categories.map((item) => (
+              <Button
+                key={item.slug}
+                size="sm"
+                variant={category === item.slug ? "default" : "outline"}
+                className="shrink-0"
+                onClick={() => navigate({ search: { category: item.slug } })}
+              >
+                {item.name}
+              </Button>
+            ))}
+          </div>
+          <span className="hidden font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground sm:inline">
+            Vira community · {activeCategoryName}
+          </span>
         </div>
-        <span className="pointer-events-none hidden font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground sm:inline">
-          Vira community · {activeCategoryName}
-        </span>
-      </div>
 
-      {!category && brandCategory ? (
-        <div className="absolute inset-x-0 top-16 z-20 flex justify-center">
-          <Button
-            size="sm"
-            variant="secondary"
-            className="pointer-events-auto"
-            onClick={() => navigate({ search: { category: brandCategory } })}
-          >
-            Tailor this feed to your brand
-          </Button>
-        </div>
-      ) : null}
+        {!category && brandCategory ? (
+          <div className="mx-auto mt-2 w-full max-w-6xl">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="pointer-events-auto"
+              onClick={() => navigate({ search: { category: brandCategory } })}
+            >
+              Tailor this feed to your brand
+            </Button>
+          </div>
+        ) : null}
+      </div>
 
       {items.length === 0 ? (
         <div className="flex h-[70vh] flex-col items-center justify-center gap-3 px-6 text-center">
@@ -148,12 +208,23 @@ function CommunityPage() {
           count={items.length}
           renderItem={(index, active) => {
             const item = items[index]!;
+            const isSelected = selectedKeys.has(itemKey(item));
             return item.kind === "video" ? (
-              <VideoCard item={item} active={active} />
+              <VideoCard
+                item={item}
+                active={active}
+                selected={isSelected}
+                onToggleSelect={() => toggleSelect(item)}
+              />
             ) : (
-              <ChatterCard item={item} />
+              <ChatterCard
+                item={item}
+                selected={isSelected}
+                onToggleSelect={() => toggleSelect(item)}
+              />
             );
           }}
+
           endSlide={
             <div className="flex flex-col items-center gap-4 px-6 text-center">
               <h2 className="font-serif text-2xl font-semibold text-foreground">
@@ -175,6 +246,42 @@ function CommunityPage() {
           }
         />
       )}
+
+      {selected.length > 0 ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-5 py-3 backdrop-blur sm:px-8 lg:px-12">
+          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">
+                {selected.length} of {MAX_BATCH} picked for video generation
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {selected
+                  .map((item) => (item.title || item.kind).slice(0, 40))
+                  .join(" · ")}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setSelected([])}>
+                Clear
+              </Button>
+              {user ? (
+                <Button size="sm" onClick={() => generate.mutate()} disabled={generate.isPending}>
+                  {generate.isPending
+                    ? "Generating…"
+                    : `Generate ${selected.length} ad${selected.length > 1 ? "s" : ""}`}
+                </Button>
+              ) : (
+                <Button asChild size="sm">
+                  <Link to="/auth" search={{ tab: "signin" }}>
+                    Sign in to generate
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
+
   );
 }
