@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { mapInsight } from "./companies.server";
 import { analyzeBrand, scrapeSite, type SiteSnapshot } from "./enrich.server";
+import { upsertKnowledge } from "./knowledge.server";
 
 const INSIGHT_SELECT =
   "id, status, error, summary, positioning, tone, keywords, ad_themes, brand_colors, sources, updated_at";
@@ -31,7 +32,7 @@ export const runEnrichment = createServerFn({ method: "POST" })
 
     const { data: company, error: companyError } = await supabase
       .from("companies")
-      .select("id, name, bio, mission, website, categories(name)")
+      .select("id, name, owner_name, bio, mission, website, categories(name)")
       .eq("id", data.companyId)
       .eq("owner_id", userId)
       .maybeSingle();
@@ -102,6 +103,22 @@ export const runEnrichment = createServerFn({ method: "POST" })
         .select(INSIGHT_SELECT)
         .single();
       if (updateError) throw new Error(updateError.message);
+
+      await upsertKnowledge(supabase, {
+        companyId: company.id,
+        ownerId: userId,
+        companyName: company.name,
+        ownerName: (company as unknown as { owner_name?: string }).owner_name ?? "",
+        categoryName,
+        bio: company.bio,
+        mission: company.mission,
+        positioning: analysis.positioning,
+        tone: analysis.tone,
+        summary: analysis.summary,
+        keywords: analysis.keywords,
+        adThemes: analysis.adThemes,
+      });
+
       return mapInsight(row);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Enrichment failed.";

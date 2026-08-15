@@ -9,6 +9,7 @@ import {
   listOwnedCompanies,
   updateCompanyRow,
 } from "./owner.server";
+import { indexCompanyKnowledge } from "./knowledge-sync.server";
 
 const companyInputSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -34,7 +35,11 @@ export const getMyCompany = createServerFn({ method: "GET" })
 export const createCompany = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => companyInputSchema.parse(input))
-  .handler(async ({ context, data }) => insertCompany(context.supabase, context.userId, data));
+  .handler(async ({ context, data }) => {
+    const created = await insertCompany(context.supabase, context.userId, data);
+    await indexCompanyKnowledge(context.supabase, context.userId, created.id);
+    return created;
+  });
 
 export const updateCompany = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -43,7 +48,9 @@ export const updateCompany = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { id, ...rest } = data;
-    return updateCompanyRow(context.supabase, context.userId, id, rest);
+    const updated = await updateCompanyRow(context.supabase, context.userId, id, rest);
+    await indexCompanyKnowledge(context.supabase, context.userId, id);
+    return updated;
   });
 
 export const deleteCompany = createServerFn({ method: "POST" })
