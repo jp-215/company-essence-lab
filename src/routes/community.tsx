@@ -246,6 +246,42 @@ function CommunityPage() {
           }
         />
       )}
+
+      {selected.length > 0 ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-5 py-3 backdrop-blur sm:px-8 lg:px-12">
+          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">
+                {selected.length} of {MAX_BATCH} picked for video generation
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {selected
+                  .map((item) => (item.title || item.kind).slice(0, 40))
+                  .join(" · ")}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setSelected([])}>
+                Clear
+              </Button>
+              {user ? (
+                <Button size="sm" onClick={() => generate.mutate()} disabled={generate.isPending}>
+                  {generate.isPending
+                    ? "Generating…"
+                    : `Generate ${selected.length} ad${selected.length > 1 ? "s" : ""}`}
+                </Button>
+              ) : (
+                <Button asChild size="sm">
+                  <Link to="/auth" search={{ tab: "signin" }}>
+                    Sign in to generate
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
+
   );
 }
