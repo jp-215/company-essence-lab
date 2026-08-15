@@ -205,6 +205,117 @@ function Dashboard() {
           ))
         )}
       </div>
+
+      {data?.length ? (
+        <section className="mt-16">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 sm:flex sm:justify-between">
+            <div className="min-w-0">
+              <Eyebrow>Trends matched to you</Eyebrow>
+              <h2 className="mt-3 font-serif text-3xl font-bold tracking-tight text-foreground">
+                {focusCompany ? focusCompany.name : "Your brand"} feed
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                Pulled live from the retrieval index: each brand profile is embedded as a 1536-dim
+                vector and matched by cosine similarity against every scraped post, then blended
+                with virality. Category mapping is only the fallback.
+              </p>
+            </div>
+            <Link to="/remix" className={outline}>
+              Open remix studio
+            </Link>
+          </div>
+
+          {data.length > 1 ? (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {data.map((company) => (
+                <button
+                  key={company.id}
+                  type="button"
+                  onClick={() => setFocusId(company.id)}
+                  className={cn(
+                    "rounded-full border px-4 py-2 text-sm transition-colors",
+                    company.id === focusId
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-card text-muted-foreground hover:border-ring",
+                  )}
+                >
+                  {company.name}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          <Panel className="mt-6 grid gap-6 p-6 sm:grid-cols-3">
+            <RagStat
+              label="Semantic matches"
+              value={`${semanticCount}/${(trends.data ?? []).length || 0}`}
+              note="Vector hits vs. category fallback in this feed"
+            />
+            <RagStat
+              label="Index coverage"
+              value={
+                indexStatus.data ? (indexStatus.data.remaining === 0 ? "Complete" : "Backfilling") : "…"
+              }
+              note={
+                indexStatus.data
+                  ? `${indexStatus.data.remaining} posts awaiting embeddings`
+                  : "Checking retrieval index"
+              }
+            />
+            <RagStat
+              label="Ranking blend"
+              value="0.8 / 0.2"
+              note="Cosine similarity weighted against trend heat"
+            />
+          </Panel>
+
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {trends.isLoading ? (
+              <>
+                <Skeleton className="h-72 w-full rounded-2xl" />
+                <Skeleton className="h-72 w-full rounded-2xl" />
+                <Skeleton className="h-72 w-full rounded-2xl" />
+              </>
+            ) : (trends.data ?? []).length === 0 ? (
+              <Panel className="p-8 sm:col-span-2 lg:col-span-3">
+                <p className="text-sm text-muted-foreground">
+                  No trends matched yet. Refresh brand signals so the retrieval index can embed this
+                  brand&apos;s profile.
+                </p>
+              </Panel>
+            ) : (
+              (trends.data ?? []).map((trend) => (
+                <Panel key={trend.trendKey} className="overflow-hidden p-0">
+                  <TrendPreview
+                    sourceUrl={trend.sourceUrl}
+                    platform={trend.platform}
+                    title={trend.title}
+                    className="aspect-[4/3] w-full"
+                  />
+                  <div className="space-y-3 p-5">
+                    <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                      <span className="rounded-full border border-border px-3 py-1">
+                        {trend.matchType === "semantic"
+                          ? `${Math.round(trend.similarity * 100)}% match`
+                          : "Category match"}
+                      </span>
+                      <span className="rounded-full border border-border px-3 py-1">
+                        {trend.format}
+                      </span>
+                    </div>
+                    <p className="line-clamp-3 text-sm text-foreground">{trend.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {compact.format(trend.views)} views · {compact.format(trend.likes)} likes ·
+                      heat {Math.round(trend.trendScore)}
+                    </p>
+                  </div>
+                </Panel>
+              ))
+            )}
+          </div>
+        </section>
+      ) : null}
+
     </PageShell>
   );
 }
