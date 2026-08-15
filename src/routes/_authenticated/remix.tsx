@@ -307,38 +307,24 @@ function RemixStudio() {
                       key={trend.trendKey}
                       className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
                     >
-                      <div className="relative flex aspect-[3/4] flex-col items-center justify-center bg-secondary">
-                        <span className="absolute left-4 top-4 rounded-full bg-card px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-foreground">
+                      <TrendPreview
+                        sourceUrl={trend.sourceUrl}
+                        platform={trend.platform}
+                        title={trend.caption || trend.title}
+                      >
+                        <span className="absolute left-4 top-4 z-20 rounded-full bg-card px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-foreground">
                           {trend.platform}
                         </span>
-                        <span className="absolute right-4 top-4 rounded-full bg-foreground px-3 py-1 font-mono text-[10px] text-background">
+                        <span className="absolute right-4 top-4 z-20 rounded-full bg-foreground px-3 py-1 font-mono text-[10px] text-background">
                           {Math.round(trend.trendScore)}
                         </span>
-                        {trend.sourceUrl ? (
-                          <a
-                            href={trend.sourceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="Watch the original post"
-                            className="flex size-14 items-center justify-center rounded-full border border-border bg-card transition-colors hover:border-ring"
-                          >
-                            <Play className="size-5 text-foreground" />
-                          </a>
-                        ) : (
-                          <span className="flex size-14 items-center justify-center rounded-full border border-border bg-card">
-                            <Play className="size-5 text-foreground" />
-                          </span>
-                        )}
-                        <span className="mt-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                          {trend.sourceUrl ? "Watch original" : "Video thumbnail"}
-                        </span>
                         {trend.format ? (
-                          <span className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-card px-4 py-2 text-sm text-foreground">
+                          <span className="absolute bottom-4 left-4 z-20 flex items-center gap-2 rounded-full bg-card px-4 py-2 text-sm text-foreground">
                             <span className="size-1.5 rounded-full bg-foreground" />
                             {trend.format}
                           </span>
                         ) : null}
-                      </div>
+                      </TrendPreview>
 
                       <div className="flex flex-1 flex-col gap-4 border-t border-border p-5">
                         <div className="flex items-center justify-between gap-2">
