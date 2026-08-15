@@ -86,6 +86,7 @@ let db: TeracClient;
 let userId: string;
 let companyId: string;
 let sessionId: string;
+let publicToken: string;
 let judgeTokens: string[] = [];
 const createdJudgeIds: string[] = [];
 
@@ -129,29 +130,14 @@ describe.skipIf(!canRun)("Terac review loop (live database)", () => {
     if (!company) throw new Error(`Account ${TEST_EMAIL} owns no company; list one first.`);
     companyId = company.id;
 
-    // Disposable judges so we never touch a real roster.
-    const stamp = mintToken(4);
-    for (let i = 0; i < JUDGE_COUNT; i += 1) {
-      const { data: judge, error } = await db
-        .from("judges")
-        .insert({
-          owner_id: userId,
-          name: `E2E Judge ${i + 1} ${stamp}`,
-          email: `e2e-${stamp}-${i}@example.test`,
-          expertise_tags: ["e2e"],
-          active: true,
-        })
-        .select("id")
-        .single();
-      if (error) throw new Error(error.message);
-      createdJudgeIds.push(judge.id);
-    }
   });
 
   afterAll(async () => {
     if (!canRun) return;
     if (sessionId) await db.from("review_sessions").delete().eq("id", sessionId);
     if (createdJudgeIds.length) await db.from("judges").delete().in("id", createdJudgeIds);
+    // Claimed agents are created by the RPC; clear them by their e2e email marker.
+    await db.from("judges").delete().like("email", "e2e-%@example.test");
   });
 
   it("Flow A — one press of Create Ads makes ONE session with N videos", async () => {
@@ -165,15 +151,15 @@ describe.skipIf(!canRun)("Terac review loop (live database)", () => {
     const result = await createReviewSession(authed, userId, {
       companyId,
       trendKeys: trends!.slice(0, CONCEPT_COUNT).map((p) => p.trend_key),
-      judgeIds: createdJudgeIds,
       quorum: QUORUM,
       deadlineHours: 48,
       origin: "http://localhost:8080",
     });
 
     sessionId = result.sessionId;
+    publicToken = result.publicToken;
     expect(result.videoCount).toBe(CONCEPT_COUNT);
-    expect(result.invited).toBe(JUDGE_COUNT);
+    expect(result.agentUrl).toContain(`/terac/r/${publicToken}`);
 
     const { data: videos } = await db.from("ad_videos").select("*").eq("session_id", sessionId);
     expect(videos).toHaveLength(CONCEPT_COUNT);
@@ -192,25 +178,26 @@ describe.skipIf(!canRun)("Terac review loop (live database)", () => {
     expect(session!.status).toBe("sent");
   });
 
-  it("mints one token per judge and logs one invite each", async () => {
+  it("lets any agent claim the open session and mints one token each", async () => {
+    const stamp = mintToken(4);
+    for (let i = 0; i < JUDGE_COUNT; i += 1) {
+      const { data, error } = await anon.rpc("terac_claim_session", {
+        _public_token: publicToken,
+        _name: `E2E Agent ${i + 1} ${stamp}`,
+        _email: `e2e-${stamp}-${i}@example.test`,
+      });
+      if (error) throw new Error(error.message);
+      judgeTokens.push((data as unknown as { invite_token: string }).invite_token);
+    }
+
+    expect(new Set(judgeTokens).size).toBe(JUDGE_COUNT);
+    for (const token of judgeTokens) expect(token).toHaveLength(64);
+
     const { data: assignments } = await db
       .from("session_judges")
       .select("invite_token, status")
       .eq("session_id", sessionId);
-
     expect(assignments).toHaveLength(JUDGE_COUNT);
-    judgeTokens = assignments!.map((a) => a.invite_token);
-    expect(new Set(judgeTokens).size).toBe(JUDGE_COUNT);
-    for (const token of judgeTokens) expect(token).toHaveLength(64);
-
-    const { data: emails } = await db
-      .from("terac_email_log")
-      .select("kind, to_email, body")
-      .eq("session_id", sessionId)
-      .eq("kind", "invite");
-    expect(emails).toHaveLength(JUDGE_COUNT);
-    // The link a judge actually receives is a path, not a subdomain.
-    expect(emails![0]!.body).toContain("/terac/r/");
   });
 
   it("Flow B — a token opens its own session with no login", async () => {
