@@ -4,16 +4,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
-<<<<<<< HEAD
-import { listKnowledgeBase, searchKnowledgeBase, syncMyKnowledge } from "@/lib/knowledge.functions";
-import { getTrendIndexStatus, runTrendEmbeddingBackfill } from "@/lib/trend-embeddings.functions";
-import { Button } from "@/components/ui/button";
-=======
 import {
   listKnowledgeBase,
   searchKnowledgeBase,
   syncMyKnowledge,
 } from "@/lib/knowledge.functions";
+import { getTrendIndexStatus, runTrendEmbeddingBackfill } from "@/lib/trend-embeddings.functions";
 import {
   Eyebrow,
   Lead,
@@ -24,7 +20,7 @@ import {
   SectionTitle,
 } from "@/components/Page";
 
->>>>>>> origin/main
+
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -140,55 +136,33 @@ function KnowledgePage() {
         </button>
       </div>
 
-<<<<<<< HEAD
-      <Card className="mb-8">
-        <CardContent className="flex flex-wrap items-center justify-between gap-4 pt-6">
-          <div>
-            <h2 className="font-heading text-lg">Trend recommendations index</h2>
-            <p className="text-sm text-muted-foreground">
-              {trendIndex
-                ? trendIndex.remaining === 0
-                  ? "Every trend is embedded — recommendations are fully semantic."
-                  : `${trendIndex.remaining} trends still need embedding before recommendations are fully semantic.`
-                : "Checking trend index…"}{" "}
-              Newly ingested trends are picked up by re-running this.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setTrendProgress(0);
-              trendBackfillMutation.mutate();
-            }}
-            disabled={trendBackfillMutation.isPending || trendIndex?.remaining === 0}
-          >
-            {trendBackfillMutation.isPending
-              ? `Indexing trends… (${trendProgress} done)`
-              : `Index trends${trendIndex && trendIndex.remaining > 0 ? ` (${trendIndex.remaining} remaining)` : ""}`}
-          </Button>
-        </CardContent>
-      </Card>
+      <Panel className="mt-12 flex flex-wrap items-center justify-between gap-4 p-8">
+        <div>
+          <SectionTitle>Trend recommendations index</SectionTitle>
+          <p className="mt-2 max-w-xl text-base text-muted-foreground">
+            {trendIndex
+              ? trendIndex.remaining === 0
+                ? "Every trend is embedded — recommendations are fully semantic."
+                : `${trendIndex.remaining} trends still need embedding before recommendations are fully semantic.`
+              : "Checking trend index…"}{" "}
+            Newly ingested trends are picked up by re-running this.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setTrendProgress(0);
+            trendBackfillMutation.mutate();
+          }}
+          disabled={trendBackfillMutation.isPending || trendIndex?.remaining === 0}
+          className="rounded-full border border-border bg-card px-7 py-3 text-base font-medium text-foreground transition-colors hover:border-ring disabled:opacity-60"
+        >
+          {trendBackfillMutation.isPending
+            ? `Indexing trends… (${trendProgress} done)`
+            : `Index trends${trendIndex && trendIndex.remaining > 0 ? ` (${trendIndex.remaining} remaining)` : ""}`}
+        </button>
+      </Panel>
 
-      <Card className="mb-8">
-        <CardContent className="space-y-4 pt-6">
-          <div>
-            <h2 className="font-heading text-lg">Find similar brands</h2>
-            <p className="text-sm text-muted-foreground">
-              Describe a mission, audience or ad angle — matching is semantic, not keyword based.
-            </p>
-          </div>
-          <form
-            className="flex flex-col gap-2 sm:flex-row"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (semanticQuery.trim().length < 3) {
-                toast.error("Use at least 3 characters.");
-                return;
-              }
-              searchMutation.mutate(semanticQuery.trim());
-            }}
-          >
-=======
       <Panel className="mt-12 p-8">
         <SectionTitle>Find similar brands</SectionTitle>
         <p className="mt-2 text-base text-muted-foreground">
@@ -209,7 +183,6 @@ function KnowledgePage() {
             <span className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 font-mono text-sm text-muted-foreground">
               /
             </span>
->>>>>>> origin/main
             <Input
               value={semanticQuery}
               onChange={(event) => setSemanticQuery(event.target.value)}
