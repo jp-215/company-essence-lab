@@ -171,11 +171,55 @@ RLS: owner-only, all operations. Never public.
 
 ---
 
+### `trends`
+Scraped viral short-form content — the live trend feed behind remixes. Populated
+by Apify (`clockworks/tiktok-scraper`) through `src/lib/trends.server.ts`.
+Currently pre-scraped with ~3,000 rows across all 8 categories.
+
+| column | type | notes |
+| --- | --- | --- |
+| `trend_key` | text | **primary identifier key**, unique (`VIRA-TR-<platform id>`) |
+| `platform` | text | `tiktok` today; instagram/youtube/facebook next |
+| `source_url` | text | link to the original post |
+| `author` | text | creator handle |
+| `title`, `caption` | text | first line + full caption |
+| `hashtags` | text[] | GIN indexed |
+| `music` | text | sound name (a trend driver on its own) |
+| `format` | text | classified shoot type (unboxing, GRWM, POV, …) |
+| `query` | text | the search query / category slug it was found under |
+| `views`, `likes`, `comments`, `shares` | bigint | raw metrics |
+| `engagement_rate` | numeric | `(likes + 2·comments + 3·shares) / views` |
+| `trend_score` | numeric | 0–100 heat: reach + engagement, decayed by age |
+| `posted_at` | timestamptz | |
+| `raw` | jsonb | trimmed source payload (video/cover URL, duration) |
+
+RLS: public read. Writes only via service-role ingest.
+
+---
+
+### `category_trends`
+Same mapping protocol as `category_prescripts`, for scraped trends.
+
+| column | type | notes |
+| --- | --- | --- |
+| `category_id` | uuid | FK → `categories.id` |
+| `trend_key` | text | FK → `trends.trend_key` |
+| `relevance_rank` | integer | 1 = hottest in that category |
+
+RLS: public read. Unique on `(category_id, trend_key)`.
+
+```sql
+select * from public.company_trends('<company_uuid>', 24);
+```
+
+---
+
 ## Functions
 
 | function | purpose |
 | --- | --- |
 | `company_prescripts(_company_id, _limit)` | company → category → ranked prescripts |
+| `company_trends(_company_id, _limit)` | company → category → ranked scraped trends |
 | `match_company_knowledge(query_embedding, match_count, exclude_company)` | vector similarity over the knowledge base |
 | `handle_new_user()` | trigger: create a profile on signup |
 | `set_updated_at()` | trigger: maintain `updated_at` |
@@ -185,5 +229,17 @@ RLS: owner-only, all operations. Never public.
 - Every public-schema table has explicit `GRANT`s plus RLS; no table relies on
   default privileges.
 - `anon` reads are limited to `categories`, `prescripts`, `category_prescripts`,
-  published `companies`, and their insights.
+  `trends`, `category_trends`, published `companies`, and their insights.
 - Anything owner-scoped is keyed on `auth.uid()`.
+
+## Trend ingestion (Apify)
+
+- Search queries per category live in `src/lib/trend-queries.ts`.
+- `src/lib/trends.server.ts` starts an Actor run through the Lovable connector
+  gateway (`LOVABLE_API_KEY` + `APIFY_API_KEY`), polls run status, reads dataset
+  items, and normalises them (`normalizeTrend`, `classifyFormat`, `scoreTrend`).
+- Ingest is upsert-by-`trend_key`, so re-runs refresh metrics instead of
+  duplicating rows.
+- The Apify account caps concurrent Actor memory, so scrape in batches of ~4
+  runs rather than all categories at once.
+
