@@ -201,19 +201,22 @@ export type RecommendedChatterDTO = {
 };
 
 /**
- * Word-of-mouth chatter mapped to the company's category, ranked by buzz.
- * Pairs with getRecommendedTrends so feeds mix short-form video and chatter.
+ * Word-of-mouth chatter mapped to the company's category, ranked by buzz then
+ * reranked with the same seeded diversity pass (capped per topic and author) so
+ * the chatter half of the feed rotates too.
  */
 export async function getRecommendedChatter(
   client: Client,
   companyId: string,
   limit = 6,
+  seed = 1,
 ): Promise<RecommendedChatterDTO[]> {
   const { data, error } = await client.rpc("company_word_of_mouth", {
     _company_id: companyId,
-    _limit: limit,
+    _limit: Math.min(limit * 5, 60),
   });
   if (error) throw new Error(error.message);
+
 
   return (data ?? []).map((row) => ({
     womKey: row.wom_key,
