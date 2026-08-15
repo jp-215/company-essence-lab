@@ -183,7 +183,7 @@ function NewCompany() {
     <div className="min-h-[calc(100vh-4rem)] bg-secondary/40">
       <div className="mx-auto w-full max-w-3xl px-6 py-16">
         <p className="font-mono text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Step {step} of 3 · about 2 minutes total
+          Step {step} of 2 · about 2 minutes total
         </p>
         <h1 className="mt-4 font-serif text-5xl font-bold tracking-tight text-foreground">
           {heading}
