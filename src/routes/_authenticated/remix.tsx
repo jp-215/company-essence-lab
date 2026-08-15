@@ -79,9 +79,10 @@ function RemixStudio() {
 
   const remixMutation = useMutation({
     mutationFn: (trendKey: string) => runRemix({ data: { companyId: companyId!, trendKey } }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["remixes", companyId] });
-      toast.success("Your version is ready.");
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["remixes", companyId] });
+      toast.success("Your version is ready — opening Create ads.");
+      void navigate({ to: "/ads" });
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Remix failed."),
   });
