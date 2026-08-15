@@ -137,7 +137,16 @@ function AuthPage() {
 
   return (
     <PageShell width="narrow">
+      {gatedLabel ? (
+        <div className="mb-6 max-w-lg rounded-2xl border border-border bg-card px-5 py-4 text-sm leading-relaxed text-foreground">
+          <span className="font-semibold">{gatedLabel} is for signed-in brands.</span>{" "}
+          <span className="text-muted-foreground">
+            Sign in (or create an account) and we&rsquo;ll take you straight there.
+          </span>
+        </div>
+      ) : null}
       <Eyebrow>Onboarding</Eyebrow>
+
       <PageTitle className="mt-4">
         {checkEmail
           ? "Check your inbox"
