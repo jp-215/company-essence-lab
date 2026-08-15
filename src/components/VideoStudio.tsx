@@ -64,9 +64,10 @@ export function VideoStudio({ companyId, companyName }: Props) {
       void queryClient.invalidateQueries({ queryKey: ["engine-videos", companyId] });
     }
     if (status === "failed") {
-      toast.error(job.data?.job.error ?? "The render failed.");
+      toast.error(describeEngineError(job.data?.job.error));
     }
   }, [job.data?.job.status, job.data?.job.error, companyId, queryClient]);
+
 
   const render = useMutation({
     mutationFn: () =>
