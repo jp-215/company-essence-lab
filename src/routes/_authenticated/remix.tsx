@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
@@ -47,6 +47,7 @@ type SortKey = "views" | "likes" | "newest";
 
 function RemixStudio() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const fetchCompanies = useServerFn(listMyCompanies);
   const fetchTrends = useServerFn(listCompanyTrends);
   const fetchRemixes = useServerFn(listCompanyRemixes);
@@ -79,9 +80,10 @@ function RemixStudio() {
 
   const remixMutation = useMutation({
     mutationFn: (trendKey: string) => runRemix({ data: { companyId: companyId!, trendKey } }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["remixes", companyId] });
-      toast.success("Your version is ready.");
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["remixes", companyId] });
+      toast.success("Your version is ready — opening Create ads.");
+      void navigate({ to: "/ads" });
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Remix failed."),
   });
@@ -119,14 +121,26 @@ function RemixStudio() {
   return (
     <div className="bg-background">
       <div className="mx-auto w-full max-w-6xl px-6 py-16">
-        <div className="flex items-center gap-4 font-mono text-xs uppercase tracking-[0.28em] text-muted-foreground">
-          <span>Remix studio</span>
-          <span className="h-px w-10 bg-border" />
-          <span className="flex items-center gap-2">
-            <span className="size-1.5 rounded-full bg-foreground" />
-            Live feed
-          </span>
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          <div className="flex items-center gap-4 font-mono text-xs uppercase tracking-[0.28em] text-muted-foreground">
+            <span>Remix studio</span>
+            <span className="h-px w-10 bg-border" />
+            <span className="flex items-center gap-2">
+              <span className="size-1.5 rounded-full bg-foreground" />
+              Live feed
+            </span>
+          </div>
+          <Button
+            asChild
+            className="h-14 rounded-2xl bg-foreground px-8 text-base font-semibold text-background hover:bg-foreground/90"
+          >
+            <Link to="/ads">
+              Create ads
+              {remixes.data?.length ? ` (${remixes.data.length})` : ""} →
+            </Link>
+          </Button>
         </div>
+
 
         <div className="mt-8 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
           <div>
@@ -371,25 +385,6 @@ function RemixStudio() {
                   ))}
                 </div>
               )}
-            </section>
-
-            <section className="mt-16 flex flex-wrap items-center justify-between gap-6 rounded-2xl border border-border bg-card p-8">
-              <div>
-                <h2 className="font-serif text-3xl font-bold tracking-tight text-foreground">
-                  Create ads
-                </h2>
-                <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                  {remixes.data?.length
-                    ? `${remixes.data.length} concept${remixes.data.length === 1 ? "" : "s"} ready for ${selectedCompany?.name ?? "your product"}.`
-                    : "Turn your remixes into finished ad concepts for your product."}
-                </p>
-              </div>
-              <Button
-                asChild
-                className="h-14 rounded-2xl bg-foreground px-8 text-base font-semibold text-background hover:bg-foreground/90"
-              >
-                <Link to="/ads">Create ads →</Link>
-              </Button>
             </section>
           </>
         )}
