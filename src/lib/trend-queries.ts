@@ -32,9 +32,15 @@ export const TREND_QUERIES: Record<string, string[]> = {
   ],
   "food-beverage": [
     "snack brand tiktok viral",
-    "drink brand founder story",
-    "coffee brand small business",
     "healthy snack review",
+    "drink brand founder story",
+    "energy drink review tiktok",
+    "sparkling water brand taste test",
+    "iced coffee brand review",
+    "matcha drink brand tiktok",
+    "kombucha prebiotic soda review",
+    "canned cocktail brand launch",
+    "protein shake brand review",
   ],
   "home-living": [
     "home decor small business",
