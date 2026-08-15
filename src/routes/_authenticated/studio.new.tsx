@@ -38,6 +38,16 @@ export const Route = createFileRoute("/_authenticated/studio/new")({
 
 type Photo = { path: string; url: string | null };
 
+const GOALS = [
+  {
+    id: "launch",
+    label: "Launch something new",
+    hint: "Teasers, reveals, waitlist hooks",
+  },
+  { id: "sales", label: "Drive sales", hint: "Offer-led, social proof, urgency formats" },
+  { id: "audience", label: "Grow the audience", hint: "Personality, series formats, trends" },
+] as const;
+
 function shortLabel(name: string) {
   const map: Record<string, string> = {
     "Beauty & Personal Care": "Beauty",
@@ -69,6 +79,7 @@ function NewCompany() {
   const [website, setWebsite] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [ownerName, setOwnerName] = useState("");
+  const [goal, setGoal] = useState<string>("");
   const [bio, setBio] = useState("");
   const [mission, setMission] = useState("");
 
@@ -129,7 +140,11 @@ function NewCompany() {
         return;
       }
     }
-    setStep((current) => Math.min(2, current + 1));
+    if (step === 2 && !goal) {
+      toast.error("Pick what these ads should do.");
+      return;
+    }
+    setStep((current) => Math.min(3, current + 1));
   }
 
   async function publish() {
@@ -156,6 +171,7 @@ function NewCompany() {
           bio: bio.trim(),
           mission: mission.trim(),
           website: website.trim() || null,
+          goal: GOALS.find((item) => item.id === goal)?.label ?? null,
           logoPath: photos[0]?.path ?? null,
         },
       });
@@ -173,17 +189,24 @@ function NewCompany() {
     }
   }
 
-  const heading = step === 1 ? "What are you selling?" : "Who's behind it?";
+  const heading =
+    step === 1
+      ? "What are you selling?"
+      : step === 2
+        ? "What should these ads do?"
+        : "Who's behind it?";
   const subheading =
     step === 1
       ? "Photos do the talking — a phone photo is perfect. It's the only thing we truly need."
-      : "A short intro and your mission, in your own words. This shapes every remix we generate.";
+      : step === 2
+        ? "One pick — it changes which formats Vira leans on."
+        : "A short intro and your mission, in your own words. This shapes every remix we generate.";
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-secondary/40">
       <div className="mx-auto w-full max-w-3xl px-6 py-16">
         <p className="font-mono text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Step {step} of 2 · about 2 minutes total
+          Step {step} of 3 · about 2 minutes total
         </p>
         <h1 className="mt-4 font-serif text-5xl font-bold tracking-tight text-foreground">
           {heading}
@@ -304,6 +327,40 @@ function NewCompany() {
         ) : null}
 
         {step === 2 ? (
+          <div className="mt-10 space-y-4">
+            {GOALS.map((item) => {
+              const selected = item.id === goal;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setGoal(item.id)}
+                  aria-pressed={selected}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-4 rounded-2xl border px-6 py-5 text-left transition-colors",
+                    selected
+                      ? "border-chart-1 bg-accent"
+                      : "border-border bg-card hover:border-ring",
+                  )}
+                >
+                  <span className="min-w-0">
+                    <span className="block text-lg font-semibold text-foreground">
+                      {item.label}
+                    </span>
+                    <span className="block text-sm text-muted-foreground">{item.hint}</span>
+                  </span>
+                  {selected ? (
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-chart-1">
+                      <Check className="size-4 text-primary-foreground" />
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {step === 3 ? (
           <div className="mt-10 space-y-6">
             <div className="space-y-2">
               <Label htmlFor="ownerName" className="text-base">
@@ -366,10 +423,10 @@ function NewCompany() {
           <button
             type="button"
             disabled={busy || uploading}
-            onClick={() => (step === 2 ? void publish() : nextStep())}
+            onClick={() => (step === 3 ? void publish() : nextStep())}
             className="inline-flex items-center gap-2 rounded-xl bg-chart-1 px-8 py-4 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            {step === 2 ? (busy ? "Publishing…" : "Publish brand") : "Continue"}
+            {step === 3 ? (busy ? "Publishing…" : "Publish brand") : "Continue"}
             <span aria-hidden="true">→</span>
           </button>
         </div>
