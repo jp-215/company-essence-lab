@@ -20,7 +20,7 @@ import type { TrendDTO } from "../remix-types";
 import { specFromRemix, type GenerationSpec } from "./spec";
 import { mintToken, judgeUrl } from "./tokens";
 import { createAsset } from "./video-provider.server";
-import { completionEmail, inviteEmail, reminderEmail, sendMail } from "./mailer.server";
+import { completionEmail, reminderEmail, sendMail } from "./mailer.server";
 import { terac, type SessionStatus, type TeracClient } from "./terac-db";
 
 type Client = SupabaseClient<Database>;
@@ -28,7 +28,6 @@ type Client = SupabaseClient<Database>;
 export type CreateSessionInput = {
   companyId: string;
   trendKeys: string[];
-  judgeIds: string[];
   quorum: number;
   deadlineHours: number;
   origin: string;
@@ -37,8 +36,8 @@ export type CreateSessionInput = {
 export type CreateSessionResult = {
   sessionId: string;
   publicToken: string;
+  agentUrl: string;
   videoCount: number;
-  invited: number;
   aiUnavailable: boolean;
 };
 
@@ -110,12 +109,6 @@ export async function createReviewSession(
   const client = terac(base);
 
   if (input.trendKeys.length === 0) throw new Error("Pick at least one ad concept.");
-  if (input.judgeIds.length === 0) throw new Error("Assign at least one judge.");
-  if (input.quorum > input.judgeIds.length) {
-    throw new Error(
-      `Quorum of ${input.quorum} exceeds the ${input.judgeIds.length} judges assigned.`,
-    );
-  }
 
   const company = await loadCompanyContext(base, userId, input.companyId);
   const available = await listMappedTrends(base, input.companyId, 100);
@@ -192,22 +185,15 @@ export async function createReviewSession(
 
   await advance(client, session.id, "ready");
 
-  const invited = await assignJudges(client, {
-    sessionId: session.id,
-    judgeIds: input.judgeIds,
-    brandName: company.name,
-    videoCount: selected.length,
-    deadlineAt,
-    origin: input.origin,
-  });
-
+  // No roster: the session opens as a task any Terac agent can claim from the
+  // pool link. They identify themselves on first open (terac_claim_session).
   await advance(client, session.id, "sent");
 
   return {
     sessionId: session.id,
     publicToken: session.public_token,
+    agentUrl: judgeUrl(input.origin, session.public_token),
     videoCount: selected.length,
-    invited,
     aiUnavailable,
   };
 }
@@ -215,62 +201,6 @@ export async function createReviewSession(
 async function advance(client: TeracClient, sessionId: string, to: SessionStatus): Promise<void> {
   const { error } = await client.rpc("terac_advance_session", { _session_id: sessionId, _to: to });
   if (error) throw new Error(error.message);
-}
-
-async function assignJudges(
-  client: TeracClient,
-  input: {
-    sessionId: string;
-    judgeIds: string[];
-    brandName: string;
-    videoCount: number;
-    deadlineAt: string;
-    origin: string;
-  },
-): Promise<number> {
-  const { data: judges, error: judgeError } = await client
-    .from("judges")
-    .select("id, name, email, active")
-    .in("id", input.judgeIds);
-  if (judgeError) throw new Error(judgeError.message);
-
-  const usable = (judges ?? []).filter((j) => j.active);
-  if (usable.length === 0) throw new Error("None of the selected judges are active.");
-
-  const rows = usable.map((judge) => ({
-    session_id: input.sessionId,
-    judge_id: judge.id,
-    invite_token: mintToken(),
-    status: "invited" as const,
-  }));
-
-  const { data: inserted, error: inviteError } = await client
-    .from("session_judges")
-    .insert(rows)
-    .select("id, judge_id, invite_token");
-  if (inviteError) throw new Error(inviteError.message);
-
-  for (const row of inserted ?? []) {
-    const judge = usable.find((j) => j.id === row.judge_id);
-    if (!judge) continue;
-    const mail = inviteEmail({
-      judgeName: judge.name,
-      brandName: input.brandName,
-      videoCount: input.videoCount,
-      url: judgeUrl(input.origin, row.invite_token),
-      deadlineAt: input.deadlineAt,
-    });
-    await sendMail(client as unknown as Client, {
-      kind: "invite",
-      to: judge.email,
-      subject: mail.subject,
-      body: mail.body,
-      sessionId: input.sessionId,
-      sessionJudgeId: row.id,
-    });
-  }
-
-  return inserted?.length ?? 0;
 }
 
 // ---------------------------------------------------------------------------
