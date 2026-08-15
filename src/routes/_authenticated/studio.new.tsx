@@ -366,6 +366,20 @@ function NewCompany() {
                 </button>
               );
             })}
+            <div className="space-y-2 pt-4">
+              <Label htmlFor="mission" className="text-base">
+                Your mission
+              </Label>
+              <Textarea
+                id="mission"
+                value={mission}
+                onChange={(event) => setMission(event.target.value)}
+                rows={5}
+                maxLength={1200}
+                placeholder="Make honest skincare the default for everyone under 30."
+                className="rounded-xl bg-card text-base"
+              />
+            </div>
           </div>
         ) : null}
 
