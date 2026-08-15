@@ -260,8 +260,11 @@ function NewCompany() {
               multiple
               className="hidden"
               onChange={(event) => {
-                void handleFiles(event.target.files);
-                event.target.value = "";
+                const input = event.currentTarget;
+                const picked = input.files ? Array.from(input.files) : [];
+                void handleFiles(picked).finally(() => {
+                  input.value = "";
+                });
               }}
             />
 
