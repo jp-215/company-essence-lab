@@ -19,6 +19,20 @@ import { cn } from "@/lib/utils";
 
 type Props = { companyId: string; companyName: string };
 
+/**
+ * The render engine runs outside Vira, so a crash inside it (missing Python
+ * dependency, traceback, import error) arrives as raw server output. Translate
+ * those into something a founder can act on instead of showing a stack trace.
+ */
+function describeEngineError(raw?: string | null): string {
+  if (!raw) return "The render failed. Try again in a moment.";
+  if (/ModuleNotFoundError|ImportError|No module named|Traceback/i.test(raw)) {
+    return "The video engine crashed on its own server (a missing dependency on the engine host). Nothing is wrong with your brand or lane — retry, and if it keeps failing the engine needs a fix on its side.";
+  }
+  return raw;
+}
+
+
 export function VideoStudio({ companyId, companyName }: Props) {
   const fetchLanes = useServerFn(listVideoLanes);
   const fetchVideos = useServerFn(listVideosForCompany);
