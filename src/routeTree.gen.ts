@@ -22,6 +22,7 @@ import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as CompaniesSlugRouteImport } from './routes/companies.$slug'
 import { Route as AuthenticatedStudioIdRouteImport } from './routes/_authenticated/studio.$id'
 import { Route as AuthenticatedStudioNewRouteImport } from './routes/_authenticated/studio.new'
+import { Route as ApiPublicStripeWebhookRouteImport } from './routes/api/public/stripe-webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -87,6 +88,11 @@ const AuthenticatedStudioNewRoute = AuthenticatedStudioNewRouteImport.update({
   path: '/studio/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicStripeWebhookRoute = ApiPublicStripeWebhookRouteImport.update({
+  id: '/api/public/stripe-webhook',
+  path: '/api/public/stripe-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/companies/$slug': typeof CompaniesSlugRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
+  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/companies/$slug': typeof CompaniesSlugRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
+  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/companies/$slug': typeof CompaniesSlugRoute
   '/_authenticated/studio/$id': typeof AuthenticatedStudioIdRoute
   '/_authenticated/studio/new': typeof AuthenticatedStudioNewRoute
+  '/api/public/stripe-webhook': typeof ApiPublicStripeWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/companies/$slug'
     | '/studio/$id'
     | '/studio/new'
+    | '/api/public/stripe-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/companies/$slug'
     | '/studio/$id'
     | '/studio/new'
+    | '/api/public/stripe-webhook'
   id:
     | '__root__'
     | '/'
@@ -176,6 +187,7 @@ export interface FileRouteTypes {
     | '/companies/$slug'
     | '/_authenticated/studio/$id'
     | '/_authenticated/studio/new'
+    | '/api/public/stripe-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -185,6 +197,7 @@ export interface RootRouteChildren {
   TrendsRoute: typeof TrendsRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   CompaniesSlugRoute: typeof CompaniesSlugRoute
+  ApiPublicStripeWebhookRoute: typeof ApiPublicStripeWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -280,6 +293,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudioNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/stripe-webhook': {
+      id: '/api/public/stripe-webhook'
+      path: '/api/public/stripe-webhook'
+      fullPath: '/api/public/stripe-webhook'
+      preLoaderRoute: typeof ApiPublicStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -313,6 +333,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrendsRoute: TrendsRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   CompaniesSlugRoute: CompaniesSlugRoute,
+  ApiPublicStripeWebhookRoute: ApiPublicStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
