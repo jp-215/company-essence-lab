@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { listMyCompanies } from "@/lib/owner.functions";
 import { listCompanyRemixes } from "@/lib/remix.functions";
+import { SendToJudges } from "@/components/SendToJudges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -214,7 +215,13 @@ function CreateAdsPage() {
                     </Card>
                   ))}
                 </div>
-                <div className="mt-10">
+                {companyId ? (
+                  <SendToJudges companyId={companyId} remixes={remixes.data} />
+                ) : null}
+                <div className="mt-10 flex flex-wrap gap-3">
+                  <Button asChild variant="outline" className="h-14 rounded-2xl px-6 text-base">
+                    <Link to="/reviews">See review rounds</Link>
+                  </Button>
                   <Button
                     asChild
                     className="h-14 rounded-2xl px-8 text-base font-semibold bg-foreground text-background hover:bg-foreground/90"
