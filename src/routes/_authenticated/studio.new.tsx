@@ -141,9 +141,15 @@ function NewCompany() {
         return;
       }
     }
-    if (step === 2 && !goal) {
-      toast.error("Pick what these ads should do.");
-      return;
+    if (step === 2) {
+      if (!goal) {
+        toast.error("Pick what these ads should do.");
+        return;
+      }
+      if (mission.trim().length < 10) {
+        toast.error("Your mission needs a little more detail.");
+        return;
+      }
     }
     setStep((current) => Math.min(3, current + 1));
   }
@@ -193,14 +199,14 @@ function NewCompany() {
     step === 1
       ? "What are you selling?"
       : step === 2
-        ? "What should these ads do?"
+        ? "What's your goal and mission?"
         : "Who's behind it?";
   const subheading =
     step === 1
       ? "Photos do the talking — a phone photo is perfect. It's the only thing we truly need."
       : step === 2
-        ? "One pick — it changes which formats Vira leans on."
-        : "A short intro and your mission, in your own words. This shapes every remix we generate.";
+        ? "Pick one goal, then tell us the mission behind the brand. This shapes every remix we generate."
+        : "A short intro in your own words — who you are and who you serve.";
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-secondary/40">
@@ -360,6 +366,20 @@ function NewCompany() {
                 </button>
               );
             })}
+            <div className="space-y-2 pt-4">
+              <Label htmlFor="mission" className="text-base">
+                Your mission
+              </Label>
+              <Textarea
+                id="mission"
+                value={mission}
+                onChange={(event) => setMission(event.target.value)}
+                rows={5}
+                maxLength={1200}
+                placeholder="Make honest skincare the default for everyone under 30."
+                className="rounded-xl bg-card text-base"
+              />
+            </div>
           </div>
         ) : null}
 
@@ -389,20 +409,6 @@ function NewCompany() {
                 rows={6}
                 maxLength={1200}
                 placeholder="We make small-batch skincare for people who hate 12-step routines."
-                className="rounded-xl bg-card text-base"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="mission" className="text-base">
-                Mission
-              </Label>
-              <Textarea
-                id="mission"
-                value={mission}
-                onChange={(event) => setMission(event.target.value)}
-                rows={6}
-                maxLength={1200}
-                placeholder="Make honest skincare the default for everyone under 30."
                 className="rounded-xl bg-card text-base"
               />
             </div>
