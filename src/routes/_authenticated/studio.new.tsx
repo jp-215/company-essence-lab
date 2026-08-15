@@ -199,14 +199,14 @@ function NewCompany() {
     step === 1
       ? "What are you selling?"
       : step === 2
-        ? "What should these ads do?"
+        ? "What's your goal and mission?"
         : "Who's behind it?";
   const subheading =
     step === 1
       ? "Photos do the talking — a phone photo is perfect. It's the only thing we truly need."
       : step === 2
-        ? "One pick — it changes which formats Vira leans on."
-        : "A short intro and your mission, in your own words. This shapes every remix we generate.";
+        ? "Pick one goal, then tell us the mission behind the brand. This shapes every remix we generate."
+        : "A short intro in your own words — who you are and who you serve.";
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-secondary/40">
