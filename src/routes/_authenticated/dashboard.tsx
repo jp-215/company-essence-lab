@@ -134,6 +134,10 @@ function Dashboard() {
                   </span>
                 </div>
                 <p className="mt-3 line-clamp-2 text-base text-muted-foreground">{company.bio}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Refresh brand signals re-reads this brand&apos;s website and public ad copy, then
+                  rewrites its positioning, tone and keywords — the profile every remix is built on.
+                </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <button
@@ -141,11 +145,13 @@ function Dashboard() {
                   className={solid}
                   onClick={() => enrichMutation.mutate(company.id)}
                   disabled={enrichMutation.isPending}
+                  title="Re-scrapes the brand's site and public ads, then updates positioning, tone and keywords used for remixes."
                 >
                   {enrichMutation.isPending && enrichMutation.variables === company.id
-                    ? "Scraping…"
-                    : "Run enrichment"}
+                    ? "Reading the brand…"
+                    : "Refresh brand signals"}
                 </button>
+
                 <Link to="/remix" className={outline}>
                   Remix ads
                 </Link>
