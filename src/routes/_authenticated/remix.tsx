@@ -121,14 +121,26 @@ function RemixStudio() {
   return (
     <div className="bg-background">
       <div className="mx-auto w-full max-w-6xl px-6 py-16">
-        <div className="flex items-center gap-4 font-mono text-xs uppercase tracking-[0.28em] text-muted-foreground">
-          <span>Remix studio</span>
-          <span className="h-px w-10 bg-border" />
-          <span className="flex items-center gap-2">
-            <span className="size-1.5 rounded-full bg-foreground" />
-            Live feed
-          </span>
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          <div className="flex items-center gap-4 font-mono text-xs uppercase tracking-[0.28em] text-muted-foreground">
+            <span>Remix studio</span>
+            <span className="h-px w-10 bg-border" />
+            <span className="flex items-center gap-2">
+              <span className="size-1.5 rounded-full bg-foreground" />
+              Live feed
+            </span>
+          </div>
+          <Button
+            asChild
+            className="h-14 rounded-2xl bg-foreground px-8 text-base font-semibold text-background hover:bg-foreground/90"
+          >
+            <Link to="/ads">
+              Create ads
+              {remixes.data?.length ? ` (${remixes.data.length})` : ""} →
+            </Link>
+          </Button>
         </div>
+
 
         <div className="mt-8 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
           <div>
