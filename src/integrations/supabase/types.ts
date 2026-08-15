@@ -944,51 +944,12 @@ export type Database = {
         }
         Relationships: []
       }
-      trend_interactions: {
-        Row: {
-          action: string
-          company_id: string
-          created_at: string
-          id: string
-          owner_id: string
-          surface: string
-          trend_key: string
-        }
-        Insert: {
-          action: string
-          company_id: string
-          created_at?: string
-          id?: string
-          owner_id: string
-          surface?: string
-          trend_key: string
-        }
-        Update: {
-          action?: string
-          company_id?: string
-          created_at?: string
-          id?: string
-          owner_id?: string
-          surface?: string
-          trend_key?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "trend_interactions_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       trends: {
         Row: {
           author: string
           caption: string
           comments: number
           created_at: string
-          duplicate_of: string | null
           embedding: string | null
           engagement_rate: number
           format: string
@@ -1013,7 +974,6 @@ export type Database = {
           caption?: string
           comments?: number
           created_at?: string
-          duplicate_of?: string | null
           embedding?: string | null
           engagement_rate?: number
           format?: string
@@ -1038,7 +998,6 @@ export type Database = {
           caption?: string
           comments?: number
           created_at?: string
-          duplicate_of?: string | null
           embedding?: string | null
           engagement_rate?: number
           format?: string
@@ -1058,15 +1017,7 @@ export type Database = {
           updated_at?: string
           views?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "trends_duplicate_of_fkey"
-            columns: ["duplicate_of"]
-            isOneToOne: false
-            referencedRelation: "trends"
-            referencedColumns: ["trend_key"]
-          },
-        ]
+        Relationships: []
       }
       video_comments: {
         Row: {
@@ -1160,8 +1111,6 @@ export type Database = {
           buzz_score: number
           content: string
           created_at: string
-          duplicate_of: string | null
-          embedding: string | null
           engagement_rate: number
           hashtags: string[]
           id: string
@@ -1190,8 +1139,6 @@ export type Database = {
           buzz_score?: number
           content?: string
           created_at?: string
-          duplicate_of?: string | null
-          embedding?: string | null
           engagement_rate?: number
           hashtags?: string[]
           id?: string
@@ -1220,8 +1167,6 @@ export type Database = {
           buzz_score?: number
           content?: string
           created_at?: string
-          duplicate_of?: string | null
-          embedding?: string | null
           engagement_rate?: number
           hashtags?: string[]
           id?: string
@@ -1243,15 +1188,7 @@ export type Database = {
           views?: number
           wom_key?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "word_of_mouth_duplicate_of_fkey"
-            columns: ["duplicate_of"]
-            isOneToOne: false
-            referencedRelation: "word_of_mouth"
-            referencedColumns: ["wom_key"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -1313,38 +1250,6 @@ export type Database = {
           views: number
         }[]
       }
-      company_word_of_mouth_v2: {
-        Args: {
-          _company_id: string
-          _exclude_keys?: string[]
-          _limit?: number
-          _pool?: number
-          _query_embedding?: string
-          _seed?: number
-        }
-        Returns: {
-          author: string
-          author_handle: string
-          buzz_score: number
-          combined_score: number
-          content: string
-          engagement_rate: number
-          hashtags: string[]
-          likes: number
-          platform: string
-          posted_at: string
-          replies: number
-          reposts: number
-          sentiment: string
-          similarity: number
-          source_url: string
-          theme: string
-          title: string
-          topic: string
-          views: number
-          wom_key: string
-        }[]
-      }
       company_word_of_mouth: {
         Args: { _company_id: string; _limit?: number }
         Returns: {
@@ -1385,18 +1290,6 @@ export type Database = {
           summary: string
         }[]
       }
-      mark_trend_duplicates: {
-        Args: { _threshold?: number }
-        Returns: number
-      }
-      recommend_community_trends: {
-        Args: { _company_id: string; _days?: number; _limit?: number }
-        Returns: {
-          community_score: number
-          remixer_count: number
-          trend_key: string
-        }[]
-      }
       recommend_company_trends: {
         Args: {
           _company_id: string
@@ -1418,44 +1311,6 @@ export type Database = {
           trend_key: string
           trend_score: number
           views: number
-        }[]
-      }
-      recommend_company_trends_v2: {
-        Args: {
-          _company_id: string
-          _exclude_keys?: string[]
-          _limit?: number
-          _pool?: number
-          _query_embedding?: string
-          _seed?: number
-        }
-        Returns: {
-          author: string
-          caption: string
-          combined_score: number
-          comments: number
-          engagement_rate: number
-          format: string
-          hashtags: string[]
-          likes: number
-          music: string
-          platform: string
-          posted_at: string
-          shares: number
-          similarity: number
-          source_url: string
-          title: string
-          trend_key: string
-          trend_score: number
-          views: number
-        }[]
-      }
-      trend_social_proof: {
-        Args: { _trend_keys: string[] }
-        Returns: {
-          remix_count: number
-          tap_count: number
-          trend_key: string
         }[]
       }
     }
