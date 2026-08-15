@@ -130,7 +130,9 @@ function ClaimOrError({ token, failure }: { token: string; failure: PortalFailur
 
   return (
     <Shell>
-      <h1 className="font-serif text-2xl font-semibold text-white">{FAILURE_COPY[failure]}</h1>
+      <h1 className="font-serif text-2xl font-semibold text-white">
+        {canClaim ? "Take this review task" : FAILURE_COPY[failure]}
+      </h1>
 
       {!canClaim ? (
         <p className="mt-3 text-sm text-neutral-400">
@@ -141,7 +143,8 @@ function ClaimOrError({ token, failure }: { token: string; failure: PortalFailur
       ) : (
         <>
           <p className="mt-3 text-sm text-neutral-400">
-            If you were forwarded this link, add your name and email and we'll issue you your own.
+            This session is open to any Terac agent. Add your name and email to claim it — you'll
+            see every ad, vote for your favourite and leave feedback. No account, no password.
           </p>
           <form
             className="mt-6 space-y-3"
@@ -179,7 +182,7 @@ function ClaimOrError({ token, failure }: { token: string; failure: PortalFailur
               disabled={mutation.isPending}
               className="w-full rounded-md bg-white px-4 py-3 text-[15px] font-medium text-neutral-900 transition-colors hover:bg-neutral-200 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
             >
-              {mutation.isPending ? "Setting up…" : "Start reviewing"}
+              {mutation.isPending ? "Setting up…" : "Claim and start reviewing"}
             </button>
           </form>
         </>
