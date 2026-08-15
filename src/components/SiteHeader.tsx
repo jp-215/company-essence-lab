@@ -40,6 +40,10 @@ export function SiteHeader() {
               <Button asChild variant="ghost" size="sm">
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/knowledge">Knowledge base</Link>
+              </Button>
+
               <Button asChild size="sm">
                 <Link to="/studio/new">List a company</Link>
               </Button>
