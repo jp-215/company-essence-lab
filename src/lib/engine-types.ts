@@ -7,8 +7,10 @@ export type EngineLane = {
   look: string;
 };
 
-export type EngineScore = Record<string, unknown> & {
+export type EngineScore = {
   total?: number | null;
+  verdict?: string | null;
+  notes?: string | null;
 };
 
 export type EngineVideo = {
@@ -59,7 +61,6 @@ export type EngineEvent = {
   stage: string;
   message: string;
   level: string;
-  data?: Record<string, unknown>;
 };
 
 export type EngineCompany = {
@@ -74,7 +75,5 @@ export type EngineCompany = {
 };
 
 export function engineScoreTotal(score?: EngineScore | null): number | null {
-  if (!score) return null;
-  const total = (score as { total?: unknown }).total;
-  return typeof total === "number" ? total : null;
+  return typeof score?.total === "number" ? score.total : null;
 }
