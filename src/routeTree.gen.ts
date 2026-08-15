@@ -24,6 +24,7 @@ import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedReviewsSessionIdRouteImport } from './routes/_authenticated/reviews.$sessionId'
 import { Route as AuthenticatedStudioIdRouteImport } from './routes/_authenticated/studio.$id'
 import { Route as AuthenticatedStudioNewRouteImport } from './routes/_authenticated/studio.new'
+import { Route as ApiPublicTeracSmokeRouteImport } from './routes/api/public/terac-smoke'
 import { Route as TeracRTokenRouteImport } from './routes/terac/r.$token'
 
 const IndexRoute = IndexRouteImport.update({
@@ -102,6 +103,11 @@ const AuthenticatedStudioNewRoute = AuthenticatedStudioNewRouteImport.update({
   path: '/studio/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicTeracSmokeRoute = ApiPublicTeracSmokeRouteImport.update({
+  id: '/api/public/terac-smoke',
+  path: '/api/public/terac-smoke',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeracRTokenRoute = TeracRTokenRouteImport.update({
   id: '/terac/r/$token',
   path: '/terac/r/$token',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/reviews/$sessionId': typeof AuthenticatedReviewsSessionIdRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
+  '/api/public/terac-smoke': typeof ApiPublicTeracSmokeRoute
   '/terac/r/$token': typeof TeracRTokenRoute
   '/reviews/': typeof AuthenticatedReviewsIndexRoute
 }
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/reviews/$sessionId': typeof AuthenticatedReviewsSessionIdRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
+  '/api/public/terac-smoke': typeof ApiPublicTeracSmokeRoute
   '/terac/r/$token': typeof TeracRTokenRoute
   '/reviews': typeof AuthenticatedReviewsIndexRoute
 }
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/_authenticated/reviews/$sessionId': typeof AuthenticatedReviewsSessionIdRoute
   '/_authenticated/studio/$id': typeof AuthenticatedStudioIdRoute
   '/_authenticated/studio/new': typeof AuthenticatedStudioNewRoute
+  '/api/public/terac-smoke': typeof ApiPublicTeracSmokeRoute
   '/terac/r/$token': typeof TeracRTokenRoute
   '/_authenticated/reviews/': typeof AuthenticatedReviewsIndexRoute
 }
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/reviews/$sessionId'
     | '/studio/$id'
     | '/studio/new'
+    | '/api/public/terac-smoke'
     | '/terac/r/$token'
     | '/reviews/'
   fileRoutesByTo: FileRoutesByTo
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/reviews/$sessionId'
     | '/studio/$id'
     | '/studio/new'
+    | '/api/public/terac-smoke'
     | '/terac/r/$token'
     | '/reviews'
   id:
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reviews/$sessionId'
     | '/_authenticated/studio/$id'
     | '/_authenticated/studio/new'
+    | '/api/public/terac-smoke'
     | '/terac/r/$token'
     | '/_authenticated/reviews/'
   fileRoutesById: FileRoutesById
@@ -223,6 +235,7 @@ export interface RootRouteChildren {
   TrendsRoute: typeof TrendsRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   CompaniesSlugRoute: typeof CompaniesSlugRoute
+  ApiPublicTeracSmokeRoute: typeof ApiPublicTeracSmokeRoute
   TeracRTokenRoute: typeof TeracRTokenRoute
 }
 
@@ -333,6 +346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudioNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/terac-smoke': {
+      id: '/api/public/terac-smoke'
+      path: '/api/public/terac-smoke'
+      fullPath: '/api/public/terac-smoke'
+      preLoaderRoute: typeof ApiPublicTeracSmokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terac/r/$token': {
       id: '/terac/r/$token'
       path: '/terac/r/$token'
@@ -377,6 +397,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrendsRoute: TrendsRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   CompaniesSlugRoute: CompaniesSlugRoute,
+  ApiPublicTeracSmokeRoute: ApiPublicTeracSmokeRoute,
   TeracRTokenRoute: TeracRTokenRoute,
 }
 export const routeTree = rootRouteImport
