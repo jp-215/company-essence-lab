@@ -51,6 +51,9 @@ export function SiteHeader() {
               <Link to="/knowledge" className={cn(navLink, "hidden md:inline-flex")}>
                 Knowledge base
               </Link>
+              <Link to="/billing" className={cn(navLink, "hidden md:inline-flex")}>
+                Billing
+              </Link>
               <Link to="/studio/new" className={solid}>
                 List a company
               </Link>

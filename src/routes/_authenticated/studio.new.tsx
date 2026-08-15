@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -8,6 +8,7 @@ import { Check, Plus, X } from "lucide-react";
 import { createCompany } from "@/lib/owner.functions";
 import { runEnrichment } from "@/lib/enrich.functions";
 import { listCategories } from "@/lib/companies.functions";
+import { getMySubscription } from "@/lib/billing.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { LOGO_BUCKET } from "@/lib/company-types";
 import { downscaleImage } from "@/lib/image-utils";
@@ -66,10 +67,21 @@ function NewCompany() {
   const create = useServerFn(createCompany);
   const enrich = useServerFn(runEnrichment);
   const fetchCategories = useServerFn(listCategories);
+  const fetchSubscription = useServerFn(getMySubscription);
+  const { data: subscription, isLoading: subscriptionLoading } = useQuery({
+    queryKey: ["subscription"],
+    queryFn: () => fetchSubscription(),
+  });
   const { data: categories } = useQuery({
     queryKey: ["categories"],
     queryFn: () => fetchCategories(),
   });
+
+  useEffect(() => {
+    if (subscriptionLoading || !subscription || subscription.entitled) return;
+    toast.info("A Vira subscription is required before onboarding a brand.");
+    void navigate({ to: "/billing" });
+  }, [navigate, subscription, subscriptionLoading]);
 
   const fileInput = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);

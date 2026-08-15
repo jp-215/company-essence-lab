@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { listCategories } from "@/lib/companies.functions";
 import { listTrendingNow } from "@/lib/trends.functions";
+import { listWordOfMouth } from "@/lib/wom.functions";
 import { listMyCompanies } from "@/lib/owner.functions";
 import { getRecommendations } from "@/lib/recommendations.functions";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,17 +17,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const searchSchema = z.object({
   category: z.string().max(80).optional(),
+  source: z.enum(["video", "wom"]).optional(),
 });
 
 const trendsQuery = (categorySlug?: string) =>
   queryOptions({
     queryKey: ["trending-page", categorySlug ?? "all"],
     queryFn: async () => {
-      const [categories, trends] = await Promise.all([
+      const [categories, trends, wordOfMouth] = await Promise.all([
         listCategories(),
         listTrendingNow({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }),
+        listWordOfMouth({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }),
       ]);
-      return { categories, trends };
+      return { categories, trends, wordOfMouth };
     },
   });
 
@@ -34,6 +37,7 @@ export const Route = createFileRoute("/trends")({
   validateSearch: (search) => searchSchema.parse(search),
   loaderDeps: ({ search }) => ({ category: search.category }),
   loader: ({ context, deps }) => context.queryClient.ensureQueryData(trendsQuery(deps.category)),
+
   head: () => ({
     meta: [
       { title: "Trending now — Vira" },
@@ -57,9 +61,10 @@ export const Route = createFileRoute("/trends")({
 const compact = new Intl.NumberFormat("en", { notation: "compact" });
 
 function TrendingPage() {
-  const { category } = Route.useSearch();
+  const { category, source } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const { data } = useSuspenseQuery(trendsQuery(category));
+  const activeSource = source ?? "video";
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-12">
@@ -69,18 +74,39 @@ function TrendingPage() {
           The posts everyone is talking about
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Ranked live by traction — views, engagement and freshness. Sign in and Vira matches them
-          to your brand so you can remix the ones that fit.
+          Short-form video trends plus live word-of-mouth chatter from X — ranked by traction and
+          scoped to your category so the ideas actually fit your brand.
         </p>
       </header>
 
-      <PersonalizedRail />
+      <PersonalizedRail
+        categories={data.categories}
+        activeCategory={category}
+        onTailor={(slug) => navigate({ search: (prev) => ({ ...prev, category: slug }) })}
+      />
 
-      <div className="mt-10 flex flex-wrap gap-2">
+      <div className="mt-10 flex flex-wrap items-center gap-2">
+        <Button
+          variant={activeSource === "video" ? "default" : "outline"}
+          size="sm"
+          onClick={() => navigate({ search: (prev) => ({ ...prev, source: "video" }) })}
+        >
+          Video trends ({data.trends.length})
+        </Button>
+        <Button
+          variant={activeSource === "wom" ? "default" : "outline"}
+          size="sm"
+          onClick={() => navigate({ search: (prev) => ({ ...prev, source: "wom" }) })}
+        >
+          Word of mouth ({data.wordOfMouth.length})
+        </Button>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
         <Button
           variant={!category ? "default" : "outline"}
           size="sm"
-          onClick={() => navigate({ search: {} })}
+          onClick={() => navigate({ search: (prev) => ({ ...prev, category: undefined }) })}
         >
           All categories
         </Button>
@@ -89,68 +115,124 @@ function TrendingPage() {
             key={item.slug}
             variant={category === item.slug ? "default" : "outline"}
             size="sm"
-            onClick={() => navigate({ search: { category: item.slug } })}
+            onClick={() => navigate({ search: (prev) => ({ ...prev, category: item.slug }) })}
           >
             {item.name}
           </Button>
         ))}
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {data.trends.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No trends in this category yet.</p>
-        ) : (
-          data.trends.map((trend) => (
-            <Card key={trend.trendKey} className="h-full">
-              <CardContent className="flex h-full flex-col gap-3 py-5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-                    {trend.trendKey}
-                  </span>
-                  <Badge variant="outline">{trend.platform}</Badge>
-                </div>
-                <h3 className="line-clamp-2 font-medium leading-snug text-foreground">
-                  {trend.title || trend.caption.slice(0, 70)}
-                </h3>
-                <p className="line-clamp-3 text-sm text-muted-foreground">{trend.caption}</p>
-                <div className="flex flex-wrap gap-2">
-                  {trend.format ? <Badge variant="secondary">{trend.format}</Badge> : null}
-                  {trend.hashtags.slice(0, 3).map((tag) => (
-                    <Badge key={tag} variant="secondary">
-                      #{tag}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="mt-auto flex items-center justify-between gap-2 pt-2">
-                  <span className="text-xs text-muted-foreground">
-                    {compact.format(trend.views)} views · {compact.format(trend.likes)} likes
-                  </span>
-                  {trend.sourceUrl ? (
-                    <a
-                      href={trend.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground"
-                    >
-                      View original
-                    </a>
-                  ) : null}
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+      {activeSource === "wom" ? (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {data.wordOfMouth.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No word-of-mouth chatter for this category yet — we're still ingesting X.
+            </p>
+          ) : (
+            data.wordOfMouth.map((post) => (
+              <Card key={post.womKey} className="h-full">
+                <CardContent className="flex h-full flex-col gap-3 py-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {post.authorHandle ? `@${post.authorHandle}` : post.author}
+                    </span>
+                    <Badge variant="outline">{post.platform}</Badge>
+                  </div>
+                  <p className="line-clamp-5 text-sm leading-relaxed text-foreground">
+                    {post.content || post.title}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {post.topic ? <Badge variant="secondary">{post.topic}</Badge> : null}
+                    {post.theme ? <Badge variant="secondary">{post.theme}</Badge> : null}
+                    {post.sentiment ? <Badge variant="secondary">{post.sentiment}</Badge> : null}
+                  </div>
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                    <span className="text-xs text-muted-foreground">
+                      {compact.format(post.likes)} likes · {compact.format(post.reposts)} reposts
+                    </span>
+                    {post.sourceUrl ? (
+                      <a
+                        href={post.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground"
+                      >
+                        View post
+                      </a>
+                    ) : null}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      ) : (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {data.trends.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No trends in this category yet.</p>
+          ) : (
+            data.trends.map((trend) => (
+              <Card key={trend.trendKey} className="h-full">
+                <CardContent className="flex h-full flex-col gap-3 py-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                      {trend.trendKey}
+                    </span>
+                    <Badge variant="outline">{trend.platform}</Badge>
+                  </div>
+                  <h3 className="line-clamp-2 font-medium leading-snug text-foreground">
+                    {trend.title || trend.caption.slice(0, 70)}
+                  </h3>
+                  <p className="line-clamp-3 text-sm text-muted-foreground">{trend.caption}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {trend.format ? <Badge variant="secondary">{trend.format}</Badge> : null}
+                    {trend.hashtags.slice(0, 3).map((tag) => (
+                      <Badge key={tag} variant="secondary">
+                        #{tag}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                    <span className="text-xs text-muted-foreground">
+                      {compact.format(trend.views)} views · {compact.format(trend.likes)} likes
+                    </span>
+                    {trend.sourceUrl ? (
+                      <a
+                        href={trend.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground"
+                      >
+                        View original
+                      </a>
+                    ) : null}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
+
 /** Signed-in users get trends matched to their brand; signed-out users get a CTA. */
-function PersonalizedRail() {
+function PersonalizedRail({
+  categories,
+  activeCategory,
+  onTailor,
+}: {
+  categories: Array<{ slug: string; name: string }>;
+  activeCategory: string | undefined;
+  onTailor: (slug: string) => void;
+}) {
   const { user, loading } = useAuth();
   const fetchCompanies = useServerFn(listMyCompanies);
   const fetchRecommendations = useServerFn(getRecommendations);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [tailored, setTailored] = useState(false);
 
   const companies = useQuery({
     queryKey: ["my-companies"],
@@ -162,11 +244,22 @@ function PersonalizedRail() {
     if (!companyId && companies.data?.length) setCompanyId(companies.data[0]!.id);
   }, [companies.data, companyId]);
 
+  // Default the feed to the selected brand's category so it isn't a generic firehose.
+  useEffect(() => {
+    if (tailored || activeCategory || !companyId) return;
+    const categoryName = companies.data?.find((company) => company.id === companyId)?.categoryName;
+    const slug = categories.find((category) => category.name === categoryName)?.slug;
+    if (!slug) return;
+    setTailored(true);
+    onTailor(slug);
+  }, [activeCategory, categories, companies.data, companyId, onTailor, tailored]);
+
   const recommendations = useQuery({
     queryKey: ["trend-recommendations", companyId],
     queryFn: () => fetchRecommendations({ data: { companyId: companyId!, limit: 8 } }),
     enabled: Boolean(user && companyId),
   });
+
 
   if (loading) return null;
 
