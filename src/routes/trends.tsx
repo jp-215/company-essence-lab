@@ -321,6 +321,9 @@ function PersonalizedRail({
   const fetchIndexStatus = useServerFn(getTrendIndexStatus);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [tailored, setTailored] = useState(false);
+  // Seed drives the server-side shuffle; a new seed = a new mix for the same brand.
+  const [seed, setSeed] = useState(() => Math.floor(Date.now() / 3_600_000) % 100000);
+
 
   const companies = useQuery({
     queryKey: ["my-companies"],
