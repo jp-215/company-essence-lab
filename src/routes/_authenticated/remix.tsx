@@ -157,7 +157,7 @@ function RemixStudio() {
                 >
                   Your product
                 </label>
-                <Select value={companyId ?? undefined} onValueChange={setCompanyId}>
+                <Select value={companyId ?? ""} onValueChange={(value) => setCompanyId(value)}>
                   <SelectTrigger
                     id="product-select"
                     className="h-14 w-full rounded-xl border-border bg-card text-base"
