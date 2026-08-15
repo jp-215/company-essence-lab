@@ -18,13 +18,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute("/_authenticated/knowledge")({
   head: () => ({
     meta: [
-      { title: "Brand knowledge base — GTM Hackathons" },
+      { title: "Brand knowledge base — Vira" },
       {
         name: "description",
         content:
           "Search every brand's owner, bio, mission and enriched advertising signals in one knowledge base.",
       },
-      { property: "og:title", content: "Brand knowledge base — GTM Hackathons" },
+      { property: "og:title", content: "Brand knowledge base — Vira" },
       {
         property: "og:description",
         content: "Owners, missions and ad signals for every brand on the marketplace.",

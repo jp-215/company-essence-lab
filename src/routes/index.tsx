@@ -20,13 +20,13 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(marketplaceQuery),
   head: () => ({
     meta: [
-      { title: "GTM Hackathons — Consumer brand purpose identities" },
+      { title: "Vira — Consumer brand purpose identities" },
       {
         name: "description",
         content:
           "A marketplace of consumer-product companies with purpose identities built from trending advertising signals across the web.",
       },
-      { property: "og:title", content: "GTM Hackathons — Consumer brand purpose identities" },
+      { property: "og:title", content: "Vira — Consumer brand purpose identities" },
       {
         property: "og:description",
         content:
@@ -74,7 +74,7 @@ function Home() {
           Every brand has a purpose. We read it from their advertising.
         </h1>
         <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-          GTM Hackathons collects trending advertising signals from across the web and turns them
+          Vira collects trending advertising signals from across the web and turns them
           into a purpose identity for each consumer-product company: positioning, tone, keywords and
           the ad themes they actually run on.
         </p>

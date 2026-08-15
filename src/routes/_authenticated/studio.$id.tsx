@@ -10,9 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute("/_authenticated/studio/$id")({
   head: () => ({
     meta: [
-      { title: "Edit company — GTM Hackathons" },
+      { title: "Edit company — Vira" },
       { name: "description", content: "Update your company profile and brand story." },
-      { property: "og:title", content: "Edit company — GTM Hackathons" },
+      { property: "og:title", content: "Edit company — Vira" },
       { property: "og:description", content: "Update your company profile and brand story." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

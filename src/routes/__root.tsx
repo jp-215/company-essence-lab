@@ -80,13 +80,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "GTM Hackathons — Consumer brand purpose identities" },
+      { title: "Vira — Consumer brand purpose identities" },
       {
         name: "description",
         content:
           "A marketplace of consumer-product companies with purpose identities built from trending advertising signals.",
       },
-      { property: "og:title", content: "GTM Hackathons Marketplace" },
+      { property: "og:title", content: "Vira" },
       {
         property: "og:description",
         content: "Consumer brands, their missions, and the advertising themes behind them.",
@@ -148,7 +148,7 @@ function RootComponent() {
         </main>
         <footer className="border-t border-border py-8">
           <div className="mx-auto max-w-6xl px-4 text-xs text-muted-foreground">
-            GTM Hackathons — purpose identities built from public advertising signals.
+            Vira — purpose identities built from public advertising signals.
           </div>
         </footer>
       </div>

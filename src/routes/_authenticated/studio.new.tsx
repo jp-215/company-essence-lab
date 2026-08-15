@@ -10,13 +10,13 @@ import { CompanyForm } from "@/components/CompanyForm";
 export const Route = createFileRoute("/_authenticated/studio/new")({
   head: () => ({
     meta: [
-      { title: "List your company — GTM Hackathons" },
+      { title: "List your company — Vira" },
       {
         name: "description",
         content:
           "Complete company sign-up: logo, name, owner, category, bio and mission for your consumer-product brand.",
       },
-      { property: "og:title", content: "List your company — GTM Hackathons" },
+      { property: "og:title", content: "List your company — Vira" },
       { property: "og:description", content: "Publish your brand to the marketplace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

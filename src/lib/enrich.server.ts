@@ -49,7 +49,7 @@ export async function scrapeSite(rawUrl: string): Promise<SiteSnapshot> {
   const response = await fetch(url, {
     headers: {
       "user-agent":
-        "Mozilla/5.0 (compatible; GTMHackathonsBot/1.0; +https://gtmhackathons.example)",
+        "Mozilla/5.0 (compatible; ViraBot/1.0; +https://vira.app)",
       accept: "text/html,application/xhtml+xml",
     },
     redirect: "follow",

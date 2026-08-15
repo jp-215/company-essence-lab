@@ -21,7 +21,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4">
         <Link to="/" className="flex items-baseline gap-2">
           <span className="font-serif text-xl font-semibold tracking-tight text-foreground">
-            GTM Hackathons
+            Vira
           </span>
           <span className="hidden text-xs uppercase tracking-[0.2em] text-muted-foreground sm:inline">
             Marketplace

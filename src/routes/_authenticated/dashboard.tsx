@@ -14,12 +14,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Brand dashboard — GTM Hackathons" },
+      { title: "Brand dashboard — Vira" },
       {
         name: "description",
         content: "Manage your company listings and run advertising-signal enrichment.",
       },
-      { property: "og:title", content: "Brand dashboard — GTM Hackathons" },
+      { property: "og:title", content: "Brand dashboard — Vira" },
       { property: "og:description", content: "Manage listings and brand enrichment." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
