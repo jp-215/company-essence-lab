@@ -46,6 +46,9 @@ export function SiteSidebar() {
               <Link to="/dashboard" className={navLink} activeProps={activeProps}>
                 Dashboard
               </Link>
+              <Link to="/community" className={navLink} activeProps={activeProps}>
+                Community
+              </Link>
               <Link to="/remix" className={navLink} activeProps={activeProps}>
                 Remix studio
               </Link>
