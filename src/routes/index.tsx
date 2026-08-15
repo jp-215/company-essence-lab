@@ -8,6 +8,7 @@ import { CompanyCard } from "@/components/CompanyCard";
 import { Eyebrow, Lead, PageShell, PageTitle, SectionTitle, Stat, StatRow } from "@/components/Page";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const marketplaceQuery = queryOptions({
   queryKey: ["marketplace"],
@@ -58,6 +59,7 @@ const compact = new Intl.NumberFormat("en", { notation: "compact" });
 
 function Home() {
   const { data } = useSuspenseQuery(marketplaceQuery);
+  const { user, loading } = useAuth();
   const [search, setSearch] = useState("");
 
   const query = search.trim().toLowerCase();
@@ -91,23 +93,42 @@ function Home() {
             can ship your first campaign without an agency.
           </Lead>
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Link
-              to="/auth"
-              className="rounded-xl bg-foreground px-7 py-3.5 text-base font-medium text-background transition-opacity hover:opacity-90"
-            >
-              Start remixing
-            </Link>
-            <Link
-              to="/auth"
-              className="rounded-xl border border-border bg-card px-7 py-3.5 text-base font-medium text-foreground transition-colors hover:border-ring"
-            >
-              Sign in
-            </Link>
+            {loading ? null : user ? (
+              <>
+                <Link
+                  to="/remix"
+                  className="rounded-xl bg-foreground px-7 py-3.5 text-base font-medium text-background transition-opacity hover:opacity-90"
+                >
+                  Start remixing
+                </Link>
+                <Link
+                  to="/dashboard"
+                  className="rounded-xl border border-border bg-card px-7 py-3.5 text-base font-medium text-foreground transition-colors hover:border-ring"
+                >
+                  Your dashboard
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/auth"
+                  className="rounded-xl bg-foreground px-7 py-3.5 text-base font-medium text-background transition-opacity hover:opacity-90"
+                >
+                  Start remixing
+                </Link>
+                <Link
+                  to="/auth"
+                  className="rounded-xl border border-border bg-card px-7 py-3.5 text-base font-medium text-foreground transition-colors hover:border-ring"
+                >
+                  Sign in
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
         <div className="lg:pt-6">
-          <StatRow className="grid-cols-3">
+          <StatRow className="grid-cols-1 divide-x-0 divide-y">
             <Stat label="Brands listed" value={String(data.companies.length)} />
             <Stat label="Categories mapped" value={String(data.categories.length)} />
             <Stat label="Trending views" value={compact.format(totalViews)} />
