@@ -366,7 +366,12 @@ function PersonalizedRail({
 
   const semanticCount = (recommendations.data ?? []).filter((t) => t.matchType === "semantic").length;
   // Balanced rail: short-form video trends alternating with social chatter.
-  const mixedFeed = interleave(recommendations.data ?? [], chatter.data ?? [], 10);
+  // The seed also flips which source leads, so the rail doesn't always open on video.
+  const videoLeads = seed % 2 === 0;
+  const mixedFeed = videoLeads
+    ? interleave(recommendations.data ?? [], chatter.data ?? [], 10)
+    : interleave(chatter.data ?? [], recommendations.data ?? [], 10);
+
 
   if (loading) return null;
 
