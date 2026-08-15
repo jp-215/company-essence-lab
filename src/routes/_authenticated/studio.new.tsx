@@ -129,20 +129,18 @@ function NewCompany() {
         return;
       }
     }
-    if (step === 2) {
-      if (!ownerName.trim()) {
-        toast.error("Who owns the brand?");
-        return;
-      }
-      if (bio.trim().length < 10) {
-        toast.error("A couple more words about who you are.");
-        return;
-      }
-    }
-    setStep((current) => Math.min(3, current + 1));
+    setStep((current) => Math.min(2, current + 1));
   }
 
   async function publish() {
+    if (!ownerName.trim()) {
+      toast.error("Who owns the brand?");
+      return;
+    }
+    if (bio.trim().length < 10) {
+      toast.error("A couple more words about who you are.");
+      return;
+    }
     if (mission.trim().length < 10) {
       toast.error("Your mission needs a little more detail.");
       return;
