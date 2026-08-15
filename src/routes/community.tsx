@@ -79,7 +79,10 @@ function CommunityPage() {
     enabled: !!user && !category,
   });
 
-  const brandCategory = companies.data?.[0]?.categorySlug as string | undefined;
+  const brandCategoryName = companies.data?.[0]?.categoryName;
+  const brandCategory = brandCategoryName
+    ? data.categories.find((c) => c.name === brandCategoryName)?.slug
+    : undefined;
 
   const items = useMemo<FeedItem[]>(() => {
     const videos = data.trends.map((t) => ({ kind: "video" as const, ...t }));
