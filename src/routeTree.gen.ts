@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAdsRouteImport } from './routes/_authenticated/ads'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedRemixRouteImport } from './routes/_authenticated/remix'
@@ -33,6 +34,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdsRoute = AuthenticatedAdsRouteImport.update({
+  id: '/ads',
+  path: '/ads',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -73,6 +79,7 @@ const AuthenticatedStudioNewRoute = AuthenticatedStudioNewRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ads': typeof AuthenticatedAdsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/remix': typeof AuthenticatedRemixRoute
@@ -84,6 +91,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ads': typeof AuthenticatedAdsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/remix': typeof AuthenticatedRemixRoute
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/ads': typeof AuthenticatedAdsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/remix': typeof AuthenticatedRemixRoute
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/ads'
     | '/dashboard'
     | '/knowledge'
     | '/remix'
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/ads'
     | '/dashboard'
     | '/knowledge'
     | '/remix'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/ads'
     | '/_authenticated/dashboard'
     | '/_authenticated/knowledge'
     | '/_authenticated/remix'
@@ -172,6 +184,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/ads': {
+      id: '/_authenticated/ads'
+      path: '/ads'
+      fullPath: '/ads'
+      preLoaderRoute: typeof AuthenticatedAdsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -226,6 +245,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdsRoute: typeof AuthenticatedAdsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedRemixRoute: typeof AuthenticatedRemixRoute
@@ -234,6 +254,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdsRoute: AuthenticatedAdsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedRemixRoute: AuthenticatedRemixRoute,
