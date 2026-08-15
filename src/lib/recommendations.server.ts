@@ -101,3 +101,55 @@ export async function getTrendByKey(client: Client, trendKey: string): Promise<T
     relevanceRank: 1,
   };
 }
+
+export type RecommendedChatterDTO = {
+  womKey: string;
+  platform: string;
+  sourceUrl: string;
+  author: string;
+  authorHandle: string;
+  title: string;
+  content: string;
+  topic: string;
+  theme: string;
+  sentiment: string;
+  views: number;
+  likes: number;
+  replies: number;
+  reposts: number;
+  buzzScore: number;
+};
+
+/**
+ * Word-of-mouth chatter mapped to the company's category, ranked by buzz.
+ * Pairs with getRecommendedTrends so feeds mix short-form video and chatter.
+ */
+export async function getRecommendedChatter(
+  client: Client,
+  companyId: string,
+  limit = 6,
+): Promise<RecommendedChatterDTO[]> {
+  const { data, error } = await client.rpc("company_word_of_mouth", {
+    _company_id: companyId,
+    _limit: limit,
+  });
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row) => ({
+    womKey: row.wom_key,
+    platform: row.platform,
+    sourceUrl: row.source_url,
+    author: row.author,
+    authorHandle: row.author_handle,
+    title: row.title,
+    content: row.content,
+    topic: row.topic,
+    theme: row.theme,
+    sentiment: row.sentiment,
+    views: Number(row.views ?? 0),
+    likes: Number(row.likes ?? 0),
+    replies: Number(row.replies ?? 0),
+    reposts: Number(row.reposts ?? 0),
+    buzzScore: Number(row.buzz_score ?? 0),
+  }));
+}
