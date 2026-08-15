@@ -374,25 +374,6 @@ function RemixStudio() {
                 </div>
               )}
             </section>
-
-            <section className="mt-16 flex flex-wrap items-center justify-between gap-6 rounded-2xl border border-border bg-card p-8">
-              <div>
-                <h2 className="font-serif text-3xl font-bold tracking-tight text-foreground">
-                  Create ads
-                </h2>
-                <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                  {remixes.data?.length
-                    ? `${remixes.data.length} concept${remixes.data.length === 1 ? "" : "s"} ready for ${selectedCompany?.name ?? "your product"}.`
-                    : "Turn your remixes into finished ad concepts for your product."}
-                </p>
-              </div>
-              <Button
-                asChild
-                className="h-14 rounded-2xl bg-foreground px-8 text-base font-semibold text-background hover:bg-foreground/90"
-              >
-                <Link to="/ads">Create ads →</Link>
-              </Button>
-            </section>
           </>
         )}
       </div>
