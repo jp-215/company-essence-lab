@@ -319,3 +319,15 @@ function Dashboard() {
     </PageShell>
   );
 }
+
+function RagStat({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-2 font-serif text-2xl font-bold tracking-tight text-foreground">{value}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{note}</p>
+    </div>
+  );
+}
