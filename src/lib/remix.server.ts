@@ -1,37 +1,69 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import type { PrescriptDTO, RemixDTO } from "./remix-types";
+import type { RemixDTO, TrendDTO } from "./remix-types";
 
 type Client = SupabaseClient<Database>;
 
 /**
- * Mapping protocol: company -> category (company.category_id) -> category_prescripts
- * -> prescripts, joined on the prescript primary identifier key.
+ * Mapping protocol: company -> category (company.category_id) -> category_trends
+ * -> trends, joined on the trend primary identifier key.
  */
-export async function listMappedPrescripts(
+export async function listMappedTrends(
   client: Client,
   companyId: string,
   limit = 24,
-): Promise<PrescriptDTO[]> {
-  const { data, error } = await client.rpc("company_prescripts", {
+): Promise<TrendDTO[]> {
+  const { data, error } = await client.rpc("company_trends", {
     _company_id: companyId,
     _limit: limit,
   });
   if (error) throw new Error(error.message);
 
   return (data ?? []).map((row) => ({
-    prescriptKey: row.prescript_key,
-    title: row.title,
+    trendKey: row.trend_key,
     platform: row.platform,
+    title: row.title,
+    caption: row.caption,
+    hashtags: row.hashtags ?? [],
     format: row.format,
-    angle: row.angle,
-    hook: row.hook,
-    rationale: row.rationale,
-    script: row.script,
-    cta: row.cta,
+    sourceUrl: row.source_url,
+    author: row.author,
+    views: Number(row.views ?? 0),
+    likes: Number(row.likes ?? 0),
+    engagementRate: Number(row.engagement_rate ?? 0),
     trendScore: Number(row.trend_score ?? 0),
     relevanceRank: Number(row.relevance_rank ?? 1),
   }));
+}
+
+function toRemix(row: {
+  id: string;
+  company_id: string;
+  trend_key: string | null;
+  trend_title: string;
+  source_url: string;
+  platform: string;
+  hook: string;
+  script: string;
+  caption: string;
+  hashtags: string[] | null;
+  differentiator: string;
+  created_at: string;
+}): RemixDTO {
+  return {
+    id: row.id,
+    companyId: row.company_id,
+    trendKey: row.trend_key ?? "",
+    trendTitle: row.trend_title,
+    sourceUrl: row.source_url,
+    platform: row.platform,
+    hook: row.hook,
+    script: row.script,
+    caption: row.caption,
+    hashtags: row.hashtags ?? [],
+    differentiator: row.differentiator,
+    createdAt: row.created_at,
+  };
 }
 
 export async function listRemixes(
@@ -48,18 +80,7 @@ export async function listRemixes(
     .limit(50);
   if (error) throw new Error(error.message);
 
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    companyId: row.company_id,
-    prescriptKey: row.prescript_key,
-    platform: row.platform,
-    hook: row.hook,
-    script: row.script,
-    caption: row.caption,
-    hashtags: row.hashtags ?? [],
-    differentiator: row.differentiator,
-    createdAt: row.created_at,
-  }));
+  return (data ?? []).map(toRemix);
 }
 
 export type RemixOutput = {
@@ -70,18 +91,19 @@ export type RemixOutput = {
   differentiator: string;
 };
 
-const SYSTEM_PROMPT = `You are Vira, a viral-ad remix engine for early-stage B2B and consumer brands.
-Given a general-purpose ad prescript plus one brand's identity, rewrite the prescript as a
-shoot-ready ad the brand can film today. Differentiate them from bigger competitors: lean on their
-mission, category and specific proof, never generic hype. Return ONLY JSON:
+const SYSTEM_PROMPT = `You are Vira, a viral-ad remix engine for early-stage consumer brands.
+Given a REAL trending social post plus one brand's identity, rewrite that trend as a shoot-ready ad
+the brand can film today. Keep the structural mechanic of the trend (hook style, pacing, format),
+but replace the substance with the brand's mission, category and specific proof. Never generic hype.
+Return ONLY JSON:
 {"hook": string (one line, under 90 chars),
  "script": string (timestamped beats, one per line, 25-35 seconds total, includes shot directions),
  "caption": string (platform caption, 1-2 sentences plus CTA),
  "hashtags": string[] (4-8 lowercase tags, no # symbol),
  "differentiator": string (1 sentence: how this ad separates them from category incumbents)}`;
 
-export async function remixPrescript(payload: {
-  prescript: PrescriptDTO;
+export async function remixTrend(payload: {
+  trend: TrendDTO;
   company: {
     name: string;
     category: string;
@@ -96,14 +118,14 @@ export async function remixPrescript(payload: {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("AI is not configured for this project.");
 
-  const { prescript, company } = payload;
+  const { trend, company } = payload;
   const userContent = [
-    `Prescript ${prescript.prescriptKey} — ${prescript.title}`,
-    `Platform: ${prescript.platform} | Format: ${prescript.format} | Angle: ${prescript.angle}`,
-    `Why it works: ${prescript.rationale}`,
-    `Original hook: ${prescript.hook}`,
-    `Original beats:\n${prescript.script}`,
-    `Original CTA: ${prescript.cta}`,
+    `Trend ${trend.trendKey} — ${trend.title || trend.caption.slice(0, 80)}`,
+    `Platform: ${trend.platform} | Format: ${trend.format} | Creator: ${trend.author}`,
+    `Caption: ${trend.caption}`,
+    trend.hashtags.length ? `Hashtags: ${trend.hashtags.join(", ")}` : "",
+    `Traction: ${trend.views} views, ${trend.likes} likes, engagement ${trend.engagementRate}`,
+    trend.sourceUrl ? `Source: ${trend.sourceUrl}` : "",
     "---",
     `Brand: ${company.name}`,
     `Category served: ${company.category}`,
@@ -196,8 +218,7 @@ export async function saveRemix(
   userId: string,
   input: {
     companyId: string;
-    prescriptKey: string;
-    platform: string;
+    trend: TrendDTO;
     output: RemixOutput;
   },
 ): Promise<RemixDTO> {
@@ -206,8 +227,10 @@ export async function saveRemix(
     .insert({
       company_id: input.companyId,
       owner_id: userId,
-      prescript_key: input.prescriptKey,
-      platform: input.platform,
+      trend_key: input.trend.trendKey,
+      trend_title: input.trend.title || input.trend.caption.slice(0, 120),
+      source_url: input.trend.sourceUrl,
+      platform: input.trend.platform,
       hook: input.output.hook,
       script: input.output.script,
       caption: input.output.caption,
@@ -218,16 +241,5 @@ export async function saveRemix(
     .single();
   if (error) throw new Error(error.message);
 
-  return {
-    id: data.id,
-    companyId: data.company_id,
-    prescriptKey: data.prescript_key,
-    platform: data.platform,
-    hook: data.hook,
-    script: data.script,
-    caption: data.caption,
-    hashtags: data.hashtags ?? [],
-    differentiator: data.differentiator,
-    createdAt: data.created_at,
-  };
+  return toRemix(data);
 }
