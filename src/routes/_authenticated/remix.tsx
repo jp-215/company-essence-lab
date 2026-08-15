@@ -494,7 +494,36 @@ function RemixStudio() {
           </>
         )}
       </div>
+
+      {selected.size ? (
+        <div className="sticky bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur">
+          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-5">
+            <div>
+              <p className="font-serif text-xl font-bold text-foreground">
+                {selected.size} of 6 posts selected
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Vira blends these into one AI video for{" "}
+                {selectedCompany?.name ?? "your product"}.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" onClick={() => setSelected(new Map())}>
+                Clear
+              </Button>
+              <Button
+                className="h-12 rounded-xl bg-foreground px-8 text-base text-background hover:bg-foreground/90"
+                disabled={videoMutation.isPending}
+                onClick={() => videoMutation.mutate()}
+              >
+                {videoMutation.isPending ? "Starting render…" : "Generate video →"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
+
   );
 }
 
