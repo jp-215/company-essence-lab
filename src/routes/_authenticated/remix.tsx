@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { listMyCompanies } from "@/lib/owner.functions";
 import { generateRemix, listCompanyRemixes, listCompanyTrends } from "@/lib/remix.functions";
 import { getRecommendations } from "@/lib/recommendations.functions";
+import { startVideoRender } from "@/lib/engine.functions";
 import { logTrendInteractions } from "@/lib/interactions.functions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ function RemixStudio() {
   const fetchRemixes = useServerFn(listCompanyRemixes);
   const runRemix = useServerFn(generateRemix);
   const logTaps = useServerFn(logTrendInteractions);
+  const startRender = useServerFn(startVideoRender);
 
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [productOpen, setProductOpen] = useState(false);
