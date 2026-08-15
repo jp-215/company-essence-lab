@@ -346,17 +346,17 @@ function PersonalizedRail({
   }, [activeCategory, categories, companies.data, companyId, onTailor, tailored]);
 
   const recommendations = useQuery({
-    queryKey: ["trend-recommendations", companyId],
-    queryFn: () => fetchRecommendations({ data: { companyId: companyId!, limit: 8 } }),
+    queryKey: ["trend-recommendations", companyId, seed],
+    queryFn: () => fetchRecommendations({ data: { companyId: companyId!, limit: 8, seed } }),
     enabled: Boolean(user && companyId),
   });
-
 
   const chatter = useQuery({
-    queryKey: ["chatter-recommendations", companyId],
-    queryFn: () => fetchChatter({ data: { companyId: companyId!, limit: 6 } }),
+    queryKey: ["chatter-recommendations", companyId, seed],
+    queryFn: () => fetchChatter({ data: { companyId: companyId!, limit: 6, seed } }),
     enabled: Boolean(user && companyId),
   });
+
 
   const indexStatus = useQuery({
     queryKey: ["trend-index-status"],
