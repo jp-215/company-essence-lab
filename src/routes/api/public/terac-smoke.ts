@@ -14,7 +14,10 @@ export const Route = createFileRoute("/api/public/terac-smoke")({
           .eq("public_token", "rs_smoke_test_2")
           .single();
         const sessionId = data!.id;
-        const synthesis = await synthesizeSession(supabaseAdmin, userId, sessionId);
+        const { applyRevision } = await import("@/lib/terac.server");
+        const results0 = await getReviewResults(supabaseAdmin, userId, sessionId);
+        const target = results0.synthesis!.revisionDirectives[0]!.videoId;
+        const synthesis = await applyRevision(supabaseAdmin, userId, sessionId, target);
         const results = await getReviewResults(supabaseAdmin, userId, sessionId);
         return Response.json({
           synthesis,
