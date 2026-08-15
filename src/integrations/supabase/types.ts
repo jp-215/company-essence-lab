@@ -310,8 +310,11 @@ export type Database = {
           id: string
           owner_id: string
           platform: string
-          prescript_key: string
+          prescript_key: string | null
           script: string
+          source_url: string
+          trend_key: string | null
+          trend_title: string
           updated_at: string
         }
         Insert: {
@@ -324,8 +327,11 @@ export type Database = {
           id?: string
           owner_id: string
           platform?: string
-          prescript_key: string
+          prescript_key?: string | null
           script?: string
+          source_url?: string
+          trend_key?: string | null
+          trend_title?: string
           updated_at?: string
         }
         Update: {
@@ -338,8 +344,11 @@ export type Database = {
           id?: string
           owner_id?: string
           platform?: string
-          prescript_key?: string
+          prescript_key?: string | null
           script?: string
+          source_url?: string
+          trend_key?: string | null
+          trend_title?: string
           updated_at?: string
         }
         Relationships: [
@@ -349,13 +358,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_remixes_prescript_key_fkey"
-            columns: ["prescript_key"]
-            isOneToOne: false
-            referencedRelation: "prescripts"
-            referencedColumns: ["prescript_key"]
           },
         ]
       }
