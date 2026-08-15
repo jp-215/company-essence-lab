@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/SiteHeader";
+import { ChatLauncher } from "@/components/ChatLauncher";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -152,6 +153,7 @@ function RootComponent() {
           </div>
         </footer>
       </div>
+      <ChatLauncher />
       <Toaster />
     </QueryClientProvider>
   );
