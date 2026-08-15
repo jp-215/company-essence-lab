@@ -12,7 +12,14 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search) =>
-    z.object({ tab: z.enum(["signin", "signup"]).optional() }).parse(search),
+    z
+      .object({
+        tab: z.enum(["signin", "signup"]).optional(),
+        next: z.string().optional(),
+        reason: z.enum(["protected"]).optional(),
+      })
+      .parse(search),
+
   head: () => ({
     meta: [
       { title: "Sign in — Vira" },
