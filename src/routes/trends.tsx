@@ -220,6 +220,7 @@ function TrendingPage() {
 
 /** Signed-in users get trends matched to their brand; signed-out users get a CTA. */
 function PersonalizedRail({
+  categories,
   activeCategory,
   onTailor,
 }: {
@@ -246,11 +247,12 @@ function PersonalizedRail({
   // Default the feed to the selected brand's category so it isn't a generic firehose.
   useEffect(() => {
     if (tailored || activeCategory || !companyId) return;
-    const slug = companies.data?.find((company) => company.id === companyId)?.categorySlug;
+    const categoryName = companies.data?.find((company) => company.id === companyId)?.categoryName;
+    const slug = categories.find((category) => category.name === categoryName)?.slug;
     if (!slug) return;
     setTailored(true);
     onTailor(slug);
-  }, [activeCategory, companies.data, companyId, onTailor, tailored]);
+  }, [activeCategory, categories, companies.data, companyId, onTailor, tailored]);
 
   const recommendations = useQuery({
     queryKey: ["trend-recommendations", companyId],
