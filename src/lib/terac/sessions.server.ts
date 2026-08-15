@@ -215,14 +215,19 @@ export type SessionProgress = {
   deadlineAt: string;
   createdAt: string;
   videoCount: number;
-  invited: number;
+  agentUrl: string;
+  claimed: number;
   opened: number;
   submitted: number;
   judges: { name: string; status: string; submittedAt: string | null; openedAt: string | null }[];
   hasSynthesis: boolean;
 };
 
-export async function listSessions(base: Client, userId: string): Promise<SessionProgress[]> {
+export async function listSessions(
+  base: Client,
+  userId: string,
+  origin: string,
+): Promise<SessionProgress[]> {
   const client = terac(base);
 
   const { data: sessions, error } = await client
@@ -255,11 +260,12 @@ export async function listSessions(base: Client, userId: string): Promise<Sessio
       deadlineAt: session.deadline_at,
       createdAt: session.created_at,
       videoCount: (videos ?? []).filter((v) => v.session_id === session.id).length,
-      invited: mine.length,
+      agentUrl: judgeUrl(origin, session.public_token),
+      claimed: mine.length,
       opened: mine.filter((a) => a.status !== "invited").length,
       submitted: mine.filter((a) => a.status === "submitted").length,
       judges: mine.map((a) => ({
-        name: (a.judges as unknown as { name: string } | null)?.name ?? "Judge",
+        name: (a.judges as unknown as { name: string } | null)?.name ?? "Agent",
         status: a.status,
         openedAt: a.opened_at,
         submittedAt: a.submitted_at,

@@ -51,7 +51,7 @@ export const createAds = createServerFn({ method: "POST" })
 
 export const listReviewSessions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => listSessions(context.supabase, context.userId));
+  .handler(async ({ context }) => listSessions(context.supabase, context.userId, origin()));
 
 export const getSessionResults = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
