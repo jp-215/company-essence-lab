@@ -25,7 +25,7 @@ export function SiteHeader() {
 
   return (
     <header className="border-b border-border bg-background/90 backdrop-blur">
-      <div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between gap-4 px-6">
+      <div className="mx-auto flex h-20 w-full max-w-6xl items-center gap-6 px-6">
         <Link to="/" className="flex items-baseline gap-3">
           <span className="font-serif text-2xl font-bold tracking-tight text-foreground">Vira</span>
           <span className="hidden font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground sm:inline">
@@ -33,14 +33,14 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-2">
+        <nav className="flex flex-1 items-center gap-1">
           <Link to="/" hash="directory" className={cn(navLink, "hidden sm:inline-flex")}>
             Browse
           </Link>
           <Link to="/trends" className={cn(navLink, "hidden sm:inline-flex")}>
             Trending
           </Link>
-          {loading ? null : user ? (
+          {loading || !user ? null : (
             <>
               <Link to="/dashboard" className={cn(navLink, "hidden sm:inline-flex")}>
                 Dashboard
@@ -54,6 +54,13 @@ export function SiteHeader() {
               <Link to="/billing" className={cn(navLink, "hidden md:inline-flex")}>
                 Billing
               </Link>
+            </>
+          )}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          {loading ? null : user ? (
+            <>
               <Link to="/studio/new" className={solid}>
                 List a company
               </Link>
@@ -71,7 +78,7 @@ export function SiteHeader() {
               </Link>
             </>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   );
