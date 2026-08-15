@@ -173,14 +173,11 @@ function NewCompany() {
     }
   }
 
-  const heading =
-    step === 1 ? "What are you selling?" : step === 2 ? "Who's behind it?" : "What's the mission?";
+  const heading = step === 1 ? "What are you selling?" : "Who's behind it?";
   const subheading =
     step === 1
       ? "Photos do the talking — a phone photo is perfect. It's the only thing we truly need."
-      : step === 2
-        ? "A short intro in your own words. We'll use it to shape your purpose identity."
-        : "One or two lines on why the brand exists. This drives every remix we generate.";
+      : "A short intro and your mission, in your own words. This shapes every remix we generate.";
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-secondary/40">
