@@ -8,6 +8,7 @@ import { CompanyCard } from "@/components/CompanyCard";
 import { Eyebrow, Lead, PageShell, PageTitle, SectionTitle, Stat, StatRow } from "@/components/Page";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const marketplaceQuery = queryOptions({
   queryKey: ["marketplace"],
@@ -58,6 +59,7 @@ const compact = new Intl.NumberFormat("en", { notation: "compact" });
 
 function Home() {
   const { data } = useSuspenseQuery(marketplaceQuery);
+  const { user, loading } = useAuth();
   const [search, setSearch] = useState("");
 
   const query = search.trim().toLowerCase();
