@@ -6,12 +6,13 @@ import { toast } from "sonner";
 
 import { deleteCompany, listMyCompanies } from "@/lib/owner.functions";
 import { runEnrichment } from "@/lib/enrich.functions";
-import { getRecommendations } from "@/lib/recommendations.functions";
+import { getChatterRecommendations, getRecommendations } from "@/lib/recommendations.functions";
 import { getTrendIndexStatus } from "@/lib/trend-embeddings.functions";
 import { BrandLogo } from "@/components/BrandLogo";
 import { TrendPreview } from "@/components/TrendPreview";
 import { Eyebrow, Lead, PageShell, PageTitle, Panel } from "@/components/Page";
 import { Skeleton } from "@/components/ui/skeleton";
+import { interleave } from "@/lib/feed-mix";
 import { cn } from "@/lib/utils";
 
 const compact = new Intl.NumberFormat("en", { notation: "compact" });
@@ -59,6 +60,7 @@ function Dashboard() {
   });
 
   const fetchRecommendations = useServerFn(getRecommendations);
+  const fetchChatterRecommendations = useServerFn(getChatterRecommendations);
   const fetchIndexStatus = useServerFn(getTrendIndexStatus);
   const [focusId, setFocusId] = useState<string | null>(null);
 
@@ -72,6 +74,12 @@ function Dashboard() {
     enabled: !!focusId,
   });
 
+  const chatter = useQuery({
+    queryKey: ["dashboard-chatter", focusId],
+    queryFn: () => fetchChatterRecommendations({ data: { companyId: focusId!, limit: 6 } }),
+    enabled: !!focusId,
+  });
+
   const indexStatus = useQuery({
     queryKey: ["trend-index-status"],
     queryFn: () => fetchIndexStatus(),
@@ -79,6 +87,8 @@ function Dashboard() {
 
   const focusCompany = data?.find((company) => company.id === focusId) ?? null;
   const semanticCount = (trends.data ?? []).filter((t) => t.matchType === "semantic").length;
+  // Balanced feed: short-form video trends alternating with social chatter.
+  const mixedFeed = interleave(trends.data ?? [], chatter.data ?? [], 6);
 
 
 
@@ -245,7 +255,7 @@ function Dashboard() {
             </div>
           ) : null}
 
-          <Panel className="mt-6 grid gap-6 p-6 sm:grid-cols-3">
+          <Panel className="mt-6 grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-4">
             <RagStat
               label="Semantic matches"
               value={`${semanticCount}/${(trends.data ?? []).length || 0}`}
@@ -263,6 +273,11 @@ function Dashboard() {
               }
             />
             <RagStat
+              label="Source mix"
+              value={`${(trends.data ?? []).length} video / ${(chatter.data ?? []).length} chatter`}
+              note="Short-form video trends balanced with social word of mouth"
+            />
+            <RagStat
               label="Ranking blend"
               value="0.8 / 0.2"
               note="Cosine similarity weighted against trend heat"
@@ -270,13 +285,13 @@ function Dashboard() {
           </Panel>
 
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {trends.isLoading ? (
+            {trends.isLoading || chatter.isLoading ? (
               <>
                 <Skeleton className="h-72 w-full rounded-2xl" />
                 <Skeleton className="h-72 w-full rounded-2xl" />
                 <Skeleton className="h-72 w-full rounded-2xl" />
               </>
-            ) : (trends.data ?? []).length === 0 ? (
+            ) : mixedFeed.length === 0 ? (
               <Panel className="p-8 sm:col-span-2 lg:col-span-3">
                 <p className="text-sm text-muted-foreground">
                   No trends matched yet. Refresh brand signals so the retrieval index can embed this
@@ -284,33 +299,68 @@ function Dashboard() {
                 </p>
               </Panel>
             ) : (
-              (trends.data ?? []).map((trend) => (
-                <Panel key={trend.trendKey} className="overflow-hidden p-0">
-                  <TrendPreview
-                    sourceUrl={trend.sourceUrl}
-                    platform={trend.platform}
-                    title={trend.title}
-                    className="aspect-[4/3] w-full"
-                  />
-                  <div className="space-y-3 p-5">
+              mixedFeed.map((item) =>
+                "trendKey" in item ? (
+                  <Panel key={item.trendKey} className="overflow-hidden p-0">
+                    <TrendPreview
+                      sourceUrl={item.sourceUrl}
+                      platform={item.platform}
+                      title={item.title}
+                      className="aspect-[4/3] w-full"
+                    />
+                    <div className="space-y-3 p-5">
+                      <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                        <span className="rounded-full border border-border px-3 py-1">
+                          {item.matchType === "semantic"
+                            ? `${Math.round(item.similarity * 100)}% match`
+                            : "Category match"}
+                        </span>
+                        <span className="rounded-full border border-border px-3 py-1">
+                          {item.format}
+                        </span>
+                      </div>
+                      <p className="line-clamp-3 text-sm text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {compact.format(item.views)} views · {compact.format(item.likes)} likes ·
+                        heat {Math.round(item.trendScore)}
+                      </p>
+                    </div>
+                  </Panel>
+                ) : (
+                  <Panel key={item.womKey} className="flex flex-col gap-3 p-5">
                     <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                       <span className="rounded-full border border-border px-3 py-1">
-                        {trend.matchType === "semantic"
-                          ? `${Math.round(trend.similarity * 100)}% match`
-                          : "Category match"}
+                        Word of mouth
                       </span>
                       <span className="rounded-full border border-border px-3 py-1">
-                        {trend.format}
+                        {item.platform}
                       </span>
+                      {item.sentiment ? (
+                        <span className="rounded-full border border-border px-3 py-1">
+                          {item.sentiment}
+                        </span>
+                      ) : null}
                     </div>
-                    <p className="line-clamp-3 text-sm text-foreground">{trend.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {compact.format(trend.views)} views · {compact.format(trend.likes)} likes ·
-                      heat {Math.round(trend.trendScore)}
+                    <p className="line-clamp-6 text-sm text-foreground">
+                      {item.content || item.title}
                     </p>
-                  </div>
-                </Panel>
-              ))
+                    <p className="text-xs text-muted-foreground">
+                      {item.authorHandle ? `@${item.authorHandle}` : item.author} ·{" "}
+                      {compact.format(item.likes)} likes · {compact.format(item.replies)} replies
+                    </p>
+                    {item.sourceUrl ? (
+                      <a
+                        href={item.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-auto text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                      >
+                        View post
+                      </a>
+                    ) : null}
+                  </Panel>
+                ),
+              )
             )}
           </div>
         </section>
