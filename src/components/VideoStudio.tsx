@@ -222,8 +222,21 @@ export function VideoStudio({ companyId, companyName }: Props) {
             </ul>
           ) : null}
           {job.data.job.error ? (
-            <p className="mt-3 text-sm text-destructive">{job.data.job.error}</p>
+            <div className="mt-3">
+              <p className="text-sm text-destructive">
+                {describeEngineError(job.data.job.error)}
+              </p>
+              <details className="mt-2">
+                <summary className="cursor-pointer font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Engine detail
+                </summary>
+                <pre className="mt-2 overflow-x-auto whitespace-pre-wrap font-mono text-[11px] text-muted-foreground">
+                  {job.data.job.error}
+                </pre>
+              </details>
+            </div>
           ) : null}
+
         </div>
       ) : null}
 
