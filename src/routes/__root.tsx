@@ -11,7 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { SiteHeader } from "@/components/SiteHeader";
+import { SiteSidebar } from "@/components/SiteSidebar";
 import { ChatLauncher } from "@/components/ChatLauncher";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,23 +141,25 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen flex-col bg-background">
+      <div className="flex min-h-screen flex-col bg-background md:flex-row">
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-foreground focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-background"
         >
           Skip to content
         </a>
-        <SiteHeader />
-        <main id="main" tabIndex={-1} className="min-h-[60vh] flex-1">
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </main>
-        <footer className="border-t border-border py-8">
-          <div className="mx-auto max-w-6xl px-4 text-xs text-muted-foreground">
-            Vira — viral ad intelligence and remixing for early-stage brands.
-          </div>
-        </footer>
+        <SiteSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <main id="main" tabIndex={-1} className="min-h-[60vh] flex-1">
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </main>
+          <footer className="border-t border-border py-8">
+            <div className="mx-auto max-w-6xl px-4 text-xs text-muted-foreground">
+              Vira — viral ad intelligence and remixing for early-stage brands.
+            </div>
+          </footer>
+        </div>
       </div>
       <ChatLauncher />
       <Toaster />
