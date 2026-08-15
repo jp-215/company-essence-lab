@@ -366,10 +366,10 @@ function NewCompany() {
           <button
             type="button"
             disabled={busy || uploading}
-            onClick={() => (step === 3 ? void publish() : nextStep())}
+            onClick={() => (step === 2 ? void publish() : nextStep())}
             className="inline-flex items-center gap-2 rounded-xl bg-chart-1 px-8 py-4 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            {step === 3 ? (busy ? "Publishing…" : "Publish brand") : "Continue"}
+            {step === 2 ? (busy ? "Publishing…" : "Publish brand") : "Continue"}
             <span aria-hidden="true">→</span>
           </button>
         </div>
