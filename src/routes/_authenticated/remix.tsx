@@ -343,29 +343,16 @@ function RemixStudio() {
                             </span>
                             {trend.author ? <span>@{trend.author}</span> : null}
                           </div>
-                          <div className="flex items-center justify-between gap-3">
-                            {trend.sourceUrl ? (
-                              <a
-                                href={trend.sourceUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                              >
-                                View original
-                              </a>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">No source</span>
-                            )}
-                            <Button
-                              className="rounded-xl bg-foreground text-background hover:bg-foreground/90"
-                              disabled={remixMutation.isPending}
-                              onClick={() => remixMutation.mutate(trend.trendKey)}
-                            >
-                              {remixMutation.isPending && remixMutation.variables === trend.trendKey
-                                ? "Remixing…"
-                                : "Remix for us"}
-                            </Button>
-                          </div>
+                          <Button
+                            className="h-12 w-full rounded-xl bg-foreground text-base text-background hover:bg-foreground/90"
+                            disabled={remixMutation.isPending}
+                            onClick={() => remixMutation.mutate(trend.trendKey)}
+                          >
+                            {remixMutation.isPending && remixMutation.variables === trend.trendKey
+                              ? "Remixing…"
+                              : "Remix for you"}
+                          </Button>
+
                         </div>
                       </div>
                     </article>
