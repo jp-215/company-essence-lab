@@ -1,13 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { listCategories } from "@/lib/companies.functions";
 import { listTrendingNow } from "@/lib/trends.functions";
 import { listWordOfMouth } from "@/lib/wom.functions";
 import { listMyCompanies } from "@/lib/owner.functions";
+import { generateRemixBatch } from "@/lib/remix.functions";
 import { interleave } from "@/lib/feed-mix";
 import { useAuth } from "@/hooks/useAuth";
 import { SwipeFeed } from "@/components/SwipeFeed";
@@ -15,6 +23,10 @@ import { ChatterCard, VideoCard, type FeedItem } from "@/components/feed/FeedCar
 import { Button } from "@/components/ui/button";
 
 const searchSchema = z.object({ category: z.string().max(80).optional() });
+const MAX_BATCH = 6;
+
+const itemKey = (item: FeedItem) => (item.kind === "video" ? item.trendKey : item.womKey);
+
 
 const communityQuery = (categorySlug?: string) =>
   queryOptions({
