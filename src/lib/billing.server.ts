@@ -50,7 +50,7 @@ export async function stripeRequest<T = any>(
       Authorization: `Bearer ${secretKey()}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: method === "POST" ? body : undefined,
+    body: method === "POST" ? (body ?? null) : null,
   });
 
   const json = (await response.json()) as any;
