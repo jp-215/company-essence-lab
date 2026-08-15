@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { listCompanyTrends } from "@/lib/remix.functions";
-import { createAds, listJudges } from "@/lib/terac/terac.functions";
+import { createAds } from "@/lib/terac/terac.functions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,27 +17,26 @@ const MAX_CONCEPTS = 6;
 /**
  * Terac Flow A, mounted on the Create ads screen.
  *
- * One press produces ONE review session holding every concept from that press —
- * judges then vote comparatively, which is where their expertise actually
- * lives. Sending a link per video would throw that away.
+ * One press produces ONE review session holding every concept from that press,
+ * opened as a task in the Terac agent pool. There is no roster: any agent with
+ * the session link claims the task, watches all the ads, ranks them and leaves
+ * feedback. Judges vote comparatively, which is where their expertise lives.
  */
 export function CreateReviewPanel({ companyId }: { companyId: string }) {
   const queryClient = useQueryClient();
   const fetchTrends = useServerFn(listCompanyTrends);
-  const fetchJudges = useServerFn(listJudges);
   const runCreateAds = useServerFn(createAds);
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [judgeIds, setJudgeIds] = useState<Set<string>>(new Set());
   const [quorum, setQuorum] = useState(3);
   const [deadlineHours, setDeadlineHours] = useState(48);
+  const [agentUrl, setAgentUrl] = useState<string | null>(null);
 
   const trends = useQuery({
     queryKey: ["trends", companyId],
     queryFn: () => fetchTrends({ data: { companyId, limit: 12 } }),
     enabled: Boolean(companyId),
   });
-  const judges = useQuery({ queryKey: ["terac-judges"], queryFn: () => fetchJudges() });
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -45,17 +44,17 @@ export function CreateReviewPanel({ companyId }: { companyId: string }) {
         data: {
           companyId,
           trendKeys: Array.from(selected),
-          judgeIds: Array.from(judgeIds),
           quorum,
           deadlineHours,
         },
       }),
     onSuccess: (result) => {
       setSelected(new Set());
+      setAgentUrl(result.agentUrl);
       void queryClient.invalidateQueries({ queryKey: ["terac-sessions"] });
       void queryClient.invalidateQueries({ queryKey: ["remixes", companyId] });
       toast.success(
-        `Sent ${result.videoCount} ad${result.videoCount === 1 ? "" : "s"} to ${result.invited} judge${result.invited === 1 ? "" : "s"}.`,
+        `${result.videoCount} ad${result.videoCount === 1 ? "" : "s"} are open for review — share the agent link.`,
       );
       if (result.aiUnavailable) {
         toast.warning(
@@ -66,9 +65,6 @@ export function CreateReviewPanel({ companyId }: { companyId: string }) {
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "Could not open the review session."),
   });
-
-  const activeJudges = (judges.data ?? []).filter((judge) => judge.active);
-  const quorumTooHigh = judgeIds.size > 0 && quorum > judgeIds.size;
 
   function toggle(key: string) {
     setSelected((prev) => {
@@ -89,8 +85,9 @@ export function CreateReviewPanel({ companyId }: { companyId: string }) {
         Get a panel on it before you ship
       </h2>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-        Pick the trends worth testing. Vira writes your version of each, then one link goes to every
-        judge so they rank them side by side. Closes on quorum or deadline, whichever lands first.
+        Pick the trends worth testing. Vira writes your version of each, then the session opens as a
+        task in the Terac agent pool — any agent who takes it sees every ad, votes for a favourite
+        and writes feedback. Closes on quorum or deadline, whichever lands first.
       </p>
 
       {trends.isLoading ? (
@@ -137,13 +134,40 @@ export function CreateReviewPanel({ companyId }: { companyId: string }) {
         </div>
       )}
 
+      {agentUrl ? (
+        <Card className="mt-8 border-foreground/20">
+          <CardContent className="p-5">
+            <p className="text-sm font-medium text-foreground">Agent link for this session</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Anyone who opens it can claim the task — no account, no password.
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Input readOnly value={agentUrl} className="max-w-md font-mono text-xs" />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void navigator.clipboard.writeText(agentUrl);
+                  toast.success("Agent link copied.");
+                }}
+              >
+                Copy link
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/reviews">See sessions</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
       {selected.size > 0 ? (
         <Card className="sticky bottom-4 z-20 mt-8 border-foreground/20 shadow-lg">
           <CardContent className="p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm font-medium text-foreground">
-                {selected.size} concept{selected.size === 1 ? "" : "s"} · one session, one link per
-                judge
+                {selected.size} concept{selected.size === 1 ? "" : "s"} · one session, one link for
+                the agent pool
               </p>
               <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
                 Clear
@@ -151,92 +175,47 @@ export function CreateReviewPanel({ companyId }: { companyId: string }) {
             </div>
 
             <div className="mt-5 border-t border-border pt-5">
-              {judges.isLoading ? (
-                <Skeleton className="h-16 w-full" />
-              ) : activeJudges.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No active judges yet.{" "}
-                  <Link to="/reviews" className="underline underline-offset-4">
-                    Add judges to your roster
-                  </Link>{" "}
-                  first.
-                </p>
-              ) : (
-                <>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                    Send to
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {activeJudges.map((judge) => (
-                      <Button
-                        key={judge.id}
-                        size="sm"
-                        variant={judgeIds.has(judge.id) ? "default" : "outline"}
-                        aria-pressed={judgeIds.has(judge.id)}
-                        onClick={() =>
-                          setJudgeIds((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(judge.id)) next.delete(judge.id);
-                            else next.add(judge.id);
-                            return next;
-                          })
-                        }
-                      >
-                        {judge.name}
-                      </Button>
-                    ))}
-                  </div>
+              <div className="flex flex-wrap gap-4">
+                <label className="text-sm">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                    Reviews needed
+                  </span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={quorum}
+                    onChange={(e) => setQuorum(Number(e.target.value))}
+                    className="mt-1 w-24"
+                  />
+                </label>
+                <label className="text-sm">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                    Deadline (hours)
+                  </span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={336}
+                    value={deadlineHours}
+                    onChange={(e) => setDeadlineHours(Number(e.target.value))}
+                    className="mt-1 w-28"
+                  />
+                </label>
+              </div>
 
-                  <div className="mt-4 flex flex-wrap gap-4">
-                    <label className="text-sm">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                        Quorum
-                      </span>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={20}
-                        value={quorum}
-                        onChange={(e) => setQuorum(Number(e.target.value))}
-                        className="mt-1 w-24"
-                      />
-                    </label>
-                    <label className="text-sm">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                        Deadline (hours)
-                      </span>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={336}
-                        value={deadlineHours}
-                        onChange={(e) => setDeadlineHours(Number(e.target.value))}
-                        className="mt-1 w-28"
-                      />
-                    </label>
-                  </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Closes on {quorum} submission{quorum === 1 ? "" : "s"} or after {deadlineHours}h,
+                whichever comes first.
+              </p>
 
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Closes on {quorum} submission{quorum === 1 ? "" : "s"} or after {deadlineHours}
-                    h, whichever comes first.
-                  </p>
-
-                  <Button
-                    className="mt-4"
-                    disabled={mutation.isPending || judgeIds.size === 0 || quorumTooHigh}
-                    onClick={() => mutation.mutate()}
-                  >
-                    {mutation.isPending
-                      ? "Generating and sending…"
-                      : `Create ads and send to ${judgeIds.size} judge${judgeIds.size === 1 ? "" : "s"}`}
-                  </Button>
-                  {quorumTooHigh ? (
-                    <p className="mt-2 text-xs text-destructive">
-                      Quorum can't exceed the number of judges assigned.
-                    </p>
-                  ) : null}
-                </>
-              )}
+              <Button
+                className="mt-4"
+                disabled={mutation.isPending}
+                onClick={() => mutation.mutate()}
+              >
+                {mutation.isPending ? "Generating…" : "Create ads and open for review"}
+              </Button>
             </div>
           </CardContent>
         </Card>
