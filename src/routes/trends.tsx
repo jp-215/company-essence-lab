@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { listCategories } from "@/lib/companies.functions";
 import { listTrendingNow } from "@/lib/trends.functions";
+import { listWordOfMouth } from "@/lib/wom.functions";
 import { listMyCompanies } from "@/lib/owner.functions";
 import { getRecommendations } from "@/lib/recommendations.functions";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,17 +17,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const searchSchema = z.object({
   category: z.string().max(80).optional(),
+  source: z.enum(["video", "wom"]).optional(),
 });
 
 const trendsQuery = (categorySlug?: string) =>
   queryOptions({
     queryKey: ["trending-page", categorySlug ?? "all"],
     queryFn: async () => {
-      const [categories, trends] = await Promise.all([
+      const [categories, trends, wordOfMouth] = await Promise.all([
         listCategories(),
         listTrendingNow({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }),
+        listWordOfMouth({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }),
       ]);
-      return { categories, trends };
+      return { categories, trends, wordOfMouth };
     },
   });
 
@@ -34,6 +37,7 @@ export const Route = createFileRoute("/trends")({
   validateSearch: (search) => searchSchema.parse(search),
   loaderDeps: ({ search }) => ({ category: search.category }),
   loader: ({ context, deps }) => context.queryClient.ensureQueryData(trendsQuery(deps.category)),
+
   head: () => ({
     meta: [
       { title: "Trending now — Vira" },
