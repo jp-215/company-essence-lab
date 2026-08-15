@@ -243,3 +243,70 @@ export async function saveRemix(
 
   return toRemix(data);
 }
+
+/**
+ * Word-of-mouth rows can be remixed too. They are mapped onto the TrendDTO
+ * shape so the same prompt/pipeline handles Reddit chatter and TikTok clips.
+ */
+export async function getWomAsTrend(client: Client, womKey: string): Promise<TrendDTO | null> {
+  const { data, error } = await client
+    .from("word_of_mouth")
+    .select(
+      "wom_key, platform, title, content, hashtags, theme, source_url, author, views, likes, engagement_rate, buzz_score",
+    )
+    .eq("wom_key", womKey)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  return {
+    trendKey: data.wom_key,
+    platform: data.platform,
+    title: data.title,
+    caption: data.content,
+    hashtags: data.hashtags ?? [],
+    format: data.theme || "word of mouth",
+    sourceUrl: data.source_url,
+    author: data.author,
+    views: Number(data.views ?? 0),
+    likes: Number(data.likes ?? 0),
+    engagementRate: Number(data.engagement_rate ?? 0),
+    trendScore: Number(data.buzz_score ?? 0),
+    relevanceRank: 1,
+  };
+}
+
+/**
+ * Same insert as saveRemix, but chatter sources are stored with a null
+ * trend_key because that column is a foreign key into `trends`.
+ */
+export async function saveSourcedRemix(
+  client: Client,
+  userId: string,
+  input: {
+    companyId: string;
+    kind: "video" | "chatter";
+    trend: TrendDTO;
+    output: RemixOutput;
+  },
+): Promise<RemixDTO> {
+  const { data, error } = await client
+    .from("company_remixes")
+    .insert({
+      company_id: input.companyId,
+      owner_id: userId,
+      trend_key: input.kind === "video" ? input.trend.trendKey : null,
+      trend_title: input.trend.title || input.trend.caption.slice(0, 120),
+      source_url: input.trend.sourceUrl,
+      platform: input.trend.platform,
+      hook: input.output.hook,
+      script: input.output.script,
+      caption: input.output.caption,
+      hashtags: input.output.hashtags,
+      differentiator: input.output.differentiator,
+    })
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  return toRemix(data);
+}
