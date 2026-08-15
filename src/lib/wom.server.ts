@@ -8,7 +8,7 @@
 import type { WomTopic } from "./wom-queries";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/apify";
-const ACTOR_ID = "apidojo~tweet-scraper";
+const ACTOR_ID = "kaitoeasyapi~twitter-x-data-tweet-scraper-pay-per-result-cheapest";
 
 export type RawWomItem = Record<string, unknown>;
 
@@ -202,7 +202,6 @@ export async function startWomScrape(
       maxItems,
       sort: "Top",
       tweetLanguage: "en",
-      includeSearchTerms: true,
     }),
   });
   if (!response.ok) {
