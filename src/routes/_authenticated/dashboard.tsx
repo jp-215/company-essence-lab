@@ -1,14 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { deleteCompany, listMyCompanies } from "@/lib/owner.functions";
 import { runEnrichment } from "@/lib/enrich.functions";
+import { getRecommendations } from "@/lib/recommendations.functions";
+import { getTrendIndexStatus } from "@/lib/trend-embeddings.functions";
 import { BrandLogo } from "@/components/BrandLogo";
+import { TrendPreview } from "@/components/TrendPreview";
 import { Eyebrow, Lead, PageShell, PageTitle, Panel } from "@/components/Page";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+
+const compact = new Intl.NumberFormat("en", { notation: "compact" });
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
