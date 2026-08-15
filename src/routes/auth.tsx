@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search) =>
+    z.object({ tab: z.enum(["signin", "signup"]).optional() }).parse(search),
   head: () => ({
     meta: [
       { title: "Sign in — Vira" },
@@ -36,16 +38,17 @@ const credentials = z.object({
   password: z.string().min(8, "Use at least 8 characters."),
 });
 
-const field = "h-14 rounded-xl bg-card text-lg";
+const field = "h-11 rounded-xl bg-card text-base";
 const primary =
-  "w-full rounded-xl bg-foreground px-7 py-4 text-base font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60";
+  "w-full rounded-xl bg-foreground px-7 py-3 text-base font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60";
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { tab } = Route.useSearch();
   const { user, loading } = useAuth();
   const [busy, setBusy] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(tab ?? "signin");
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/dashboard", replace: true });
@@ -116,9 +119,13 @@ function AuthPage() {
     <PageShell width="narrow">
       <Eyebrow>Onboarding</Eyebrow>
       <PageTitle className="mt-4">
-        {checkEmail ? "Check your inbox" : mode === "signin" ? "Welcome back" : "Create your account"}
+        {checkEmail
+          ? "Check your inbox"
+          : mode === "signin"
+            ? "Welcome back"
+            : "Create your account"}
       </PageTitle>
-      <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
+      <p className="mt-3 max-w-xl text-base leading-relaxed text-muted-foreground">
         {checkEmail
           ? "We sent a confirmation link. Open it to activate your account, then sign in and finish your company profile."
           : "Existing brands sign in. New brands complete the full company profile right after signing up."}
@@ -135,7 +142,7 @@ function AuthPage() {
           </button>
         </Panel>
       ) : (
-        <div className="mt-10 max-w-lg">
+        <div className="mt-6 max-w-lg">
           <div className="flex flex-wrap gap-3">
             {(["signin", "signup"] as const).map((value) => (
               <button
@@ -144,7 +151,7 @@ function AuthPage() {
                 onClick={() => setMode(value)}
                 aria-pressed={mode === value}
                 className={cn(
-                  "rounded-full px-6 py-3 text-base font-medium transition-colors",
+                  "rounded-full px-5 py-2 text-sm font-medium transition-colors",
                   mode === value
                     ? "bg-foreground text-background"
                     : "border border-border bg-card text-foreground hover:border-ring",
@@ -155,9 +162,9 @@ function AuthPage() {
             ))}
           </div>
 
-          <Panel className="mt-6 p-8">
+          <Panel className="mt-4 p-6">
             {mode === "signin" ? (
-              <form className="space-y-6" onSubmit={handleSignIn}>
+              <form className="space-y-4" onSubmit={handleSignIn}>
                 <div className="space-y-2">
                   <Label htmlFor="signin-email" className="text-base">
                     Work email
@@ -189,7 +196,7 @@ function AuthPage() {
                 </button>
               </form>
             ) : (
-              <form className="space-y-6" onSubmit={handleSignUp}>
+              <form className="space-y-4" onSubmit={handleSignUp}>
                 <div className="space-y-2">
                   <Label htmlFor="signup-name" className="text-base">
                     Your name
@@ -238,7 +245,7 @@ function AuthPage() {
         </div>
       )}
 
-      <p className="mt-10 text-base text-muted-foreground">
+      <p className="mt-6 text-base text-muted-foreground">
         <Link to="/" className="underline underline-offset-4 hover:text-foreground">
           Back to the marketplace
         </Link>

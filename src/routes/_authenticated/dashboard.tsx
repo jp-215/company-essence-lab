@@ -34,12 +34,12 @@ const statusCopy: Record<string, string> = {
   failed: "Signals failed",
 };
 
-
 const solid =
   "rounded-xl bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60";
 const outline =
   "rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-ring";
-const quiet = "rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground";
+const quiet =
+  "rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground";
 
 function Dashboard() {
   const queryClient = useQueryClient();
@@ -89,7 +89,7 @@ function Dashboard() {
             Remix studio
           </Link>
           <Link to="/studio/new" className={solid}>
-            Add a company
+            List a company
           </Link>
         </div>
       </div>
@@ -106,7 +106,7 @@ function Dashboard() {
               No listings yet. Complete the company sign-up to appear on the marketplace.
             </p>
             <Link to="/studio/new" className={cn(solid, "mt-6 inline-block")}>
-              Start company sign-up
+              List a company
             </Link>
           </Panel>
         ) : (
@@ -130,11 +130,11 @@ function Dashboard() {
                     )}
                   >
                     {company.insightStatus
-                      ? statusCopy[company.insightStatus] ?? company.insightStatus
+                      ? (statusCopy[company.insightStatus] ?? company.insightStatus)
                       : "Not enriched"}
                   </span>
                 </div>
-                <p className="mt-3 line-clamp-2 text-base text-muted-foreground">{company.bio}</p>
+                <p className="mt-3 text-base text-muted-foreground">{company.bio}</p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Refresh brand signals re-reads this brand&apos;s website and public ad copy, then
                   rewrites its positioning, tone and keywords — the profile every remix is built on.
@@ -143,7 +143,7 @@ function Dashboard() {
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  className={solid}
+                  className={cn(solid, "min-w-[196px] text-center")}
                   onClick={() => enrichMutation.mutate(company.id)}
                   disabled={enrichMutation.isPending}
                   title="Re-scrapes the brand's site and public ads, then updates positioning, tone and keywords used for remixes."
@@ -153,8 +153,8 @@ function Dashboard() {
                     : "Refresh brand signals"}
                 </button>
 
-                <Link to="/remix" className={outline}>
-                  Remix ads
+                <Link to="/ads" className={outline}>
+                  Create ads
                 </Link>
                 <Link to="/studio/$id" params={{ id: company.id }} className={outline}>
                   Edit

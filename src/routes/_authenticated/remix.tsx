@@ -54,6 +54,7 @@ function RemixStudio() {
   const runRemix = useServerFn(generateRemix);
 
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [productOpen, setProductOpen] = useState(false);
   const [platform, setPlatform] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("views");
@@ -170,7 +171,17 @@ function RemixStudio() {
                 >
                   Your product
                 </label>
-                <Select value={companyId ?? ""} onValueChange={(value) => setCompanyId(value)}>
+                <Select
+                  value={companyId ?? ""}
+                  // Controlled open state: force the listbox closed on selection so the
+                  // popover never lingers and blocks clicks on the platform filter tabs.
+                  open={productOpen}
+                  onOpenChange={setProductOpen}
+                  onValueChange={(value) => {
+                    setCompanyId(value);
+                    setProductOpen(false);
+                  }}
+                >
                   <SelectTrigger
                     id="product-select"
                     className="h-14 w-full rounded-xl border-border bg-card text-base"
