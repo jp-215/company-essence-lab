@@ -49,17 +49,29 @@ const field = "h-11 rounded-xl bg-card text-base";
 const primary =
   "w-full rounded-xl bg-foreground px-7 py-3 text-base font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60";
 
+const routeLabels: Record<string, string> = {
+  "/billing": "Billing",
+  "/remix": "Remix studio",
+  "/dashboard": "Dashboard",
+  "/knowledge": "Knowledge base",
+  "/community": "Community",
+};
+
 function AuthPage() {
   const navigate = useNavigate();
-  const { tab } = Route.useSearch();
+  const { tab, next, reason } = Route.useSearch();
   const { user, loading } = useAuth();
   const [busy, setBusy] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
   const [mode, setMode] = useState<"signin" | "signup">(tab ?? "signin");
 
+  // Only same-origin app paths are honoured as a post-sign-in destination.
+  const destination = next && /^\/[A-Za-z0-9\-_/]*$/.test(next) ? next : "/dashboard";
+  const gatedLabel = reason === "protected" ? (routeLabels[destination] ?? "That page") : null;
+
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/dashboard", replace: true });
-  }, [loading, user, navigate]);
+    if (!loading && user) navigate({ to: destination, replace: true });
+  }, [loading, user, navigate, destination]);
 
   async function handleSignIn(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -80,8 +92,9 @@ function AuthPage() {
       toast.error(error.message);
       return;
     }
-    navigate({ to: "/dashboard" });
+    navigate({ to: destination });
   }
+
 
   async function handleSignUp(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
