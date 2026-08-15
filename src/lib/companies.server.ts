@@ -47,6 +47,7 @@ function toCard(row: CompanyRow, logoUrl: string | null): CompanyCardDTO {
     name: row.name,
     slug: row.slug,
     bio: row.bio,
+    mission: row.mission,
     ownerName: row.owner_name,
     categoryName: row.categories?.name ?? "Uncategorized",
     categorySlug: row.categories?.slug ?? "",

@@ -10,6 +10,7 @@ export type CompanyCardDTO = {
   name: string;
   slug: string;
   bio: string;
+  mission: string;
   ownerName: string;
   categoryName: string;
   categorySlug: string;
@@ -18,7 +19,6 @@ export type CompanyCardDTO = {
 };
 
 export type CompanyDetailDTO = CompanyCardDTO & {
-  mission: string;
   createdAt: string;
 };
 
