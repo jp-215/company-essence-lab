@@ -430,6 +430,89 @@ export type Database = {
         }
         Relationships: []
       }
+      remix_chat_messages: {
+        Row: {
+          chat_id: string
+          content: string
+          created_at: string
+          id: string
+          owner_id: string
+          remix_id: string | null
+          role: string
+          trend_suggestions: Json | null
+        }
+        Insert: {
+          chat_id: string
+          content?: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          remix_id?: string | null
+          role: string
+          trend_suggestions?: Json | null
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          remix_id?: string | null
+          role?: string
+          trend_suggestions?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remix_chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "remix_chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remix_chat_messages_remix_id_fkey"
+            columns: ["remix_id"]
+            isOneToOne: false
+            referencedRelation: "company_remixes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      remix_chats: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          owner_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remix_chats_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trends: {
         Row: {
           author: string
