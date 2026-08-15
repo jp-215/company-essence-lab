@@ -24,7 +24,7 @@ export function SiteHeader() {
             Vira
           </span>
           <span className="hidden text-xs uppercase tracking-[0.2em] text-muted-foreground sm:inline">
-            Marketplace
+            Viral ad remix
           </span>
         </Link>
 
@@ -39,6 +39,9 @@ export function SiteHeader() {
             <>
               <Button asChild variant="ghost" size="sm">
                 <Link to="/dashboard">Dashboard</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/remix">Remix studio</Link>
               </Button>
               <Button asChild variant="ghost" size="sm">
                 <Link to="/knowledge">Knowledge base</Link>
