@@ -218,7 +218,7 @@ export async function getRecommendedChatter(
   if (error) throw new Error(error.message);
 
 
-  return (data ?? []).map((row) => ({
+  const pool: RecommendedChatterDTO[] = (data ?? []).map((row) => ({
     womKey: row.wom_key,
     platform: row.platform,
     sourceUrl: row.source_url,
@@ -235,4 +235,14 @@ export async function getRecommendedChatter(
     reposts: Number(row.reposts ?? 0),
     buzzScore: Number(row.buzz_score ?? 0),
   }));
+
+  const maxBuzz = Math.max(1, ...pool.map((row) => row.buzzScore));
+  return diversify(pool, {
+    limit,
+    seed,
+    key: (row) => row.womKey,
+    score: (row) => row.buzzScore / maxBuzz,
+    groups: (row) => [`topic:${row.topic}`, `author:${row.authorHandle || row.author}`],
+  });
+
 }
