@@ -89,7 +89,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Vira" },
       {
         property: "og:description",
-        content: "Trending ad prescripts mapped to your category, remixed into your brand voice.",
+        content: "Real viral trends mapped to your category, remixed into your brand voice.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
