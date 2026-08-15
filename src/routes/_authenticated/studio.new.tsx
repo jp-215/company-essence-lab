@@ -398,20 +398,6 @@ function NewCompany() {
                 className="rounded-xl bg-card text-base"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="mission" className="text-base">
-                Mission
-              </Label>
-              <Textarea
-                id="mission"
-                value={mission}
-                onChange={(event) => setMission(event.target.value)}
-                rows={6}
-                maxLength={1200}
-                placeholder="Make honest skincare the default for everyone under 30."
-                className="rounded-xl bg-card text-base"
-              />
-            </div>
           </div>
         ) : null}
 
