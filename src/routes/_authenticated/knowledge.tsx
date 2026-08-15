@@ -6,10 +6,17 @@ import { toast } from "sonner";
 
 import { listKnowledgeBase, searchKnowledgeBase, syncMyKnowledge } from "@/lib/knowledge.functions";
 import { getTrendIndexStatus, runTrendEmbeddingBackfill } from "@/lib/trend-embeddings.functions";
-import { Button } from "@/components/ui/button";
+import {
+  Eyebrow,
+  Lead,
+  MetaLabel,
+  PageShell,
+  PageTitle,
+  Panel,
+  SectionTitle,
+} from "@/components/Page";
+
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/_authenticated/knowledge")({
@@ -104,115 +111,122 @@ function KnowledgePage() {
   const matches = searchMutation.data ?? [];
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <PageShell>
+      <Eyebrow live>Knowledge base</Eyebrow>
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-6">
         <div>
-          <h1 className="font-heading text-3xl">Brand knowledge base</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Every owner, company, intention and mission on the marketplace — plus the enriched
-            positioning, tone and ad themes that power recommendations.
-          </p>
+          <PageTitle>Every brand, owner and mission</PageTitle>
+          <Lead className="mt-4 max-w-2xl">
+            The indexed purpose identity behind each company — owner, bio, mission, plus the
+            enriched positioning, tone and ad themes powering recommendations.
+          </Lead>
         </div>
-        <Button
-          variant="outline"
+        <button
+          type="button"
           onClick={() => syncMutation.mutate()}
           disabled={syncMutation.isPending}
+          className="rounded-xl border border-border bg-card px-6 py-3 text-base font-medium text-foreground transition-colors hover:border-ring disabled:opacity-60"
         >
           {syncMutation.isPending ? "Indexing…" : "Re-index my companies"}
-        </Button>
-      </header>
+        </button>
+      </div>
 
-      <Card className="mb-8">
-        <CardContent className="flex flex-wrap items-center justify-between gap-4 pt-6">
-          <div>
-            <h2 className="font-heading text-lg">Trend recommendations index</h2>
-            <p className="text-sm text-muted-foreground">
-              {trendIndex
-                ? trendIndex.remaining === 0
-                  ? "Every trend is embedded — recommendations are fully semantic."
-                  : `${trendIndex.remaining} trends still need embedding before recommendations are fully semantic.`
-                : "Checking trend index…"}{" "}
-              Newly ingested trends are picked up by re-running this.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setTrendProgress(0);
-              trendBackfillMutation.mutate();
-            }}
-            disabled={trendBackfillMutation.isPending || trendIndex?.remaining === 0}
-          >
-            {trendBackfillMutation.isPending
-              ? `Indexing trends… (${trendProgress} done)`
-              : `Index trends${trendIndex && trendIndex.remaining > 0 ? ` (${trendIndex.remaining} remaining)` : ""}`}
-          </Button>
-        </CardContent>
-      </Card>
+      <Panel className="mt-12 flex flex-wrap items-center justify-between gap-6 p-8">
+        <div>
+          <SectionTitle>Trend recommendations index</SectionTitle>
+          <p className="mt-2 max-w-xl text-base text-muted-foreground">
+            {trendIndex
+              ? trendIndex.remaining === 0
+                ? "Every trend is embedded — recommendations are fully semantic."
+                : `${trendIndex.remaining} trends still need embedding before recommendations are fully semantic.`
+              : "Checking trend index…"}{" "}
+            Newly ingested trends are picked up by re-running this.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setTrendProgress(0);
+            trendBackfillMutation.mutate();
+          }}
+          disabled={trendBackfillMutation.isPending || trendIndex?.remaining === 0}
+          className="rounded-xl border border-border bg-card px-6 py-3 text-base font-medium text-foreground transition-colors hover:border-ring disabled:opacity-60"
+        >
+          {trendBackfillMutation.isPending
+            ? `Indexing trends… (${trendProgress} done)`
+            : `Index trends${trendIndex && trendIndex.remaining > 0 ? ` (${trendIndex.remaining} remaining)` : ""}`}
+        </button>
+      </Panel>
 
-      <Card className="mb-8">
-        <CardContent className="space-y-4 pt-6">
-          <div>
-            <h2 className="font-heading text-lg">Find similar brands</h2>
-            <p className="text-sm text-muted-foreground">
-              Describe a mission, audience or ad angle — matching is semantic, not keyword based.
-            </p>
-          </div>
-          <form
-            className="flex flex-col gap-2 sm:flex-row"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (semanticQuery.trim().length < 3) {
-                toast.error("Use at least 3 characters.");
-                return;
-              }
-              searchMutation.mutate(semanticQuery.trim());
-            }}
-          >
+      <Panel className="mt-12 p-8">
+        <SectionTitle>Find similar brands</SectionTitle>
+        <p className="mt-2 text-base text-muted-foreground">
+          Describe a mission, audience or ad angle — matching is semantic, not keyword based.
+        </p>
+        <form
+          className="mt-6 flex flex-col gap-3 sm:flex-row"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (semanticQuery.trim().length < 3) {
+              toast.error("Use at least 3 characters.");
+              return;
+            }
+            searchMutation.mutate(semanticQuery.trim());
+          }}
+        >
+          <div className="relative flex-1">
+            <span className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 font-mono text-sm text-muted-foreground">
+              /
+            </span>
             <Input
               value={semanticQuery}
               onChange={(event) => setSemanticQuery(event.target.value)}
               placeholder="e.g. sustainable skincare for young parents"
+              className="h-12 rounded-full border-border bg-card pl-10 text-base"
             />
-            <Button type="submit" disabled={searchMutation.isPending}>
-              {searchMutation.isPending ? "Searching…" : "Search"}
-            </Button>
-          </form>
+          </div>
+          <button
+            type="submit"
+            disabled={searchMutation.isPending}
+            className="rounded-full bg-foreground px-7 py-3 text-base font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {searchMutation.isPending ? "Searching…" : "Search"}
+          </button>
+        </form>
 
-          {searchMutation.isSuccess && matches.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No matches yet — re-index companies so their knowledge is embedded.
-            </p>
-          ) : null}
+        {searchMutation.isSuccess && matches.length === 0 ? (
+          <p className="mt-6 text-base text-muted-foreground">
+            No matches yet — re-index companies so their knowledge is embedded.
+          </p>
+        ) : null}
 
-          {matches.length > 0 ? (
-            <ul className="space-y-3">
-              {matches.map((match) => (
-                <li key={match.companyId} className="rounded-md border border-border p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Link
-                      to="/companies/$slug"
-                      params={{ slug: match.slug }}
-                      className="font-heading text-base underline-offset-4 hover:underline"
-                    >
-                      {match.companyName}
-                    </Link>
-                    <Badge variant="secondary">
-                      {Math.round(match.similarity * 100)}% match · {match.categoryName}
-                    </Badge>
-                  </div>
-                  {match.positioning ? (
-                    <p className="mt-2 text-sm text-muted-foreground">{match.positioning}</p>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </CardContent>
-      </Card>
+        {matches.length > 0 ? (
+          <ul className="mt-6 space-y-4">
+            {matches.map((match) => (
+              <li key={match.companyId} className="rounded-2xl border border-border p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <Link
+                    to="/companies/$slug"
+                    params={{ slug: match.slug }}
+                    className="font-serif text-xl font-bold tracking-tight text-foreground underline-offset-4 hover:underline"
+                  >
+                    {match.companyName}
+                  </Link>
+                  <span className="rounded-full bg-secondary px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-foreground">
+                    {Math.round(match.similarity * 100)}% match · {match.categoryName}
+                  </span>
+                </div>
+                {match.positioning ? (
+                  <p className="mt-3 text-base text-muted-foreground">{match.positioning}</p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </Panel>
 
       <form
-        className="mb-6 flex flex-col gap-2 sm:flex-row"
+        className="mt-12 flex flex-col gap-3 border-y border-border py-6 sm:flex-row sm:items-center"
         onSubmit={(event) => {
           event.preventDefault();
           setAppliedKeyword(keyword.trim());
@@ -222,96 +236,118 @@ function KnowledgePage() {
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
           placeholder="Filter by company, owner or text"
+          className="h-12 flex-1 rounded-full border-border bg-card text-base"
         />
-        <Button type="submit" variant="secondary">
+        <button
+          type="submit"
+          className="rounded-full border border-border bg-card px-7 py-3 text-base font-medium text-foreground transition-colors hover:border-ring"
+        >
           Filter
-        </Button>
+        </button>
       </form>
 
       {isLoading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
+        <div className="mt-8 space-y-4">
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
         </div>
       ) : (entries ?? []).length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="mt-8 text-base text-muted-foreground">
           Nothing in the knowledge base yet. Add a company, then re-index.
         </p>
       ) : (
-        <ul className="space-y-4">
+        <ul className="mt-8 space-y-6">
           {(entries ?? []).map((entry) => (
             <li key={entry.companyId}>
-              <Card>
-                <CardContent className="space-y-3 pt-6">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {entry.slug ? (
-                        <Link
-                          to="/companies/$slug"
-                          params={{ slug: entry.slug }}
-                          className="font-heading text-lg underline-offset-4 hover:underline"
-                        >
-                          {entry.companyName}
-                        </Link>
-                      ) : (
-                        <span className="font-heading text-lg">{entry.companyName}</span>
-                      )}
-                      <Badge variant="outline">{entry.categoryName}</Badge>
-                      {entry.isMine ? <Badge>Yours</Badge> : null}
-                      {entry.indexed ? null : <Badge variant="secondary">Not embedded</Badge>}
-                    </div>
-                    <span className="text-xs text-muted-foreground">Owner: {entry.ownerName}</span>
+              <Panel className="space-y-5 p-8">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    {entry.slug ? (
+                      <Link
+                        to="/companies/$slug"
+                        params={{ slug: entry.slug }}
+                        className="font-serif text-2xl font-bold tracking-tight text-foreground underline-offset-4 hover:underline"
+                      >
+                        {entry.companyName}
+                      </Link>
+                    ) : (
+                      <span className="font-serif text-2xl font-bold tracking-tight text-foreground">
+                        {entry.companyName}
+                      </span>
+                    )}
+                    <span className="rounded-full border border-border px-4 py-1.5 text-sm text-foreground">
+                      {entry.categoryName}
+                    </span>
+                    {entry.isMine ? (
+                      <span className="rounded-full bg-foreground px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-background">
+                        Yours
+                      </span>
+                    ) : null}
+                    {entry.indexed ? null : (
+                      <span className="rounded-full bg-secondary px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                        Not embedded
+                      </span>
+                    )}
                   </div>
+                  <MetaLabel>Owner · {entry.ownerName}</MetaLabel>
+                </div>
 
-                  <dl className="grid gap-3 sm:grid-cols-2">
+                <dl className="grid gap-6 sm:grid-cols-2">
+                  <div>
+                    <dt>
+                      <MetaLabel>Bio</MetaLabel>
+                    </dt>
+                    <dd className="mt-1 text-base text-foreground">{entry.bio || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>
+                      <MetaLabel>Mission</MetaLabel>
+                    </dt>
+                    <dd className="mt-1 text-base text-foreground">{entry.mission || "—"}</dd>
+                  </div>
+                  {entry.positioning ? (
                     <div>
-                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">Bio</dt>
-                      <dd className="text-sm">{entry.bio || "—"}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Mission
+                      <dt>
+                        <MetaLabel>Positioning</MetaLabel>
                       </dt>
-                      <dd className="text-sm">{entry.mission || "—"}</dd>
-                    </div>
-                    {entry.positioning ? (
-                      <div>
-                        <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Positioning
-                        </dt>
-                        <dd className="text-sm">{entry.positioning}</dd>
-                      </div>
-                    ) : null}
-                    {entry.tone ? (
-                      <div>
-                        <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Tone
-                        </dt>
-                        <dd className="text-sm">{entry.tone}</dd>
-                      </div>
-                    ) : null}
-                  </dl>
-
-                  {entry.keywords.length > 0 || entry.adThemes.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {entry.keywords.map((word) => (
-                        <Badge key={`k-${word}`} variant="secondary">
-                          {word}
-                        </Badge>
-                      ))}
-                      {entry.adThemes.map((theme) => (
-                        <Badge key={`a-${theme}`} variant="outline">
-                          {theme}
-                        </Badge>
-                      ))}
+                      <dd className="mt-1 text-base text-foreground">{entry.positioning}</dd>
                     </div>
                   ) : null}
-                </CardContent>
-              </Card>
+                  {entry.tone ? (
+                    <div>
+                      <dt>
+                        <MetaLabel>Tone</MetaLabel>
+                      </dt>
+                      <dd className="mt-1 text-base text-foreground">{entry.tone}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+
+                {entry.keywords.length > 0 || entry.adThemes.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 border-t border-border pt-5">
+                    {entry.keywords.map((word) => (
+                      <span
+                        key={`k-${word}`}
+                        className="rounded-md bg-secondary px-3 py-1 text-sm text-foreground"
+                      >
+                        {word}
+                      </span>
+                    ))}
+                    {entry.adThemes.map((theme) => (
+                      <span
+                        key={`a-${theme}`}
+                        className="rounded-md border border-border px-3 py-1 text-sm text-foreground"
+                      >
+                        {theme}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </Panel>
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </PageShell>
   );
 }
