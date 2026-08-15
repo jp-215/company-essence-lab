@@ -26,61 +26,11 @@ function origin(): string {
   return "http://localhost:8080";
 }
 
-// --- judges ----------------------------------------------------------------
-
-export const listJudges = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await terac(context.supabase)
-      .from("judges")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return data ?? [];
-  });
-
-export const createJudge = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({
-        name: z.string().trim().min(1).max(120),
-        email: z.string().trim().email().max(200),
-        expertiseTags: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
-      })
-      .parse(input),
-  )
-  .handler(async ({ context, data }) => {
-    const { data: row, error } = await terac(context.supabase)
-      .from("judges")
-      .insert({
-        owner_id: context.userId,
-        name: data.name,
-        email: data.email.toLowerCase(),
-        expertise_tags: data.expertiseTags,
-        active: true,
-      })
-      .select("*")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
-  });
-
-export const setJudgeActive = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ judgeId: z.string().uuid(), active: z.boolean() }).parse(input),
-  )
-  .handler(async ({ context, data }) => {
-    const { error } = await terac(context.supabase)
-      .from("judges")
-      .update({ active: data.active })
-      .eq("id", data.judgeId);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
-
 // --- Flow A ----------------------------------------------------------------
+//
+// There is no judge roster. A session opens as a task in the Terac agent pool:
+// anyone with the session link can claim it, watch every concept, rank them and
+// leave feedback. Identity is captured on claim, not curated up front.
 
 export const createAds = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -89,7 +39,12 @@ export const createAds = createServerFn({ method: "POST" })
       .object({
         companyId: z.string().uuid(),
         trendKeys: z.array(z.string().trim().min(3).max(40)).min(1).max(6),
-        judgeIds: z.array(z.string().uuid()).min(1).max(20),
+        quorum: z.number().int().min(1).max(20).default(3),
+        deadlineHours: z.number().int().min(1).max(336).default(48),
+      })
+      .parse(input),
+  )
+
         quorum: z.number().int().min(1).max(20).default(3),
         deadlineHours: z.number().int().min(1).max(336).default(48),
       })
