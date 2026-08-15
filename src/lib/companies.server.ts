@@ -147,7 +147,7 @@ export async function fetchCompanyBySlug(
     .maybeSingle();
 
   return {
-    company: { ...toCard(row, logoUrl), mission: row.mission, createdAt: row.created_at },
+    company: { ...toCard(row, logoUrl), createdAt: row.created_at },
     insight: insightRow ? mapInsight(insightRow) : null,
   };
 }
