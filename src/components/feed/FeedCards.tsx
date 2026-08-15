@@ -13,9 +13,10 @@ const compact = new Intl.NumberFormat("en", { notation: "compact" });
 export type FeedItem = ({ kind: "video" } & PublicTrend) | ({ kind: "chatter" } & PublicWom);
 
 export type SelectionProps = {
-  selected?: boolean;
-  onToggleSelect?: () => void;
+  selected?: boolean | undefined;
+  onToggleSelect?: (() => void) | undefined;
 };
+
 
 export function tiktokVideoId(sourceUrl: string | null): string | null {
   if (!sourceUrl) return null;
