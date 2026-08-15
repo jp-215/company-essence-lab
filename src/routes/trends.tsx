@@ -11,6 +11,7 @@ import { listMyCompanies } from "@/lib/owner.functions";
 import { getChatterRecommendations, getRecommendations } from "@/lib/recommendations.functions";
 import { getTrendIndexStatus } from "@/lib/trend-embeddings.functions";
 import { interleave } from "@/lib/feed-mix";
+import { RANK_BLEND_LABEL } from "@/lib/rank-constants";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -303,7 +304,6 @@ function TrendingPage() {
   );
 }
 
-
 /** Signed-in users get trends matched to their brand; signed-out users get a CTA. */
 function PersonalizedRail({
   categories,
@@ -321,9 +321,9 @@ function PersonalizedRail({
   const fetchIndexStatus = useServerFn(getTrendIndexStatus);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [tailored, setTailored] = useState(false);
-  // Seed drives the server-side shuffle; a new seed = a new mix for the same brand.
-  const [seed, setSeed] = useState(() => Math.floor(Date.now() / 3_600_000) % 100000);
-
+  // Seed drives the server-side shuffle; a fresh random one per mount means
+  // every visit gets a new mix (not a shared hourly bucket).
+  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1_000_000));
 
   const companies = useQuery({
     queryKey: ["my-companies"],
@@ -347,16 +347,17 @@ function PersonalizedRail({
 
   const recommendations = useQuery({
     queryKey: ["trend-recommendations", companyId, seed],
-    queryFn: () => fetchRecommendations({ data: { companyId: companyId!, limit: 8, seed } }),
+    queryFn: () =>
+      fetchRecommendations({ data: { companyId: companyId!, limit: 8, seed, surface: "trends" } }),
     enabled: Boolean(user && companyId),
   });
 
   const chatter = useQuery({
     queryKey: ["chatter-recommendations", companyId, seed],
-    queryFn: () => fetchChatter({ data: { companyId: companyId!, limit: 6, seed } }),
+    queryFn: () =>
+      fetchChatter({ data: { companyId: companyId!, limit: 6, seed, surface: "trends" } }),
     enabled: Boolean(user && companyId),
   });
-
 
   const indexStatus = useQuery({
     queryKey: ["trend-index-status"],
@@ -364,14 +365,15 @@ function PersonalizedRail({
     enabled: Boolean(user),
   });
 
-  const semanticCount = (recommendations.data ?? []).filter((t) => t.matchType === "semantic").length;
+  const semanticCount = (recommendations.data ?? []).filter(
+    (t) => t.matchType === "semantic",
+  ).length;
   // Balanced rail: short-form video trends alternating with social chatter.
   // The seed also flips which source leads, so the rail doesn't always open on video.
   const videoLeads = seed % 2 === 0;
   const mixedFeed = videoLeads
     ? interleave(recommendations.data ?? [], chatter.data ?? [], 10)
     : interleave(chatter.data ?? [], recommendations.data ?? [], 10);
-
 
   if (loading) return null;
 
@@ -416,7 +418,7 @@ function PersonalizedRail({
             size="sm"
             variant="secondary"
             disabled={recommendations.isFetching || chatter.isFetching}
-            onClick={() => setSeed(Math.floor(Math.random() * 100000))}
+            onClick={() => setSeed(Math.floor(Math.random() * 1_000_000))}
           >
             {recommendations.isFetching || chatter.isFetching ? "Mixing…" : "Shuffle mix"}
           </Button>
@@ -447,11 +449,10 @@ function PersonalizedRail({
         />
         <RagStat
           label="Ranking blend"
-          value="0.55 / 0.45"
-          note="Brand fit vs. fresh rotation · max 2 per creator"
+          value={RANK_BLEND_LABEL}
+          note="Fit + heat percentiles, community boost, seeded exploration · max 2 per creator"
         />
       </div>
-
 
       {recommendations.isLoading || chatter.isLoading || companies.isLoading ? (
         <div className="mt-4 flex gap-4 overflow-hidden">

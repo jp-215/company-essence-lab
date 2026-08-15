@@ -43,8 +43,12 @@ export const startChat = createServerFn({ method: "POST" })
       `${company.name} — remix chat`,
     );
 
+    // No explicit seed: the server draws a fresh random one, so every new chat
+    // opens with a different mix.
     const recommendations = await getRecommendedTrends(context.supabase, data.companyId, {
       limit: CHIP_COUNT,
+      surface: "chat",
+      ownerId: context.userId,
     });
 
     // Templated greeting — no LLM call, so opening a chat is instant.
@@ -81,6 +85,8 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     const recommendations = await getRecommendedTrends(context.supabase, chat.companyId, {
       limit: CHIP_COUNT,
       queryText: data.message,
+      surface: "chat",
+      ownerId: context.userId,
     });
 
     let reply: string;

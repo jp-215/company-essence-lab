@@ -3,9 +3,10 @@ import type { TrendDTO } from "./remix-types";
 
 export type PublicTrend = Omit<TrendDTO, "relevanceRank"> & { categoryName: string | null };
 
-/** Public trending feed, optionally scoped to a category slug via category_trends. */
+/** Public trending feed, optionally scoped to a category slug and/or hashtag. */
 export async function fetchTrendingNow(input: {
   categorySlug?: string | undefined;
+  hashtag?: string | undefined;
   limit?: number | undefined;
 }): Promise<PublicTrend[]> {
   const client = createPublicClient();
@@ -37,11 +38,13 @@ export async function fetchTrendingNow(input: {
   let query = client
     .from("trends")
     .select(
-      "trend_key, platform, title, caption, hashtags, format, source_url, author, views, likes, engagement_rate, trend_score",
+      "trend_key, platform, title, caption, hashtags, music, format, source_url, author, views, likes, comments, shares, engagement_rate, trend_score, posted_at",
     )
+    .is("duplicate_of", null)
     .order("trend_score", { ascending: false })
     .limit(limit);
   if (trendKeys) query = query.in("trend_key", trendKeys);
+  if (input.hashtag) query = query.contains("hashtags", [input.hashtag]);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
@@ -59,6 +62,49 @@ export async function fetchTrendingNow(input: {
     likes: Number(row.likes ?? 0),
     engagementRate: Number(row.engagement_rate ?? 0),
     trendScore: Number(row.trend_score ?? 0),
+    music: row.music ?? "",
+    comments: Number(row.comments ?? 0),
+    shares: Number(row.shares ?? 0),
+    postedAt: row.posted_at ?? null,
     categoryName,
   }));
+}
+
+export type TrendingHashtag = { tag: string; uses: number };
+
+/**
+ * Top hashtags across the hottest canonical trends and chatter — powers the
+ * "trending tags" chip rail. Aggregated in TS (a few hundred rows).
+ */
+export async function fetchTrendingHashtags(limit = 18): Promise<TrendingHashtag[]> {
+  const client = createPublicClient();
+  const [{ data: trendRows }, { data: womRows }] = await Promise.all([
+    client
+      .from("trends")
+      .select("hashtags")
+      .is("duplicate_of", null)
+      .order("trend_score", { ascending: false })
+      .limit(300),
+    client
+      .from("word_of_mouth")
+      .select("hashtags")
+      .is("duplicate_of", null)
+      .order("buzz_score", { ascending: false })
+      .limit(200),
+  ]);
+
+  const counts = new Map<string, number>();
+  for (const row of [...(trendRows ?? []), ...(womRows ?? [])]) {
+    for (const raw of row.hashtags ?? []) {
+      const tag = raw.replace(/^#/, "").trim().toLowerCase();
+      if (!tag || tag.length > 40) continue;
+      counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+  }
+
+  return [...counts.entries()]
+    .filter(([, uses]) => uses >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([tag, uses]) => ({ tag, uses }));
 }

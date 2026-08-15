@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import type { RemixDTO, TrendDTO } from "./remix-types";
+import { logInteractionsInBackground } from "./interactions.server";
 
 type Client = SupabaseClient<Database>;
 
@@ -241,6 +242,17 @@ export async function saveRemix(
     .single();
   if (error) throw new Error(error.message);
 
+  // Collaborative signal: remixes are the strongest "brands like yours" event.
+  logInteractionsInBackground([
+    {
+      companyId: input.companyId,
+      ownerId: userId,
+      trendKey: input.trend.trendKey,
+      action: "remix",
+      surface: "remix",
+    },
+  ]);
+
   return toRemix(data);
 }
 
@@ -308,5 +320,18 @@ export async function saveSourcedRemix(
     .select("*")
     .single();
   if (error) throw new Error(error.message);
+
+  // Chatter remixes keep a null company_remixes.trend_key (FK into trends), but
+  // the interaction log records the wom key so collaborative filtering sees it.
+  logInteractionsInBackground([
+    {
+      companyId: input.companyId,
+      ownerId: userId,
+      trendKey: input.trend.trendKey,
+      action: "remix",
+      surface: "community",
+    },
+  ]);
+
   return toRemix(data);
 }

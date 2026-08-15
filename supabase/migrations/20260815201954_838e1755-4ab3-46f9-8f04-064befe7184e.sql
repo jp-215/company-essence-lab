@@ -1,8 +1,11 @@
+-- NOTE: this migration is a byte-duplicate of 20260815195006_951bcce3-... (already applied
+-- on the hosted DB). Every statement is guarded so a fresh replay of the folder succeeds.
+
 -- Content-based trend recommendations: embed trends and rank by similarity to a company profile.
 
-ALTER TABLE public.trends ADD COLUMN embedding extensions.vector(1536);
+ALTER TABLE public.trends ADD COLUMN IF NOT EXISTS embedding extensions.vector(1536);
 
-CREATE INDEX trends_embedding_idx ON public.trends
+CREATE INDEX IF NOT EXISTS trends_embedding_idx ON public.trends
 USING hnsw (embedding extensions.vector_cosine_ops);
 
 -- Ranks trends for a company by cosine similarity between the trend embedding and either

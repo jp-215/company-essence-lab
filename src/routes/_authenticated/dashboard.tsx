@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { deleteCompany, listMyCompanies } from "@/lib/owner.functions";
 import { runEnrichment } from "@/lib/enrich.functions";
 import { getChatterRecommendations, getRecommendations } from "@/lib/recommendations.functions";
+import { RANK_BLEND_LABEL } from "@/lib/rank-constants";
 import { getTrendIndexStatus } from "@/lib/trend-embeddings.functions";
 import { BrandLogo } from "@/components/BrandLogo";
 import { TrendPreview } from "@/components/TrendPreview";
@@ -63,20 +64,28 @@ function Dashboard() {
   const fetchChatterRecommendations = useServerFn(getChatterRecommendations);
   const fetchIndexStatus = useServerFn(getTrendIndexStatus);
   const [focusId, setFocusId] = useState<string | null>(null);
+  // Per-mount seed: every dashboard visit gets a fresh mix; Shuffle re-rolls it.
+  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1_000_000));
 
   useEffect(() => {
     if (!focusId && data?.length) setFocusId(data[0]!.id);
   }, [data, focusId]);
 
   const trends = useQuery({
-    queryKey: ["dashboard-trends", focusId],
-    queryFn: () => fetchRecommendations({ data: { companyId: focusId!, limit: 6 } }),
+    queryKey: ["dashboard-trends", focusId, seed],
+    queryFn: () =>
+      fetchRecommendations({
+        data: { companyId: focusId!, limit: 6, seed, surface: "dashboard" },
+      }),
     enabled: !!focusId,
   });
 
   const chatter = useQuery({
-    queryKey: ["dashboard-chatter", focusId],
-    queryFn: () => fetchChatterRecommendations({ data: { companyId: focusId!, limit: 6 } }),
+    queryKey: ["dashboard-chatter", focusId, seed],
+    queryFn: () =>
+      fetchChatterRecommendations({
+        data: { companyId: focusId!, limit: 6, seed, surface: "dashboard" },
+      }),
     enabled: !!focusId,
   });
 
@@ -89,8 +98,6 @@ function Dashboard() {
   const semanticCount = (trends.data ?? []).filter((t) => t.matchType === "semantic").length;
   // Balanced feed: short-form video trends alternating with social chatter.
   const mixedFeed = interleave(trends.data ?? [], chatter.data ?? [], 6);
-
-
 
   const enrichMutation = useMutation({
     mutationFn: (companyId: string) => enrich({ data: { companyId } }),
@@ -230,9 +237,19 @@ function Dashboard() {
                 with virality. Category mapping is only the fallback.
               </p>
             </div>
-            <Link to="/remix" className={outline}>
-              Open remix studio
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => setSeed(Math.floor(Math.random() * 1_000_000))}
+                disabled={trends.isFetching || chatter.isFetching}
+                className={outline}
+              >
+                {trends.isFetching || chatter.isFetching ? "Mixing…" : "Shuffle mix"}
+              </button>
+              <Link to="/remix" className={outline}>
+                Open remix studio
+              </Link>
+            </div>
           </div>
 
           {data.length > 1 ? (
@@ -264,7 +281,11 @@ function Dashboard() {
             <RagStat
               label="Index coverage"
               value={
-                indexStatus.data ? (indexStatus.data.remaining === 0 ? "Complete" : "Backfilling") : "…"
+                indexStatus.data
+                  ? indexStatus.data.remaining === 0
+                    ? "Complete"
+                    : "Backfilling"
+                  : "…"
               }
               note={
                 indexStatus.data
@@ -279,8 +300,8 @@ function Dashboard() {
             />
             <RagStat
               label="Ranking blend"
-              value="0.8 / 0.2"
-              note="Cosine similarity weighted against trend heat"
+              value={RANK_BLEND_LABEL}
+              note="Fit + heat percentiles, community boost, seeded exploration"
             />
           </Panel>
 
@@ -365,7 +386,6 @@ function Dashboard() {
           </div>
         </section>
       ) : null}
-
     </PageShell>
   );
 }

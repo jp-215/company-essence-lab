@@ -22,9 +22,10 @@ export type PublicWom = {
   categoryName: string | null;
 };
 
-/** Public X/Twitter word-of-mouth feed, optionally scoped to a category slug. */
+/** Public X/Twitter word-of-mouth feed, optionally scoped to a category slug and/or hashtag. */
 export async function fetchWordOfMouth(input: {
   categorySlug?: string | undefined;
+  hashtag?: string | undefined;
   limit?: number | undefined;
 }): Promise<PublicWom[]> {
   const client = createPublicClient();
@@ -58,9 +59,11 @@ export async function fetchWordOfMouth(input: {
     .select(
       "wom_key, platform, source_url, author, author_handle, title, content, hashtags, topic, theme, sentiment, views, likes, replies, reposts, engagement_rate, buzz_score, posted_at",
     )
+    .is("duplicate_of", null)
     .order("buzz_score", { ascending: false })
     .limit(limit);
   if (womKeys) query = query.in("wom_key", womKeys);
+  if (input.hashtag) query = query.contains("hashtags", [input.hashtag]);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);

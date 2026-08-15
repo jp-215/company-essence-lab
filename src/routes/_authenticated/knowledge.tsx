@@ -5,7 +5,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
 import { listKnowledgeBase, searchKnowledgeBase, syncMyKnowledge } from "@/lib/knowledge.functions";
-import { getTrendIndexStatus, runTrendEmbeddingBackfill } from "@/lib/trend-embeddings.functions";
+import {
+  getTrendIndexStatus,
+  getWomIndexStatus,
+  runDedupeTrends,
+  runTrendEmbeddingBackfill,
+  runWomEmbeddingBackfill,
+} from "@/lib/trend-embeddings.functions";
 import {
   Eyebrow,
   Lead,
@@ -95,6 +101,53 @@ function KnowledgePage() {
     onError: (error) => toast.error(error instanceof Error ? error.message : "Indexing failed."),
   });
 
+  const fetchWomIndexStatus = useServerFn(getWomIndexStatus);
+  const backfillWom = useServerFn(runWomEmbeddingBackfill);
+  const dedupe = useServerFn(runDedupeTrends);
+  const [womProgress, setWomProgress] = useState(0);
+
+  const { data: womIndex } = useQuery({
+    queryKey: ["wom-index-status"],
+    queryFn: () => fetchWomIndexStatus(),
+  });
+
+  const womBackfillMutation = useMutation({
+    mutationFn: async () => {
+      let embedded = 0;
+      for (;;) {
+        const result = await backfillWom({ data: { batchSize: 100 } });
+        embedded += result.embedded;
+        setWomProgress(embedded);
+        if (result.remaining === 0 || result.embedded === 0) {
+          return { ...result, embedded };
+        }
+      }
+    },
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ["wom-index-status"] });
+      if (result.remaining === 0) {
+        toast.success(`All chatter indexed (${result.embedded} embedded this run).`);
+      } else {
+        toast.error(
+          `Indexed ${result.embedded}, but ${result.remaining} remain — is AI configured?`,
+        );
+      }
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Indexing failed."),
+  });
+
+  const dedupeMutation = useMutation({
+    mutationFn: () => dedupe({ data: {} }),
+    onSuccess: (result) => {
+      toast.success(
+        result.marked === 0
+          ? `No new duplicates found (${result.totalDuplicates} already flagged).`
+          : `Flagged ${result.marked} near-duplicate trends (${result.totalDuplicates} total).`,
+      );
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Dedupe failed."),
+  });
+
   const syncMutation = useMutation({
     mutationFn: () => sync(),
     onSuccess: (result) => {
@@ -133,29 +186,58 @@ function KnowledgePage() {
 
       <Panel className="mt-12 flex flex-wrap items-center justify-between gap-6 p-8">
         <div>
-          <SectionTitle>Trend recommendations index</SectionTitle>
+          <SectionTitle>Recommendation engine maintenance</SectionTitle>
           <p className="mt-2 max-w-xl text-base text-muted-foreground">
             {trendIndex
               ? trendIndex.remaining === 0
-                ? "Every trend is embedded — recommendations are fully semantic."
-                : `${trendIndex.remaining} trends still need embedding before recommendations are fully semantic.`
+                ? "Every trend is embedded."
+                : `${trendIndex.remaining} trends still need embedding.`
               : "Checking trend index…"}{" "}
-            Newly ingested trends are picked up by re-running this.
+            {womIndex
+              ? womIndex.remaining === 0
+                ? "All chatter is embedded."
+                : `${womIndex.remaining} chatter posts still need embedding.`
+              : ""}{" "}
+            Run dedupe after indexing so near-identical scrapes stop repeating in recommendations.
+            Newly ingested rows are picked up by re-running these.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setTrendProgress(0);
-            trendBackfillMutation.mutate();
-          }}
-          disabled={trendBackfillMutation.isPending || trendIndex?.remaining === 0}
-          className="rounded-xl border border-border bg-card px-6 py-3 text-base font-medium text-foreground transition-colors hover:border-ring disabled:opacity-60"
-        >
-          {trendBackfillMutation.isPending
-            ? `Indexing trends… (${trendProgress} done)`
-            : `Index trends${trendIndex && trendIndex.remaining > 0 ? ` (${trendIndex.remaining} remaining)` : ""}`}
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setTrendProgress(0);
+              trendBackfillMutation.mutate();
+            }}
+            disabled={trendBackfillMutation.isPending || trendIndex?.remaining === 0}
+            className="rounded-xl border border-border bg-card px-6 py-3 text-base font-medium text-foreground transition-colors hover:border-ring disabled:opacity-60"
+          >
+            {trendBackfillMutation.isPending
+              ? `Indexing trends… (${trendProgress} done)`
+              : `Index trends${trendIndex && trendIndex.remaining > 0 ? ` (${trendIndex.remaining} remaining)` : ""}`}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setWomProgress(0);
+              womBackfillMutation.mutate();
+            }}
+            disabled={womBackfillMutation.isPending || womIndex?.remaining === 0}
+            className="rounded-xl border border-border bg-card px-6 py-3 text-base font-medium text-foreground transition-colors hover:border-ring disabled:opacity-60"
+          >
+            {womBackfillMutation.isPending
+              ? `Indexing chatter… (${womProgress} done)`
+              : `Index chatter${womIndex && womIndex.remaining > 0 ? ` (${womIndex.remaining} remaining)` : ""}`}
+          </button>
+          <button
+            type="button"
+            onClick={() => dedupeMutation.mutate()}
+            disabled={dedupeMutation.isPending}
+            className="rounded-xl border border-border bg-card px-6 py-3 text-base font-medium text-foreground transition-colors hover:border-ring disabled:opacity-60"
+          >
+            {dedupeMutation.isPending ? "Flagging duplicates…" : "Dedupe trends"}
+          </button>
+        </div>
       </Panel>
 
       <Panel className="mt-12 p-8">

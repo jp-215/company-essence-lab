@@ -17,6 +17,11 @@ export type TrendDTO = {
   engagementRate: number;
   trendScore: number;
   relevanceRank: number;
+  /** Extra display metadata (present on newer read paths). */
+  music?: string;
+  comments?: number;
+  shares?: number;
+  postedAt?: string | null;
 };
 
 export type RemixDTO = {

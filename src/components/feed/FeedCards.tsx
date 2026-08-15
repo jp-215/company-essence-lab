@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { Check, ExternalLink, Play, Sparkles } from "lucide-react";
+import { Check, ExternalLink, Flame, Music, Play, Sparkles } from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, timeAgo } from "@/lib/utils";
 import type { PublicTrend } from "@/lib/trends-feed.server";
 import type { PublicWom } from "@/lib/wom-feed.server";
 
@@ -17,6 +17,54 @@ export type SelectionProps = {
   onToggleSelect?: (() => void) | undefined;
 };
 
+export type SocialProps = {
+  /** Distinct brands that already remixed this item ("N brands remixed this"). */
+  remixCount?: number | undefined;
+  /** Makes hashtags tappable filters when provided. */
+  onTagClick?: ((tag: string) => void) | undefined;
+};
+
+function HashtagChips({
+  hashtags,
+  onTagClick,
+}: {
+  hashtags: string[];
+  onTagClick?: ((tag: string) => void) | undefined;
+}) {
+  if (!hashtags.length) return null;
+  const tags = hashtags.slice(0, 6).map((tag) => tag.replace(/^#/, ""));
+  if (!onTagClick) {
+    return (
+      <p className="font-mono text-xs text-muted-foreground">
+        {tags.map((tag) => `#${tag}`).join("  ")}
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {tags.map((tag) => (
+        <button
+          key={tag}
+          type="button"
+          onClick={() => onTagClick(tag.toLowerCase())}
+          className="rounded-full border border-border bg-card px-2.5 py-1 font-mono text-xs text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
+        >
+          #{tag}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SocialProofBadge({ remixCount }: { remixCount?: number | undefined }) {
+  if (!remixCount) return null;
+  return (
+    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground">
+      <Flame className="size-3.5" />
+      {remixCount} {remixCount === 1 ? "brand" : "brands"} remixed this
+    </span>
+  );
+}
 
 export function tiktokVideoId(sourceUrl: string | null): string | null {
   if (!sourceUrl) return null;
@@ -83,7 +131,9 @@ export function VideoCard({
   active,
   selected,
   onToggleSelect,
-}: { item: PublicTrend; active: boolean } & SelectionProps) {
+  remixCount,
+  onTagClick,
+}: { item: PublicTrend; active: boolean } & SelectionProps & SocialProps) {
   const [thumbFailed, setThumbFailed] = useState(false);
   const videoId = tiktokVideoId(item.sourceUrl);
   const thumbSrc =
@@ -140,20 +190,25 @@ export function VideoCard({
           <h2 className="max-w-2xl font-serif text-2xl font-semibold leading-tight text-foreground lg:text-3xl">
             {item.title || item.caption.slice(0, 80) || "Trending clip"}
           </h2>
-          {item.author ? <p className="text-sm text-muted-foreground">@{item.author}</p> : null}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+            {item.author ? <span>@{item.author}</span> : null}
+            {item.postedAt ? <span>{timeAgo(item.postedAt)}</span> : null}
+            {item.music ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Music className="size-3.5" />
+                <span className="max-w-[240px] truncate">{item.music}</span>
+              </span>
+            ) : null}
+          </div>
+          <SocialProofBadge remixCount={remixCount} />
           <p className="max-w-2xl line-clamp-5 text-sm leading-relaxed text-muted-foreground">
             {item.caption}
           </p>
-          {item.hashtags.length ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              {item.hashtags
-                .slice(0, 6)
-                .map((tag) => `#${tag.replace(/^#/, "")}`)
-                .join("  ")}
-            </p>
-          ) : null}
+          <HashtagChips hashtags={item.hashtags} onTagClick={onTagClick} />
           <p className="text-xs text-muted-foreground">
-            {compact.format(item.views)} views · {compact.format(item.likes)} likes ·{" "}
+            {compact.format(item.views)} views · {compact.format(item.likes)} likes
+            {item.comments ? ` · ${compact.format(item.comments)} comments` : ""}
+            {item.shares ? ` · ${compact.format(item.shares)} shares` : ""} ·{" "}
             {(item.engagementRate * 100).toFixed(1)}% engagement
           </p>
           <Actions
@@ -173,7 +228,9 @@ export function ChatterCard({
   item,
   selected,
   onToggleSelect,
-}: { item: PublicWom } & SelectionProps) {
+  remixCount,
+  onTagClick,
+}: { item: PublicWom } & SelectionProps & SocialProps) {
   return (
     <Slide>
       <div className="grid gap-6 sm:grid-cols-[minmax(0,300px)_minmax(0,1fr)] sm:items-center sm:gap-10 lg:gap-16">
@@ -187,7 +244,11 @@ export function ChatterCard({
           </p>
           <p className="text-xs text-muted-foreground">
             {compact.format(item.likes)} upvotes · {compact.format(item.replies)} comments
+            {item.reposts ? ` · ${compact.format(item.reposts)} reposts` : ""}
           </p>
+          {item.postedAt ? (
+            <p className="text-xs text-muted-foreground">{timeAgo(item.postedAt)}</p>
+          ) : null}
         </div>
 
         <div
@@ -215,6 +276,10 @@ export function ChatterCard({
                 {tag}
               </Badge>
             ))}
+          </div>
+          <div className="mt-3 space-y-2">
+            <SocialProofBadge remixCount={remixCount} />
+            <HashtagChips hashtags={item.hashtags} onTagClick={onTagClick} />
           </div>
           <div className="mt-5">
             <Actions

@@ -13,7 +13,7 @@ export type TrendChip = {
   platform: string;
   views: number;
   similarity: number;
-  matchType: "semantic" | "category";
+  matchType: "semantic" | "community" | "category";
 };
 
 export type ChatDTO = {

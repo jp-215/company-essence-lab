@@ -12,44 +12,65 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { listCategories } from "@/lib/companies.functions";
-import { listTrendingNow } from "@/lib/trends.functions";
+import { listTrendingHashtags, listTrendingNow } from "@/lib/trends.functions";
 import { listWordOfMouth } from "@/lib/wom.functions";
 import { listMyCompanies } from "@/lib/owner.functions";
 import { generateRemixBatch } from "@/lib/remix.functions";
+import { getTrendSocialProof, logTrendInteractions } from "@/lib/interactions.functions";
 import { interleave } from "@/lib/feed-mix";
 import { useAuth } from "@/hooks/useAuth";
 import { SwipeFeed } from "@/components/SwipeFeed";
 import { ChatterCard, VideoCard, type FeedItem } from "@/components/feed/FeedCards";
 import { Button } from "@/components/ui/button";
 
-const searchSchema = z.object({ category: z.string().max(80).optional() });
+const searchSchema = z.object({
+  category: z.string().max(80).optional(),
+  tag: z.string().max(40).optional(),
+});
 const MAX_BATCH = 6;
 
 const itemKey = (item: FeedItem) => (item.kind === "video" ? item.trendKey : item.womKey);
 
+/** Deterministic Fisher-Yates so "Shuffle deck" re-rolls the same loaded feed. */
+function shuffleBySeed<T>(items: T[], seed: number): T[] {
+  if (seed === 0) return items;
+  const result = [...items];
+  let state = seed >>> 0 || 1;
+  const rand = () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rand() * (i + 1));
+    [result[i], result[j]] = [result[j]!, result[i]!];
+  }
+  return result;
+}
 
-const communityQuery = (categorySlug?: string) =>
+const communityQuery = (categorySlug?: string, hashtag?: string) =>
   queryOptions({
-    queryKey: ["community-feed", categorySlug ?? "all"],
+    queryKey: ["community-feed", categorySlug ?? "all", hashtag ?? "all"],
     queryFn: async () => {
-      const [categories, trends, wordOfMouth] = await Promise.all([
+      const scope = {
+        ...(categorySlug ? { categorySlug } : {}),
+        ...(hashtag ? { hashtag } : {}),
+      };
+      const [categories, trends, wordOfMouth, hashtags] = await Promise.all([
         listCategories().catch(() => []),
-        listTrendingNow({ data: { limit: 30, ...(categorySlug ? { categorySlug } : {}) } }).catch(
-          () => [],
-        ),
-        listWordOfMouth({ data: { limit: 30, ...(categorySlug ? { categorySlug } : {}) } }).catch(
-          () => [],
-        ),
+        listTrendingNow({ data: { limit: 30, ...scope } }).catch(() => []),
+        listWordOfMouth({ data: { limit: 30, ...scope } }).catch(() => []),
+        listTrendingHashtags({ data: {} }).catch(() => []),
       ]);
-      return { categories, trends, wordOfMouth };
+      return { categories, trends, wordOfMouth, hashtags };
     },
     retry: 2,
   });
 
 export const Route = createFileRoute("/community")({
   validateSearch: (search) => searchSchema.parse(search),
-  loaderDeps: ({ search }) => ({ category: search.category }),
-  loader: ({ context, deps }) => context.queryClient.ensureQueryData(communityQuery(deps.category)),
+  loaderDeps: ({ search }) => ({ category: search.category, tag: search.tag }),
+  loader: ({ context, deps }) =>
+    context.queryClient.ensureQueryData(communityQuery(deps.category, deps.tag)),
   head: () => ({
     meta: [
       { title: "Community feed — swipe through viral ads | Vira" },
@@ -77,15 +98,18 @@ export const Route = createFileRoute("/community")({
 });
 
 function CommunityPage() {
-  const { category } = Route.useSearch();
+  const { category, tag } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const { user } = useAuth();
   const fetchCompanies = useServerFn(listMyCompanies);
   const runBatch = useServerFn(generateRemixBatch);
+  const fetchSocialProof = useServerFn(getTrendSocialProof);
+  const logTaps = useServerFn(logTrendInteractions);
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<FeedItem[]>([]);
+  const [deckSeed, setDeckSeed] = useState(0);
 
-  const { data } = useSuspenseQuery(communityQuery(category));
+  const { data } = useSuspenseQuery(communityQuery(category, tag));
 
   // Default the slice to the signed-in brand's primary category.
   const companies = useQuery({
@@ -103,8 +127,20 @@ function CommunityPage() {
   const items = useMemo<FeedItem[]>(() => {
     const videos = data.trends.map((t) => ({ kind: "video" as const, ...t }));
     const chatter = data.wordOfMouth.map((w) => ({ kind: "chatter" as const, ...w }));
-    return interleave(videos, chatter, 60) as FeedItem[];
-  }, [data.trends, data.wordOfMouth]);
+    return shuffleBySeed(interleave(videos, chatter, 60) as FeedItem[], deckSeed);
+  }, [data.trends, data.wordOfMouth, deckSeed]);
+
+  // Aggregate remix counts for the "N brands remixed this" ribbons (public-safe).
+  const socialProof = useQuery({
+    queryKey: ["community-social-proof", items.map(itemKey).slice(0, 50).join(",")],
+    queryFn: () => fetchSocialProof({ data: { trendKeys: items.map(itemKey).slice(0, 50) } }),
+    enabled: items.length > 0,
+  });
+
+  const openTag = (nextTag: string) =>
+    navigate({
+      search: { ...(category ? { category } : {}), tag: nextTag },
+    });
 
   const activeCategoryName =
     data.categories.find((c) => c.slug === category)?.name ?? "All categories";
@@ -120,6 +156,12 @@ function CommunityPage() {
       if (prev.length >= MAX_BATCH) {
         toast.error(`Up to ${MAX_BATCH} picks per batch.`);
         return prev;
+      }
+      // Picks are tap telemetry for the collaborative layer (signed-in only).
+      if (companyId) {
+        void logTaps({
+          data: { companyId, surface: "community", action: "tap", trendKeys: [key] },
+        }).catch(() => undefined);
       }
       return [...prev, item];
     });
@@ -150,7 +192,6 @@ function CommunityPage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
-
   return (
     <div className="relative">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-5 py-3 sm:px-8 lg:px-12">
@@ -175,10 +216,50 @@ function CommunityPage() {
               </Button>
             ))}
           </div>
-          <span className="hidden font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground sm:inline">
-            Vira community · {activeCategoryName}
-          </span>
+          <div className="pointer-events-auto flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setDeckSeed(Math.floor(Math.random() * 1_000_000) || 1)}
+            >
+              Shuffle deck
+            </Button>
+            <span className="hidden font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground sm:inline">
+              Vira community · {activeCategoryName}
+            </span>
+          </div>
         </div>
+
+        {data.hashtags.length ? (
+          <div className="pointer-events-auto mx-auto mt-2 flex w-full max-w-6xl gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {tag ? (
+              <Button
+                size="sm"
+                variant="default"
+                className="shrink-0"
+                onClick={() => navigate({ search: category ? { category } : {} })}
+              >
+                #{tag} ✕
+              </Button>
+            ) : null}
+            {data.hashtags
+              .filter((entry) => entry.tag !== tag)
+              .map((entry) => (
+                <Button
+                  key={entry.tag}
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => openTag(entry.tag)}
+                >
+                  #{entry.tag}
+                  <span className="ml-1.5 font-mono text-[10px] text-muted-foreground">
+                    {entry.uses}
+                  </span>
+                </Button>
+              ))}
+          </div>
+        ) : null}
 
         {!category && brandCategory ? (
           <div className="mx-auto mt-2 w-full max-w-6xl">
@@ -209,18 +290,23 @@ function CommunityPage() {
           renderItem={(index, active) => {
             const item = items[index]!;
             const isSelected = selectedKeys.has(itemKey(item));
+            const proof = socialProof.data?.[itemKey(item)];
             return item.kind === "video" ? (
               <VideoCard
                 item={item}
                 active={active}
                 selected={isSelected}
                 onToggleSelect={() => toggleSelect(item)}
+                remixCount={proof?.remixCount}
+                onTagClick={openTag}
               />
             ) : (
               <ChatterCard
                 item={item}
                 selected={isSelected}
                 onToggleSelect={() => toggleSelect(item)}
+                remixCount={proof?.remixCount}
+                onTagClick={openTag}
               />
             );
           }}
@@ -255,9 +341,7 @@ function CommunityPage() {
                 {selected.length} of {MAX_BATCH} picked for video generation
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {selected
-                  .map((item) => (item.title || item.kind).slice(0, 40))
-                  .join(" · ")}
+                {selected.map((item) => (item.title || item.kind).slice(0, 40)).join(" · ")}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -282,6 +366,5 @@ function CommunityPage() {
         </div>
       ) : null}
     </div>
-
   );
 }

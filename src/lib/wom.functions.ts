@@ -8,6 +8,7 @@ export const listWordOfMouth = createServerFn({ method: "GET" })
     z
       .object({
         categorySlug: z.string().max(80).optional(),
+        hashtag: z.string().max(40).optional(),
         limit: z.number().int().min(1).max(60).optional(),
       })
       .parse(input ?? {}),

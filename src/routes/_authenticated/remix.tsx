@@ -7,6 +7,8 @@ import { toast } from "sonner";
 
 import { listMyCompanies } from "@/lib/owner.functions";
 import { generateRemix, listCompanyRemixes, listCompanyTrends } from "@/lib/remix.functions";
+import { getRecommendations } from "@/lib/recommendations.functions";
+import { logTrendInteractions } from "@/lib/interactions.functions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,17 +46,22 @@ export const Route = createFileRoute("/_authenticated/remix")({
 
 const compact = new Intl.NumberFormat("en", { notation: "compact" });
 type SortKey = "views" | "likes" | "newest";
+type FeedMode = "foryou" | "browse";
 
 function RemixStudio() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const fetchCompanies = useServerFn(listMyCompanies);
   const fetchTrends = useServerFn(listCompanyTrends);
+  const fetchRecommendations = useServerFn(getRecommendations);
   const fetchRemixes = useServerFn(listCompanyRemixes);
   const runRemix = useServerFn(generateRemix);
+  const logTaps = useServerFn(logTrendInteractions);
 
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [productOpen, setProductOpen] = useState(false);
+  const [mode, setMode] = useState<FeedMode>("foryou");
+  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 1_000_000));
   const [platform, setPlatform] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("views");
@@ -70,7 +77,16 @@ function RemixStudio() {
   const trends = useQuery({
     queryKey: ["company-trends", companyId],
     queryFn: () => fetchTrends({ data: { companyId: companyId!, limit: 24 } }),
-    enabled: Boolean(companyId),
+    enabled: Boolean(companyId) && mode === "browse",
+  });
+
+  const recommended = useQuery({
+    queryKey: ["remix-recommendations", companyId, seed],
+    queryFn: () =>
+      fetchRecommendations({
+        data: { companyId: companyId!, limit: 24, seed, surface: "remix" },
+      }),
+    enabled: Boolean(companyId) && mode === "foryou",
   });
 
   const remixes = useQuery({
@@ -80,7 +96,13 @@ function RemixStudio() {
   });
 
   const remixMutation = useMutation({
-    mutationFn: (trendKey: string) => runRemix({ data: { companyId: companyId!, trendKey } }),
+    mutationFn: (trendKey: string) => {
+      // Tap telemetry feeds the collaborative layer; fire-and-forget.
+      void logTaps({
+        data: { companyId: companyId!, surface: "remix", action: "tap", trendKeys: [trendKey] },
+      }).catch(() => undefined);
+      return runRemix({ data: { companyId: companyId!, trendKey } });
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["remixes", companyId] });
       toast.success("Your version is ready — opening Create ads.");
@@ -90,7 +112,8 @@ function RemixStudio() {
   });
 
   const selectedCompany = companies.data?.find((company) => company.id === companyId) ?? null;
-  const all = trends.data ?? [];
+  const all = (mode === "foryou" ? recommended.data : trends.data) ?? [];
+  const feedLoading = mode === "foryou" ? recommended.isLoading : trends.isLoading;
 
   const platforms = useMemo(() => {
     const counts = new Map<string, number>();
@@ -227,6 +250,29 @@ function RemixStudio() {
             <div className="mt-14 flex flex-wrap items-center justify-between gap-6 border-y border-border py-6">
               <div className="flex flex-wrap items-center gap-3">
                 <FilterPill
+                  active={mode === "foryou"}
+                  label="For you"
+                  count={mode === "foryou" ? all.length : 24}
+                  onClick={() => setMode("foryou")}
+                />
+                <FilterPill
+                  active={mode === "browse"}
+                  label="Browse all"
+                  count={mode === "browse" ? all.length : 24}
+                  onClick={() => setMode("browse")}
+                />
+                {mode === "foryou" ? (
+                  <button
+                    type="button"
+                    onClick={() => setSeed(Math.floor(Math.random() * 1_000_000))}
+                    disabled={recommended.isFetching}
+                    className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-6 py-3 text-base font-medium text-foreground transition-colors hover:border-ring disabled:opacity-60"
+                  >
+                    {recommended.isFetching ? "Mixing…" : "Shuffle"}
+                  </button>
+                ) : null}
+                <span className="h-6 w-px bg-border" />
+                <FilterPill
                   active={platform === "all"}
                   label="All platforms"
                   count={all.length}
@@ -283,14 +329,14 @@ function RemixStudio() {
             <section className="mt-12">
               <div className="flex items-end justify-between gap-4">
                 <h2 className="font-serif text-3xl font-bold tracking-tight text-foreground">
-                  Trends mapped to your category
+                  {mode === "foryou" ? "Picked for your brand" : "Trends mapped to your category"}
                 </h2>
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   {visible.length} of {all.length} trends
                 </p>
               </div>
 
-              {trends.isLoading ? (
+              {feedLoading ? (
                 <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                   {[0, 1, 2, 3].map((key) => (
                     <Skeleton key={key} className="h-[560px] w-full rounded-2xl" />
