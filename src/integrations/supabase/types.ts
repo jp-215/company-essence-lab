@@ -153,6 +153,74 @@ export type Database = {
           },
         ]
       }
+      company_knowledge: {
+        Row: {
+          ad_themes: string[]
+          bio: string
+          category_name: string
+          company_id: string
+          company_name: string
+          content: string
+          created_at: string
+          embedding: string | null
+          id: string
+          keywords: string[]
+          mission: string
+          owner_id: string
+          owner_name: string
+          positioning: string
+          summary: string
+          tone: string
+          updated_at: string
+        }
+        Insert: {
+          ad_themes?: string[]
+          bio?: string
+          category_name?: string
+          company_id: string
+          company_name: string
+          content: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          keywords?: string[]
+          mission?: string
+          owner_id: string
+          owner_name?: string
+          positioning?: string
+          summary?: string
+          tone?: string
+          updated_at?: string
+        }
+        Update: {
+          ad_themes?: string[]
+          bio?: string
+          category_name?: string
+          company_id?: string
+          company_name?: string
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          keywords?: string[]
+          mission?: string
+          owner_id?: string
+          owner_name?: string
+          positioning?: string
+          summary?: string
+          tone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_knowledge_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -182,7 +250,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      match_company_knowledge: {
+        Args: {
+          exclude_company?: string
+          match_count?: number
+          query_embedding: string
+        }
+        Returns: {
+          category_name: string
+          company_id: string
+          company_name: string
+          positioning: string
+          similarity: number
+          slug: string
+          summary: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
