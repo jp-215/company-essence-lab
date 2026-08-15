@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
+import { Route as AuthenticatedRemixRouteImport } from './routes/_authenticated/remix'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as CompaniesSlugRouteImport } from './routes/companies.$slug'
 import { Route as AuthenticatedStudioIdRouteImport } from './routes/_authenticated/studio.$id'
@@ -43,6 +44,11 @@ const AuthenticatedKnowledgeRoute = AuthenticatedKnowledgeRouteImport.update({
   path: '/knowledge',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRemixRoute = AuthenticatedRemixRouteImport.update({
+  id: '/remix',
+  path: '/remix',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const CategoriesSlugRoute = CategoriesSlugRouteImport.update({
   id: '/categories/$slug',
   path: '/categories/$slug',
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/remix': typeof AuthenticatedRemixRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/companies/$slug': typeof CompaniesSlugRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/remix': typeof AuthenticatedRemixRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/companies/$slug': typeof CompaniesSlugRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
+  '/_authenticated/remix': typeof AuthenticatedRemixRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/companies/$slug': typeof CompaniesSlugRoute
   '/_authenticated/studio/$id': typeof AuthenticatedStudioIdRoute
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/knowledge'
+    | '/remix'
     | '/categories/$slug'
     | '/companies/$slug'
     | '/studio/$id'
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/knowledge'
+    | '/remix'
     | '/categories/$slug'
     | '/companies/$slug'
     | '/studio/$id'
@@ -124,6 +135,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/knowledge'
+    | '/_authenticated/remix'
     | '/categories/$slug'
     | '/companies/$slug'
     | '/_authenticated/studio/$id'
@@ -175,6 +187,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKnowledgeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/remix': {
+      id: '/_authenticated/remix'
+      path: '/remix'
+      fullPath: '/remix'
+      preLoaderRoute: typeof AuthenticatedRemixRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/categories/$slug': {
       id: '/categories/$slug'
       path: '/categories/$slug'
@@ -209,6 +228,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
+  AuthenticatedRemixRoute: typeof AuthenticatedRemixRoute
   AuthenticatedStudioIdRoute: typeof AuthenticatedStudioIdRoute
   AuthenticatedStudioNewRoute: typeof AuthenticatedStudioNewRoute
 }
@@ -216,6 +236,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
+  AuthenticatedRemixRoute: AuthenticatedRemixRoute,
   AuthenticatedStudioIdRoute: AuthenticatedStudioIdRoute,
   AuthenticatedStudioNewRoute: AuthenticatedStudioNewRoute,
 }
