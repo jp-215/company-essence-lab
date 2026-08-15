@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { listMyCompanies } from "@/lib/owner.functions";
 import { generateRemix, listCompanyRemixes, listCompanyTrends } from "@/lib/remix.functions";
 import { getRecommendations } from "@/lib/recommendations.functions";
+import { startVideoRender } from "@/lib/engine.functions";
 import { logTrendInteractions } from "@/lib/interactions.functions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ function RemixStudio() {
   const fetchRemixes = useServerFn(listCompanyRemixes);
   const runRemix = useServerFn(generateRemix);
   const logTaps = useServerFn(logTrendInteractions);
+  const startRender = useServerFn(startVideoRender);
 
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [productOpen, setProductOpen] = useState(false);
@@ -65,6 +67,25 @@ function RemixStudio() {
   const [platform, setPlatform] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("views");
+  // Up to six pieces of platform content ride along as influence for one render.
+  const [selected, setSelected] = useState<Map<string, string>>(new Map());
+
+  const toggleSelected = (trendKey: string, line: string) => {
+    setSelected((current) => {
+      const next = new Map(current);
+      if (next.has(trendKey)) {
+        next.delete(trendKey);
+        return next;
+      }
+      if (next.size >= 6) {
+        toast.info("Six is the max influence set for one video.");
+        return current;
+      }
+      next.set(trendKey, line);
+      return next;
+    });
+  };
+
 
   const companies = useQuery({ queryKey: ["my-companies"], queryFn: () => fetchCompanies() });
 
@@ -110,6 +131,32 @@ function RemixStudio() {
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Remix failed."),
   });
+
+  const videoMutation = useMutation({
+    mutationFn: () => {
+      const trendKeys = [...selected.keys()];
+      void logTaps({
+        data: { companyId: companyId!, surface: "remix", action: "remix", trendKeys },
+      }).catch(() => undefined);
+      return startRender({
+        data: {
+          companyId: companyId!,
+          lane: "founder-story",
+          mode: "fast",
+          product: selectedCompany?.name,
+          influences: [...selected.values()].map((line) => line.slice(0, 300)),
+        },
+      });
+    },
+    onSuccess: (accepted) => {
+      toast.success(`Rendering your video — about ${accepted.estimated_seconds}s.`);
+      setSelected(new Map());
+      void navigate({ to: "/ads" });
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Render failed."),
+  });
+
+
 
   const selectedCompany = companies.data?.find((company) => company.id === companyId) ?? null;
   const all = (mode === "foryou" ? recommended.data : trends.data) ?? [];
@@ -414,15 +461,29 @@ function RemixStudio() {
                             </span>
                             {trend.author ? <span>@{trend.author}</span> : null}
                           </div>
-                          <Button
-                            className="h-12 w-full rounded-xl bg-foreground text-base text-background hover:bg-foreground/90"
-                            disabled={remixMutation.isPending}
-                            onClick={() => remixMutation.mutate(trend.trendKey)}
-                          >
-                            {remixMutation.isPending && remixMutation.variables === trend.trendKey
-                              ? "Remixing…"
-                              : "Remix for you"}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant={selected.has(trend.trendKey) ? "default" : "outline"}
+                              className="h-12 flex-1 rounded-xl text-sm"
+                              aria-pressed={selected.has(trend.trendKey)}
+                              onClick={() =>
+                                toggleSelected(trend.trendKey, trend.caption || trend.title)
+                              }
+                            >
+                              {selected.has(trend.trendKey) ? "Selected ✓" : "Add to video"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="h-12 flex-1 rounded-xl text-sm"
+                              disabled={remixMutation.isPending}
+                              onClick={() => remixMutation.mutate(trend.trendKey)}
+                            >
+                              {remixMutation.isPending && remixMutation.variables === trend.trendKey
+                                ? "Remixing…"
+                                : "Remix copy"}
+                            </Button>
+                          </div>
+
                         </div>
                       </div>
                     </article>
@@ -433,7 +494,36 @@ function RemixStudio() {
           </>
         )}
       </div>
+
+      {selected.size ? (
+        <div className="sticky bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur">
+          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-5">
+            <div>
+              <p className="font-serif text-xl font-bold text-foreground">
+                {selected.size} of 6 posts selected
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Vira blends these into one AI video for{" "}
+                {selectedCompany?.name ?? "your product"}.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" onClick={() => setSelected(new Map())}>
+                Clear
+              </Button>
+              <Button
+                className="h-12 rounded-xl bg-foreground px-8 text-base text-background hover:bg-foreground/90"
+                disabled={videoMutation.isPending}
+                onClick={() => videoMutation.mutate()}
+              >
+                {videoMutation.isPending ? "Starting render…" : "Generate video →"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
+
   );
 }
 

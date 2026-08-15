@@ -36,6 +36,8 @@ export const startVideoRender = createServerFn({ method: "POST" })
         lane: z.string().trim().min(2).max(60),
         mode: z.enum(["fast", "agentic"]).default("fast"),
         product: z.string().trim().min(2).max(200).optional(),
+        // Up to six pieces of platform content the founder selected as influence.
+        influences: z.array(z.string().trim().min(2).max(300)).max(6).default([]),
       })
       .parse(input),
   )
@@ -52,13 +54,23 @@ export const startVideoRender = createServerFn({ method: "POST" })
       website: company.website,
     });
 
+    // The engine takes a single free-text product brief, so selected trends ride
+    // along as explicit influence lines it can ground the script in.
+    const base = data.product?.trim() || company.name;
+    const product = data.influences.length
+      ? `${base}. Influenced by these trending posts: ${data.influences
+          .map((line, index) => `(${index + 1}) ${line}`)
+          .join(" ")}`.slice(0, 1800)
+      : base;
+
     return requestVideo({
       companySlug: company.slug,
-      product: data.product?.trim() || company.name,
+      product,
       lane: data.lane,
       mode: data.mode,
     });
   });
+
 
 export const getVideoJob = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
