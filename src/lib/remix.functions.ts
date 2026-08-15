@@ -9,6 +9,7 @@ import {
   remixTrend,
   saveRemix,
 } from "./remix.server";
+import { getTrendByKey } from "./recommendations.server";
 
 export const listCompanyTrends = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -37,10 +38,9 @@ export const generateRemix = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const company = await loadCompanyContext(context.supabase, context.userId, data.companyId);
-    const trends = await listMappedTrends(context.supabase, data.companyId, 200);
-    const trend = trends.find((item) => item.trendKey === data.trendKey);
+    const trend = await getTrendByKey(context.supabase, data.trendKey);
     if (!trend) {
-      throw new Error("That trend is not mapped to your company's category.");
+      throw new Error("That trend no longer exists.");
     }
 
     const output = await remixTrend({ trend, company });

@@ -1,0 +1,23 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
+
+import { getRecommendedTrends } from "./recommendations.server";
+
+export const getRecommendations = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        companyId: z.string().uuid(),
+        limit: z.number().int().min(1).max(24).optional(),
+        query: z.string().trim().max(300).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) =>
+    getRecommendedTrends(context.supabase, data.companyId, {
+      limit: data.limit,
+      queryText: data.query,
+    }),
+  );
