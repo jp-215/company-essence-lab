@@ -81,6 +81,9 @@ function CommunityPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { user } = useAuth();
   const fetchCompanies = useServerFn(listMyCompanies);
+  const runBatch = useServerFn(generateRemixBatch);
+  const queryClient = useQueryClient();
+  const [selected, setSelected] = useState<FeedItem[]>([]);
 
   const { data } = useSuspenseQuery(communityQuery(category));
 
@@ -88,13 +91,14 @@ function CommunityPage() {
   const companies = useQuery({
     queryKey: ["community-companies"],
     queryFn: () => fetchCompanies(),
-    enabled: !!user && !category,
+    enabled: !!user,
   });
 
   const brandCategoryName = companies.data?.[0]?.categoryName;
   const brandCategory = brandCategoryName
     ? data.categories.find((c) => c.name === brandCategoryName)?.slug
     : undefined;
+  const companyId = companies.data?.[0]?.id;
 
   const items = useMemo<FeedItem[]>(() => {
     const videos = data.trends.map((t) => ({ kind: "video" as const, ...t }));
@@ -104,6 +108,48 @@ function CommunityPage() {
 
   const activeCategoryName =
     data.categories.find((c) => c.slug === category)?.name ?? "All categories";
+
+  const selectedKeys = new Set(selected.map(itemKey));
+
+  function toggleSelect(item: FeedItem) {
+    const key = itemKey(item);
+    setSelected((prev) => {
+      if (prev.some((entry) => itemKey(entry) === key)) {
+        return prev.filter((entry) => itemKey(entry) !== key);
+      }
+      if (prev.length >= MAX_BATCH) {
+        toast.error(`Up to ${MAX_BATCH} picks per batch.`);
+        return prev;
+      }
+      return [...prev, item];
+    });
+  }
+
+  const generate = useMutation({
+    mutationFn: async () => {
+      if (!companyId) throw new Error("Add a company before generating ads.");
+      return runBatch({
+        data: {
+          companyId,
+          items: selected.map((item) => ({ kind: item.kind, key: itemKey(item) })),
+        },
+      });
+    },
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: ["company-remixes"] });
+      setSelected([]);
+      if (result.created.length === 0) {
+        toast.error("None of those could be turned into ads. Try other picks.");
+        return;
+      }
+      toast.success(
+        `${result.created.length} ad concept${result.created.length > 1 ? "s" : ""} queued for video generation.`,
+      );
+      navigate({ to: "/ads" });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
 
   return (
     <div className="relative">
