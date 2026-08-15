@@ -47,8 +47,8 @@ export function VideoCard({ item, active }: { item: PublicTrend; active: boolean
       : null;
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-5 px-4 py-6 sm:flex-row sm:items-stretch sm:gap-8">
-      <div className="relative aspect-[9/16] w-full max-w-[300px] shrink-0 overflow-hidden rounded-3xl border border-border bg-secondary">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-5 px-4 py-6 sm:flex-row sm:gap-8">
+      <div className="relative h-[min(72vh,560px)] w-full max-w-[315px] shrink-0 self-center overflow-hidden rounded-3xl border border-border bg-secondary">
         {active && videoId ? (
           <iframe
             key={item.trendKey}
