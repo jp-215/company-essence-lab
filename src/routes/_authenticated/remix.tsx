@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { Play } from "lucide-react";
+import { TrendPreview } from "@/components/TrendPreview";
 import { toast } from "sonner";
 
 import { listMyCompanies } from "@/lib/owner.functions";
