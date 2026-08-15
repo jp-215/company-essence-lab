@@ -129,20 +129,18 @@ function NewCompany() {
         return;
       }
     }
-    if (step === 2) {
-      if (!ownerName.trim()) {
-        toast.error("Who owns the brand?");
-        return;
-      }
-      if (bio.trim().length < 10) {
-        toast.error("A couple more words about who you are.");
-        return;
-      }
-    }
-    setStep((current) => Math.min(3, current + 1));
+    setStep((current) => Math.min(2, current + 1));
   }
 
   async function publish() {
+    if (!ownerName.trim()) {
+      toast.error("Who owns the brand?");
+      return;
+    }
+    if (bio.trim().length < 10) {
+      toast.error("A couple more words about who you are.");
+      return;
+    }
     if (mission.trim().length < 10) {
       toast.error("Your mission needs a little more detail.");
       return;
@@ -175,20 +173,17 @@ function NewCompany() {
     }
   }
 
-  const heading =
-    step === 1 ? "What are you selling?" : step === 2 ? "Who's behind it?" : "What's the mission?";
+  const heading = step === 1 ? "What are you selling?" : "Who's behind it?";
   const subheading =
     step === 1
       ? "Photos do the talking — a phone photo is perfect. It's the only thing we truly need."
-      : step === 2
-        ? "A short intro in your own words. We'll use it to shape your purpose identity."
-        : "One or two lines on why the brand exists. This drives every remix we generate.";
+      : "A short intro and your mission, in your own words. This shapes every remix we generate.";
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-secondary/40">
       <div className="mx-auto w-full max-w-3xl px-6 py-16">
         <p className="font-mono text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Step {step} of 3 · about 2 minutes total
+          Step {step} of 2 · about 2 minutes total
         </p>
         <h1 className="mt-4 font-serif text-5xl font-bold tracking-tight text-foreground">
           {heading}
@@ -337,23 +332,20 @@ function NewCompany() {
                 className="rounded-xl bg-card text-base"
               />
             </div>
-          </div>
-        ) : null}
-
-        {step === 3 ? (
-          <div className="mt-10 space-y-2">
-            <Label htmlFor="mission" className="text-base">
-              Mission
-            </Label>
-            <Textarea
-              id="mission"
-              value={mission}
-              onChange={(event) => setMission(event.target.value)}
-              rows={6}
-              maxLength={1200}
-              placeholder="Make honest skincare the default for everyone under 30."
-              className="rounded-xl bg-card text-base"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="mission" className="text-base">
+                Mission
+              </Label>
+              <Textarea
+                id="mission"
+                value={mission}
+                onChange={(event) => setMission(event.target.value)}
+                rows={6}
+                maxLength={1200}
+                placeholder="Make honest skincare the default for everyone under 30."
+                className="rounded-xl bg-card text-base"
+              />
+            </div>
           </div>
         ) : null}
 
@@ -374,10 +366,10 @@ function NewCompany() {
           <button
             type="button"
             disabled={busy || uploading}
-            onClick={() => (step === 3 ? void publish() : nextStep())}
+            onClick={() => (step === 2 ? void publish() : nextStep())}
             className="inline-flex items-center gap-2 rounded-xl bg-chart-1 px-8 py-4 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            {step === 3 ? (busy ? "Publishing…" : "Publish brand") : "Continue"}
+            {step === 2 ? (busy ? "Publishing…" : "Publish brand") : "Continue"}
             <span aria-hidden="true">→</span>
           </button>
         </div>
