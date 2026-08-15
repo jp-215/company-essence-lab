@@ -19,11 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-<<<<<<< HEAD
-import { RemixCard } from "@/components/RemixCard";
-=======
 import { cn } from "@/lib/utils";
->>>>>>> origin/main
 
 export const Route = createFileRoute("/_authenticated/remix")({
   head: () => ({
@@ -144,7 +140,6 @@ function RemixStudio() {
             </Link>
           </Button>
         </div>
-
 
         <div className="mt-8 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
           <div>
@@ -334,27 +329,6 @@ function RemixStudio() {
                         ) : null}
                       </div>
 
-<<<<<<< HEAD
-          <section className="mt-14">
-            <h2 className="font-serif text-2xl font-semibold tracking-tight">Your remixes</h2>
-            {remixes.isLoading ? (
-              <Skeleton className="mt-4 h-40 w-full" />
-            ) : !remixes.data?.length ? (
-              <p className="mt-3 text-sm text-muted-foreground">
-                No remixes yet. Pick a trend above to generate your first ad.
-              </p>
-            ) : (
-              <div className="mt-4 space-y-4">
-                {remixes.data.map((remix) => (
-                  <RemixCard key={remix.id} remix={remix} />
-                ))}
-              </div>
-            )}
-          </section>
-        </>
-      )}
-=======
-
                       <div className="flex flex-1 flex-col gap-4 border-t border-border p-5">
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-mono text-[10px] tracking-wider text-muted-foreground">
@@ -372,7 +346,11 @@ function RemixStudio() {
                         {trend.hashtags.length ? (
                           <div className="flex flex-wrap gap-2">
                             {trend.hashtags.slice(0, 4).map((tag) => (
-                              <Badge key={tag} variant="secondary" className="rounded-md font-normal">
+                              <Badge
+                                key={tag}
+                                variant="secondary"
+                                className="rounded-md font-normal"
+                              >
                                 #{tag}
                               </Badge>
                             ))}
@@ -402,7 +380,6 @@ function RemixStudio() {
                               ? "Remixing…"
                               : "Remix for you"}
                           </Button>
-
                         </div>
                       </div>
                     </article>
@@ -413,7 +390,6 @@ function RemixStudio() {
           </>
         )}
       </div>
->>>>>>> origin/main
     </div>
   );
 }

@@ -37,35 +37,16 @@ export function SiteHeader() {
           <Link to="/" className={cn(navLink, "hidden sm:inline-flex")}>
             Browse
           </Link>
-          <Link
-            to="/trends"
-            className="hidden rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
-          >
+          <Link to="/trends" className={cn(navLink, "hidden sm:inline-flex")}>
             Trending
           </Link>
           {loading ? null : user ? (
             <>
-<<<<<<< HEAD
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/dashboard">Dashboard</Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/chat">Chat</Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/remix">Remix studio</Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/knowledge">Knowledge base</Link>
-              </Button>
-
-              <Button asChild size="sm">
-                <Link to="/studio/new">List a company</Link>
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-=======
               <Link to="/dashboard" className={cn(navLink, "hidden sm:inline-flex")}>
                 Dashboard
+              </Link>
+              <Link to="/chat" className={cn(navLink, "hidden sm:inline-flex")}>
+                Chat
               </Link>
               <Link to="/remix" className={cn(navLink, "hidden sm:inline-flex")}>
                 Remix studio
@@ -77,7 +58,6 @@ export function SiteHeader() {
                 List a company
               </Link>
               <button type="button" onClick={handleSignOut} className={outline}>
->>>>>>> origin/main
                 Sign out
               </button>
             </>
