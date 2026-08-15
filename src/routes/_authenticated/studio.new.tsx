@@ -187,7 +187,7 @@ function NewCompany() {
         .then(() => queryClient.invalidateQueries({ queryKey: ["my-companies"] }))
         .catch(() => undefined);
       void queryClient.invalidateQueries({ queryKey: ["my-companies"] });
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/remix" });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Something went wrong.");
     } finally {
