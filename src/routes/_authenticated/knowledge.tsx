@@ -4,11 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
-import {
-  listKnowledgeBase,
-  searchKnowledgeBase,
-  syncMyKnowledge,
-} from "@/lib/knowledge.functions";
+import { listKnowledgeBase, searchKnowledgeBase, syncMyKnowledge } from "@/lib/knowledge.functions";
+import { getTrendIndexStatus, runTrendEmbeddingBackfill } from "@/lib/trend-embeddings.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +53,41 @@ function KnowledgePage() {
     onError: (error) => toast.error(error instanceof Error ? error.message : "Search failed."),
   });
 
+  const fetchTrendIndexStatus = useServerFn(getTrendIndexStatus);
+  const backfillTrends = useServerFn(runTrendEmbeddingBackfill);
+  const [trendProgress, setTrendProgress] = useState(0);
+
+  const { data: trendIndex } = useQuery({
+    queryKey: ["trend-index-status"],
+    queryFn: () => fetchTrendIndexStatus(),
+  });
+
+  const trendBackfillMutation = useMutation({
+    mutationFn: async () => {
+      let embedded = 0;
+      // Loop batches until every trend is embedded; each call is idempotent.
+      for (;;) {
+        const result = await backfillTrends({ data: { batchSize: 100 } });
+        embedded += result.embedded;
+        setTrendProgress(embedded);
+        if (result.remaining === 0 || result.embedded === 0) {
+          return { ...result, embedded };
+        }
+      }
+    },
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ["trend-index-status"] });
+      if (result.remaining === 0) {
+        toast.success(`All trends indexed (${result.embedded} embedded this run).`);
+      } else {
+        toast.error(
+          `Indexed ${result.embedded}, but ${result.remaining} remain — is AI configured?`,
+        );
+      }
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Indexing failed."),
+  });
+
   const syncMutation = useMutation({
     mutationFn: () => sync(),
     onSuccess: (result) => {
@@ -89,6 +121,34 @@ function KnowledgePage() {
           {syncMutation.isPending ? "Indexing…" : "Re-index my companies"}
         </Button>
       </header>
+
+      <Card className="mb-8">
+        <CardContent className="flex flex-wrap items-center justify-between gap-4 pt-6">
+          <div>
+            <h2 className="font-heading text-lg">Trend recommendations index</h2>
+            <p className="text-sm text-muted-foreground">
+              {trendIndex
+                ? trendIndex.remaining === 0
+                  ? "Every trend is embedded — recommendations are fully semantic."
+                  : `${trendIndex.remaining} trends still need embedding before recommendations are fully semantic.`
+                : "Checking trend index…"}{" "}
+              Newly ingested trends are picked up by re-running this.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setTrendProgress(0);
+              trendBackfillMutation.mutate();
+            }}
+            disabled={trendBackfillMutation.isPending || trendIndex?.remaining === 0}
+          >
+            {trendBackfillMutation.isPending
+              ? `Indexing trends… (${trendProgress} done)`
+              : `Index trends${trendIndex && trendIndex.remaining > 0 ? ` (${trendIndex.remaining} remaining)` : ""}`}
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card className="mb-8">
         <CardContent className="space-y-4 pt-6">

@@ -35,10 +35,19 @@ export function SiteHeader() {
           >
             Browse
           </Link>
+          <Link
+            to="/trends"
+            className="hidden rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+          >
+            Trending
+          </Link>
           {loading ? null : user ? (
             <>
               <Button asChild variant="ghost" size="sm">
                 <Link to="/dashboard">Dashboard</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/chat">Chat</Link>
               </Button>
               <Button asChild variant="ghost" size="sm">
                 <Link to="/remix">Remix studio</Link>
