@@ -14,7 +14,169 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      companies: {
+        Row: {
+          bio: string
+          category_id: string
+          created_at: string
+          id: string
+          logo_url: string | null
+          mission: string
+          name: string
+          owner_id: string
+          owner_name: string
+          slug: string
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          bio?: string
+          category_id: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          mission?: string
+          name: string
+          owner_id: string
+          owner_name?: string
+          slug: string
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          bio?: string
+          category_id?: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          mission?: string
+          name?: string
+          owner_id?: string
+          owner_name?: string
+          slug?: string
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "companies_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_insights: {
+        Row: {
+          ad_themes: string[]
+          brand_colors: string[]
+          company_id: string
+          created_at: string
+          error: string | null
+          id: string
+          keywords: string[]
+          positioning: string | null
+          raw: Json | null
+          sources: Json
+          status: string
+          summary: string | null
+          tone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ad_themes?: string[]
+          brand_colors?: string[]
+          company_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          keywords?: string[]
+          positioning?: string | null
+          raw?: Json | null
+          sources?: Json
+          status?: string
+          summary?: string | null
+          tone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ad_themes?: string[]
+          brand_colors?: string[]
+          company_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          keywords?: string[]
+          positioning?: string | null
+          raw?: Json | null
+          sources?: Json
+          status?: string
+          summary?: string | null
+          tone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_insights_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
