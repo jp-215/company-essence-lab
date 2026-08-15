@@ -153,44 +153,46 @@ function CommunityPage() {
 
   return (
     <div className="relative">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-3 px-4 py-3">
-        <div className="pointer-events-auto flex max-w-[70%] gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <Button
-            size="sm"
-            variant={!category ? "default" : "outline"}
-            onClick={() => navigate({ search: {} })}
-          >
-            All
-          </Button>
-          {data.categories.map((item) => (
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-5 py-3 sm:px-8 lg:px-12">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
+          <div className="pointer-events-auto flex max-w-[70%] gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Button
-              key={item.slug}
               size="sm"
-              variant={category === item.slug ? "default" : "outline"}
-              className="shrink-0"
-              onClick={() => navigate({ search: { category: item.slug } })}
+              variant={!category ? "default" : "outline"}
+              onClick={() => navigate({ search: {} })}
             >
-              {item.name}
+              All
             </Button>
-          ))}
+            {data.categories.map((item) => (
+              <Button
+                key={item.slug}
+                size="sm"
+                variant={category === item.slug ? "default" : "outline"}
+                className="shrink-0"
+                onClick={() => navigate({ search: { category: item.slug } })}
+              >
+                {item.name}
+              </Button>
+            ))}
+          </div>
+          <span className="hidden font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground sm:inline">
+            Vira community · {activeCategoryName}
+          </span>
         </div>
-        <span className="pointer-events-none hidden font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground sm:inline">
-          Vira community · {activeCategoryName}
-        </span>
-      </div>
 
-      {!category && brandCategory ? (
-        <div className="absolute inset-x-0 top-16 z-20 flex justify-center">
-          <Button
-            size="sm"
-            variant="secondary"
-            className="pointer-events-auto"
-            onClick={() => navigate({ search: { category: brandCategory } })}
-          >
-            Tailor this feed to your brand
-          </Button>
-        </div>
-      ) : null}
+        {!category && brandCategory ? (
+          <div className="mx-auto mt-2 w-full max-w-6xl">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="pointer-events-auto"
+              onClick={() => navigate({ search: { category: brandCategory } })}
+            >
+              Tailor this feed to your brand
+            </Button>
+          </div>
+        ) : null}
+      </div>
 
       {items.length === 0 ? (
         <div className="flex h-[70vh] flex-col items-center justify-center gap-3 px-6 text-center">
@@ -206,12 +208,23 @@ function CommunityPage() {
           count={items.length}
           renderItem={(index, active) => {
             const item = items[index]!;
+            const isSelected = selectedKeys.has(itemKey(item));
             return item.kind === "video" ? (
-              <VideoCard item={item} active={active} />
+              <VideoCard
+                item={item}
+                active={active}
+                selected={isSelected}
+                onToggleSelect={() => toggleSelect(item)}
+              />
             ) : (
-              <ChatterCard item={item} />
+              <ChatterCard
+                item={item}
+                selected={isSelected}
+                onToggleSelect={() => toggleSelect(item)}
+              />
             );
           }}
+
           endSlide={
             <div className="flex flex-col items-center gap-4 px-6 text-center">
               <h2 className="font-serif text-2xl font-semibold text-foreground">
