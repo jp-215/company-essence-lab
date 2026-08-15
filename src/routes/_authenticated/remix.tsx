@@ -414,15 +414,29 @@ function RemixStudio() {
                             </span>
                             {trend.author ? <span>@{trend.author}</span> : null}
                           </div>
-                          <Button
-                            className="h-12 w-full rounded-xl bg-foreground text-base text-background hover:bg-foreground/90"
-                            disabled={remixMutation.isPending}
-                            onClick={() => remixMutation.mutate(trend.trendKey)}
-                          >
-                            {remixMutation.isPending && remixMutation.variables === trend.trendKey
-                              ? "Remixing…"
-                              : "Remix for you"}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant={selected.has(trend.trendKey) ? "default" : "outline"}
+                              className="h-12 flex-1 rounded-xl text-sm"
+                              aria-pressed={selected.has(trend.trendKey)}
+                              onClick={() =>
+                                toggleSelected(trend.trendKey, trend.caption || trend.title)
+                              }
+                            >
+                              {selected.has(trend.trendKey) ? "Selected ✓" : "Add to video"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="h-12 flex-1 rounded-xl text-sm"
+                              disabled={remixMutation.isPending}
+                              onClick={() => remixMutation.mutate(trend.trendKey)}
+                            >
+                              {remixMutation.isPending && remixMutation.variables === trend.trendKey
+                                ? "Remixing…"
+                                : "Remix copy"}
+                            </Button>
+                          </div>
+
                         </div>
                       </div>
                     </article>
