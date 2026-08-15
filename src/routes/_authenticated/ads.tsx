@@ -115,6 +115,10 @@ function CreateAdsPage() {
             <p className="mt-10 font-mono text-xs uppercase tracking-[0.24em] text-muted-foreground">
               Your concepts land here
             </p>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Each concept below started as a trend you remixed in the studio — Vira rewrote the
+              hook, script and caption around your product. Newest first.
+            </p>
 
             {remixes.isLoading ? (
               <div className="mt-6 grid gap-6 sm:grid-cols-3">
