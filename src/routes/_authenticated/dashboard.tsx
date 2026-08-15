@@ -58,6 +58,30 @@ function Dashboard() {
     queryFn: () => fetchCompanies(),
   });
 
+  const fetchRecommendations = useServerFn(getRecommendations);
+  const fetchIndexStatus = useServerFn(getTrendIndexStatus);
+  const [focusId, setFocusId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!focusId && data?.length) setFocusId(data[0]!.id);
+  }, [data, focusId]);
+
+  const trends = useQuery({
+    queryKey: ["dashboard-trends", focusId],
+    queryFn: () => fetchRecommendations({ data: { companyId: focusId!, limit: 6 } }),
+    enabled: !!focusId,
+  });
+
+  const indexStatus = useQuery({
+    queryKey: ["trend-index-status"],
+    queryFn: () => fetchIndexStatus(),
+  });
+
+  const focusCompany = data?.find((company) => company.id === focusId) ?? null;
+  const semanticCount = (trends.data ?? []).filter((t) => t.matchType === "semantic").length;
+
+
+
   const enrichMutation = useMutation({
     mutationFn: (companyId: string) => enrich({ data: { companyId } }),
     onSuccess: (insight) => {
