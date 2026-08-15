@@ -244,12 +244,18 @@ export async function submitReview(input: {
     .eq("id", context.sessionJudgeId);
   if (error) throw new Error(error.message);
 
-  await maybeCompleteSession(context.sessionId, context.ownerId);
+  // Closing the round is cheap; the LLM synthesis runs on the founder's side so a
+  // judge never waits on it (and can't abort it by closing the tab).
+  await maybeCompleteSession(context.sessionId, context.ownerId, { synthesize: false });
   return { ok: true, alreadySubmitted: false };
 }
 
 /** Session completes on quorum OR deadline, whichever comes first. */
-export async function maybeCompleteSession(sessionId: string, ownerId: string) {
+export async function maybeCompleteSession(
+  sessionId: string,
+  ownerId: string,
+  options: { synthesize?: boolean } = {},
+) {
   const { data: session } = await supabaseAdmin
     .from("review_sessions")
     .select("id, status, quorum, deadline_at")
@@ -272,11 +278,13 @@ export async function maybeCompleteSession(sessionId: string, ownerId: string) {
     .update({ status: "complete", closed_at: new Date().toISOString() })
     .eq("id", sessionId);
 
-  try {
-    await synthesizeSession(supabaseAdmin, ownerId, sessionId);
-  } catch (error) {
-    // The founder can retry synthesis from the results screen.
-    console.error("Terac synthesis failed:", error);
+  if (options.synthesize !== false) {
+    try {
+      await synthesizeSession(supabaseAdmin, ownerId, sessionId);
+    } catch (error) {
+      // The founder can retry synthesis from the results screen.
+      console.error("Terac synthesis failed:", error);
+    }
   }
   return { completed: true };
 }

@@ -56,7 +56,7 @@ export const getSessionResults = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ sessionId: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
-    // Close on deadline even when nobody submitted last.
+    // Close on quorum/deadline and synthesize on first view after completion.
     await maybeCompleteSession(data.sessionId, context.userId);
     return getReviewResults(context.supabase, context.userId, data.sessionId);
   });
