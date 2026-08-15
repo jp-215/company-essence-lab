@@ -1,16 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
 import { toast } from "sonner";
 
-import {
-  createJudge,
-  listJudges,
-  listReviewSessions,
-  runReminders,
-  setJudgeActive,
-} from "@/lib/terac/terac.functions";
+import { listReviewSessions, runReminders } from "@/lib/terac/terac.functions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,8 +16,16 @@ export const Route = createFileRoute("/_authenticated/reviews/")({
       { title: "Terac reviews — Vira" },
       {
         name: "description",
-        content: "Expert review sessions on your ad concepts, and the judge roster behind them.",
+        content:
+          "Open your ad concepts to the Terac agent pool and watch votes and feedback come in.",
       },
+      { property: "og:title", content: "Terac reviews — Vira" },
+      {
+        property: "og:description",
+        content: "Expert agents vote on your ad concepts before you ship.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ReviewsIndex,
@@ -32,8 +33,8 @@ export const Route = createFileRoute("/_authenticated/reviews/")({
 
 const STATUS_COPY: Record<string, string> = {
   generating: "Generating",
-  ready: "Ready to send",
-  sent: "Out with judges",
+  ready: "Ready to open",
+  sent: "Open to agents",
   in_review: "Being reviewed",
   complete: "Ready to synthesise",
   synthesized: "Synthesis ready",
@@ -42,49 +43,16 @@ const STATUS_COPY: Record<string, string> = {
 };
 
 function ReviewsIndex() {
-  const queryClient = useQueryClient();
   const fetchSessions = useServerFn(listReviewSessions);
-  const fetchJudges = useServerFn(listJudges);
-  const addJudge = useServerFn(createJudge);
-  const toggleJudge = useServerFn(setJudgeActive);
   const nudge = useServerFn(runReminders);
 
   const sessions = useQuery({ queryKey: ["terac-sessions"], queryFn: () => fetchSessions() });
-  const judges = useQuery({ queryKey: ["terac-judges"], queryFn: () => fetchJudges() });
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [tags, setTags] = useState("");
-
-  const judgeMutation = useMutation({
-    mutationFn: () =>
-      addJudge({
-        data: {
-          name,
-          email,
-          expertiseTags: tags
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean)
-            .slice(0, 12),
-        },
-      }),
-    onSuccess: () => {
-      setName("");
-      setEmail("");
-      setTags("");
-      void queryClient.invalidateQueries({ queryKey: ["terac-judges"] });
-      toast.success("Judge added to your roster.");
-    },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : "Could not add judge."),
-  });
 
   const reminderMutation = useMutation({
     mutationFn: () => nudge({}),
     onSuccess: (result) =>
       toast.success(
-        result.sent === 0 ? "No reminders were due." : `Reminded ${result.sent} judge(s).`,
+        result.sent === 0 ? "No reminders were due." : `Reminded ${result.sent} agent(s).`,
       ),
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "Reminder run failed."),
@@ -98,9 +66,9 @@ function ReviewsIndex() {
           Expert review, between generation and ship
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Every press of Create Ads opens one review session — all the concepts from that press, one
-          link per judge, judged side by side. A session closes on quorum or deadline, whichever
-          comes first.
+          Every press of Create Ads opens one review session as a task in the Terac agent pool.
+          Share its link: any agent willing to take it sees every ad, votes for their favourite and
+          writes feedback. A session closes on quorum or deadline, whichever comes first.
         </p>
       </header>
 
@@ -128,7 +96,8 @@ function ReviewsIndex() {
           <Card className="mt-4">
             <CardContent className="flex flex-col items-start gap-3 p-6">
               <p className="text-sm text-muted-foreground">
-                No review sessions yet. Pick concepts in the remix studio and send them to a panel.
+                No review sessions yet. Pick concepts in the remix studio and open them to the agent
+                pool.
               </p>
               <Button asChild size="sm">
                 <Link to="/remix">Go to remix studio</Link>
@@ -149,11 +118,11 @@ function ReviewsIndex() {
                         </Badge>
                       </div>
                       <p className="mt-1.5 text-sm text-muted-foreground">
-                        Sent to {session.invited} judge{session.invited === 1 ? "" : "s"} ·{" "}
+                        {session.claimed} agent{session.claimed === 1 ? "" : "s"} claimed ·{" "}
                         <span className="font-medium text-foreground">
                           {session.submitted} reviewed
                         </span>{" "}
-                        · quorum {session.quorum} · {session.videoCount} ad
+                        · needs {session.quorum} · {session.videoCount} ad
                         {session.videoCount === 1 ? "" : "s"}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
@@ -164,6 +133,25 @@ function ReviewsIndex() {
                       <Link to="/reviews/$id" params={{ id: session.id }}>
                         {session.hasSynthesis ? "See results" : "Open"}
                       </Link>
+                    </Button>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <Input
+                      readOnly
+                      value={session.agentUrl}
+                      aria-label="Agent link"
+                      className="max-w-md font-mono text-xs"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(session.agentUrl);
+                        toast.success("Agent link copied.");
+                      }}
+                    >
+                      Copy agent link
                     </Button>
                   </div>
 
@@ -192,104 +180,19 @@ function ReviewsIndex() {
                         >
                           <span className="font-medium text-foreground">{judge.name}</span>
                           {" · "}
-                          {judge.status === "submitted"
-                            ? "reviewed"
-                            : judge.status === "opened"
-                              ? "opened"
-                              : "not opened"}
+                          {judge.status === "submitted" ? "reviewed" : "in progress"}
                         </li>
                       ))}
                     </ul>
-                  ) : null}
+                  ) : (
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      No agent has claimed this session yet.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
-        )}
-      </section>
-
-      <section className="mt-14">
-        <h2 className="font-serif text-2xl font-semibold tracking-tight">Judge roster</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Judges never create a password. Each gets a unique link tied to one session.
-        </p>
-
-        <Card className="mt-4">
-          <CardContent className="p-5">
-            <form
-              className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto]"
-              onSubmit={(event) => {
-                event.preventDefault();
-                judgeMutation.mutate();
-              }}
-            >
-              <Input
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Name"
-                required
-                aria-label="Judge name"
-              />
-              <Input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="Email"
-                required
-                aria-label="Judge email"
-              />
-              <Input
-                value={tags}
-                onChange={(event) => setTags(event.target.value)}
-                placeholder="Expertise, comma separated"
-                aria-label="Expertise tags"
-              />
-              <Button type="submit" disabled={judgeMutation.isPending}>
-                {judgeMutation.isPending ? "Adding…" : "Add judge"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {judges.isLoading ? (
-          <Skeleton className="mt-4 h-24 w-full" />
-        ) : judges.data?.length ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {judges.data.map((judge) => (
-              <Card key={judge.id}>
-                <CardContent className="flex items-start justify-between gap-3 p-4">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-foreground">{judge.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{judge.email}</p>
-                    {judge.expertise_tags?.length ? (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {judge.expertise_tags.map((tag: string) => (
-                          <Badge key={tag} variant="secondary" className="text-[10px]">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() =>
-                      toggleJudge({ data: { judgeId: judge.id, active: !judge.active } }).then(() =>
-                        queryClient.invalidateQueries({ queryKey: ["terac-judges"] }),
-                      )
-                    }
-                  >
-                    {judge.active ? "Pause" : "Activate"}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-4 text-sm text-muted-foreground">
-            No judges yet. Add one above before creating a review session.
-          </p>
         )}
       </section>
     </div>
