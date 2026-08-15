@@ -49,7 +49,7 @@ function EditCompany() {
             initial={data}
             submitLabel="Save changes"
             onSubmit={async (values) => {
-              await save({
+              const updated = await save({
                 data: {
                   id,
                   name: values.name,
@@ -62,6 +62,8 @@ function EditCompany() {
                 },
               });
               toast.success("Company updated.");
+              // Reuse the record the save just returned instead of re-fetching it.
+              queryClient.setQueryData(["my-company", id], updated);
               void queryClient.invalidateQueries({ queryKey: ["my-companies"] });
               navigate({ to: "/dashboard" });
             }}

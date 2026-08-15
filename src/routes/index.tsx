@@ -5,7 +5,15 @@ import { useState } from "react";
 import { listCategories, listCompanies } from "@/lib/companies.functions";
 import { listTrendingNow } from "@/lib/trends.functions";
 import { CompanyCard } from "@/components/CompanyCard";
-import { Eyebrow, Lead, PageShell, PageTitle, SectionTitle, Stat, StatRow } from "@/components/Page";
+import {
+  Eyebrow,
+  Lead,
+  PageShell,
+  PageTitle,
+  SectionTitle,
+  Stat,
+  StatRow,
+} from "@/components/Page";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -199,7 +207,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="mt-16">
+      <section id="directory" className="mt-16 scroll-mt-24">
         <div className="flex flex-wrap items-center justify-between gap-6 border-y border-border py-6">
           <SectionTitle>Browse the directory</SectionTitle>
           <div className="relative min-w-[280px] flex-1 sm:max-w-md">

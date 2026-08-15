@@ -34,7 +34,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="flex items-center gap-2">
-          <Link to="/" className={cn(navLink, "hidden sm:inline-flex")}>
+          <Link to="/" hash="directory" className={cn(navLink, "hidden sm:inline-flex")}>
             Browse
           </Link>
           <Link to="/trends" className={cn(navLink, "hidden sm:inline-flex")}>
@@ -66,7 +66,7 @@ export function SiteHeader() {
               <Link to="/auth" className={navLink}>
                 Sign in
               </Link>
-              <Link to="/auth" className={solid}>
+              <Link to="/auth" search={{ tab: "signup" }} className={solid}>
                 List your company
               </Link>
             </>

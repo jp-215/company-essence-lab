@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Check, Plus } from "lucide-react";
+import { Check, Plus, X } from "lucide-react";
 
 import { createCompany } from "@/lib/owner.functions";
 import { runEnrichment } from "@/lib/enrich.functions";
@@ -11,6 +11,7 @@ import { listCategories } from "@/lib/companies.functions";
 import { getMySubscription } from "@/lib/billing.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { LOGO_BUCKET } from "@/lib/company-types";
+import { downscaleImage } from "@/lib/image-utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,11 +115,12 @@ function NewCompany() {
     }
 
     const next: Photo[] = [];
-    for (const file of files.slice(0, room)) {
-      if (file.size > 5_000_000) {
-        toast.error(`${file.name} is larger than 5 MB.`);
+    for (const original of files.slice(0, room)) {
+      if (original.size > 5_000_000) {
+        toast.error(`${original.name} is larger than 5 MB.`);
         continue;
       }
+      const file = await downscaleImage(original);
       const extension = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
       const path = `${userId}/${crypto.randomUUID()}.${extension}`;
       const { error } = await supabase.storage
@@ -136,6 +138,12 @@ function NewCompany() {
 
     setUploading(false);
     if (next.length) setPhotos((current) => [...current, ...next]);
+  }
+
+  function removePhoto(path: string) {
+    setPhotos((current) => current.filter((photo) => photo.path !== path));
+    // Best-effort cleanup; the row only ever references photos still in state.
+    void supabase.storage.from(LOGO_BUCKET).remove([path]);
   }
 
   function nextStep() {
@@ -248,30 +256,49 @@ function NewCompany() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-semibold text-foreground">
-                  {uploading ? "Uploading…" : "Drag photos here, or browse"}
+                  {uploading
+                    ? "Uploading…"
+                    : photos.length
+                      ? `${photos.length} ${photos.length === 1 ? "photo" : "photos"} added — drag more, or browse`
+                      : "Drag photos here, or browse"}
                 </span>
                 <span className="block text-sm text-muted-foreground">
-                  1–5 photos · JPG, PNG or HEIC · straight off your phone is fine
+                  {photos.length
+                    ? `Up to ${5 - photos.length} more · the first photo is your logo`
+                    : "1–5 photos · JPG, PNG or HEIC · straight off your phone is fine"}
                 </span>
               </span>
-              <span className="flex shrink-0 gap-2">
+            </button>
+
+            {photos.length ? (
+              <ul className="flex flex-wrap gap-3">
                 {photos.map((photo, index) => (
-                  <span key={photo.path} className="relative block">
+                  <li key={photo.path} className="relative">
                     <img
                       src={photo.url ?? ""}
                       alt={`Product photo ${index + 1}`}
                       loading="lazy"
+                      width={64}
+                      height={64}
                       className="size-16 rounded-lg border border-border bg-muted object-cover"
                     />
                     {index === 0 ? (
-                      <span className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-foreground">
+                      <span className="absolute -left-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-foreground">
                         <Check className="size-3 text-background" />
                       </span>
                     ) : null}
-                  </span>
+                    <button
+                      type="button"
+                      aria-label={`Remove photo ${index + 1}`}
+                      onClick={() => removePhoto(photo.path)}
+                      className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-destructive text-white shadow transition-transform hover:scale-110"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </li>
                 ))}
-              </span>
-            </button>
+              </ul>
+            ) : null}
             <input
               ref={fileInput}
               type="file"
@@ -372,7 +399,7 @@ function NewCompany() {
                   </span>
                   {selected ? (
                     <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-chart-1">
-                      <Check className="size-4 text-primary-foreground" />
+                      <Check className="size-4 text-white" />
                     </span>
                   ) : null}
                 </button>
@@ -445,7 +472,7 @@ function NewCompany() {
             type="button"
             disabled={busy || uploading}
             onClick={() => (step === 3 ? void publish() : nextStep())}
-            className="inline-flex items-center gap-2 rounded-xl bg-chart-1 px-8 py-4 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl bg-chart-1 px-8 py-4 text-base font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {step === 3 ? (busy ? "Publishing…" : "Publish brand") : "Continue"}
             <span aria-hidden="true">→</span>

@@ -29,14 +29,14 @@ export function CompanyCard({ company }: { company: CompanyCardDTO }) {
         {company.categoryName}
       </Link>
 
-      <p className="line-clamp-3 text-base leading-relaxed text-muted-foreground">{company.bio}</p>
+      <p className="text-base leading-relaxed text-muted-foreground">{company.bio}</p>
 
       {company.mission ? (
         <div className="border-t border-border pt-4">
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             Mission
           </p>
-          <p className="mt-1 line-clamp-2 text-base text-foreground">{company.mission}</p>
+          <p className="mt-1 text-base text-foreground">{company.mission}</p>
         </div>
       ) : null}
 

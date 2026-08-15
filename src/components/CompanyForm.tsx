@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { listCategories } from "@/lib/companies.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { LOGO_BUCKET, type OwnerCompanyDTO } from "@/lib/company-types";
+import { downscaleImage } from "@/lib/image-utils";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,12 +61,13 @@ export function CompanyForm({ initial, submitLabel, onSubmit }: Props) {
   }
 
   async function handleLogo(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2_000_000) {
+    const picked = event.target.files?.[0];
+    if (!picked) return;
+    if (picked.size > 2_000_000) {
       toast.error("Logo must be smaller than 2 MB.");
       return;
     }
+    const file = await downscaleImage(picked);
 
     setUploading(true);
     const { data: userData } = await supabase.auth.getUser();
@@ -98,6 +100,21 @@ export function CompanyForm({ initial, submitLabel, onSubmit }: Props) {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
+    if (initial) {
+      const unchanged =
+        values.name === initial.name &&
+        values.ownerName === initial.ownerName &&
+        values.categoryId === initial.categoryId &&
+        values.bio === initial.bio &&
+        values.mission === initial.mission &&
+        values.website === (initial.website ?? "") &&
+        values.logoPath === (initial.logoPath ?? null);
+      if (unchanged) {
+        toast.info("Nothing changed — no save needed.");
+        return;
+      }
+    }
     if (!values.categoryId) {
       toast.error("Pick the category you serve.");
       return;
@@ -118,7 +135,7 @@ export function CompanyForm({ initial, submitLabel, onSubmit }: Props) {
   }
 
   return (
-    <form className="space-y-8" onSubmit={handleSubmit}>
+    <form className="space-y-6" onSubmit={handleSubmit}>
       <section className="space-y-4">
         <h2 className="font-serif text-lg font-semibold text-foreground">Company identity</h2>
 
@@ -126,7 +143,13 @@ export function CompanyForm({ initial, submitLabel, onSubmit }: Props) {
           <BrandLogo name={values.name || "New brand"} logoUrl={logoPreview} className="size-20" />
           <div className="space-y-2">
             <Label htmlFor="logo">Logo</Label>
-            <Input id="logo" type="file" accept="image/*" onChange={handleLogo} disabled={uploading} />
+            <Input
+              id="logo"
+              type="file"
+              accept="image/*"
+              onChange={handleLogo}
+              disabled={uploading}
+            />
             <p className="text-xs text-muted-foreground">PNG, JPG or SVG up to 2 MB.</p>
           </div>
         </div>
@@ -217,9 +240,11 @@ export function CompanyForm({ initial, submitLabel, onSubmit }: Props) {
         </div>
       </section>
 
-      <Button type="submit" disabled={busy || uploading}>
-        {busy ? "Saving…" : submitLabel}
-      </Button>
+      <div className="sticky bottom-0 -mx-4 border-t border-border bg-background px-4 py-3">
+        <Button type="submit" disabled={busy || uploading}>
+          {busy ? "Saving…" : submitLabel}
+        </Button>
+      </div>
     </form>
   );
 }
