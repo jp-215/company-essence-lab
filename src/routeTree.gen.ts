@@ -20,11 +20,8 @@ import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authentica
 import { Route as AuthenticatedRemixRouteImport } from './routes/_authenticated/remix'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as CompaniesSlugRouteImport } from './routes/companies.$slug'
-import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authenticated/reviews.index'
-import { Route as AuthenticatedReviewsSessionIdRouteImport } from './routes/_authenticated/reviews.$sessionId'
 import { Route as AuthenticatedStudioIdRouteImport } from './routes/_authenticated/studio.$id'
 import { Route as AuthenticatedStudioNewRouteImport } from './routes/_authenticated/studio.new'
-import { Route as TeracRTokenRouteImport } from './routes/terac/r.$token'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -80,18 +77,6 @@ const CompaniesSlugRoute = CompaniesSlugRouteImport.update({
   path: '/companies/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedReviewsIndexRoute =
-  AuthenticatedReviewsIndexRouteImport.update({
-    id: '/reviews/',
-    path: '/reviews/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedReviewsSessionIdRoute =
-  AuthenticatedReviewsSessionIdRouteImport.update({
-    id: '/reviews/$sessionId',
-    path: '/reviews/$sessionId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedStudioIdRoute = AuthenticatedStudioIdRouteImport.update({
   id: '/studio/$id',
   path: '/studio/$id',
@@ -101,11 +86,6 @@ const AuthenticatedStudioNewRoute = AuthenticatedStudioNewRouteImport.update({
   id: '/studio/new',
   path: '/studio/new',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const TeracRTokenRoute = TeracRTokenRouteImport.update({
-  id: '/terac/r/$token',
-  path: '/terac/r/$token',
-  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -119,11 +99,8 @@ export interface FileRoutesByFullPath {
   '/remix': typeof AuthenticatedRemixRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/companies/$slug': typeof CompaniesSlugRoute
-  '/reviews/$sessionId': typeof AuthenticatedReviewsSessionIdRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
-  '/terac/r/$token': typeof TeracRTokenRoute
-  '/reviews/': typeof AuthenticatedReviewsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -136,11 +113,8 @@ export interface FileRoutesByTo {
   '/remix': typeof AuthenticatedRemixRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/companies/$slug': typeof CompaniesSlugRoute
-  '/reviews/$sessionId': typeof AuthenticatedReviewsSessionIdRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
-  '/terac/r/$token': typeof TeracRTokenRoute
-  '/reviews': typeof AuthenticatedReviewsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -155,11 +129,8 @@ export interface FileRoutesById {
   '/_authenticated/remix': typeof AuthenticatedRemixRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/companies/$slug': typeof CompaniesSlugRoute
-  '/_authenticated/reviews/$sessionId': typeof AuthenticatedReviewsSessionIdRoute
   '/_authenticated/studio/$id': typeof AuthenticatedStudioIdRoute
   '/_authenticated/studio/new': typeof AuthenticatedStudioNewRoute
-  '/terac/r/$token': typeof TeracRTokenRoute
-  '/_authenticated/reviews/': typeof AuthenticatedReviewsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -174,11 +145,8 @@ export interface FileRouteTypes {
     | '/remix'
     | '/categories/$slug'
     | '/companies/$slug'
-    | '/reviews/$sessionId'
     | '/studio/$id'
     | '/studio/new'
-    | '/terac/r/$token'
-    | '/reviews/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -191,11 +159,8 @@ export interface FileRouteTypes {
     | '/remix'
     | '/categories/$slug'
     | '/companies/$slug'
-    | '/reviews/$sessionId'
     | '/studio/$id'
     | '/studio/new'
-    | '/terac/r/$token'
-    | '/reviews'
   id:
     | '__root__'
     | '/'
@@ -209,11 +174,8 @@ export interface FileRouteTypes {
     | '/_authenticated/remix'
     | '/categories/$slug'
     | '/companies/$slug'
-    | '/_authenticated/reviews/$sessionId'
     | '/_authenticated/studio/$id'
     | '/_authenticated/studio/new'
-    | '/terac/r/$token'
-    | '/_authenticated/reviews/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -223,7 +185,6 @@ export interface RootRouteChildren {
   TrendsRoute: typeof TrendsRoute
   CategoriesSlugRoute: typeof CategoriesSlugRoute
   CompaniesSlugRoute: typeof CompaniesSlugRoute
-  TeracRTokenRoute: typeof TeracRTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -305,20 +266,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompaniesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/reviews/': {
-      id: '/_authenticated/reviews/'
-      path: '/reviews'
-      fullPath: '/reviews/'
-      preLoaderRoute: typeof AuthenticatedReviewsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/reviews/$sessionId': {
-      id: '/_authenticated/reviews/$sessionId'
-      path: '/reviews/$sessionId'
-      fullPath: '/reviews/$sessionId'
-      preLoaderRoute: typeof AuthenticatedReviewsSessionIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/studio/$id': {
       id: '/_authenticated/studio/$id'
       path: '/studio/$id'
@@ -333,13 +280,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudioNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/terac/r/$token': {
-      id: '/terac/r/$token'
-      path: '/terac/r/$token'
-      fullPath: '/terac/r/$token'
-      preLoaderRoute: typeof TeracRTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -349,10 +289,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedRemixRoute: typeof AuthenticatedRemixRoute
-  AuthenticatedReviewsSessionIdRoute: typeof AuthenticatedReviewsSessionIdRoute
   AuthenticatedStudioIdRoute: typeof AuthenticatedStudioIdRoute
   AuthenticatedStudioNewRoute: typeof AuthenticatedStudioNewRoute
-  AuthenticatedReviewsIndexRoute: typeof AuthenticatedReviewsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -361,10 +299,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedRemixRoute: AuthenticatedRemixRoute,
-  AuthenticatedReviewsSessionIdRoute: AuthenticatedReviewsSessionIdRoute,
   AuthenticatedStudioIdRoute: AuthenticatedStudioIdRoute,
   AuthenticatedStudioNewRoute: AuthenticatedStudioNewRoute,
-  AuthenticatedReviewsIndexRoute: AuthenticatedReviewsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -377,7 +313,6 @@ const rootRouteChildren: RootRouteChildren = {
   TrendsRoute: TrendsRoute,
   CategoriesSlugRoute: CategoriesSlugRoute,
   CompaniesSlugRoute: CompaniesSlugRoute,
-  TeracRTokenRoute: TeracRTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

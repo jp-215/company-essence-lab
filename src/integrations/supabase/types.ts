@@ -186,6 +186,45 @@ export type Database = {
           },
         ]
       }
+      category_word_of_mouth: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          relevance_rank: number
+          wom_key: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          relevance_rank?: number
+          wom_key: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          relevance_rank?: number
+          wom_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_word_of_mouth_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_word_of_mouth_wom_key_fkey"
+            columns: ["wom_key"]
+            isOneToOne: false
+            referencedRelation: "word_of_mouth"
+            referencedColumns: ["wom_key"]
+          },
+        ]
+      }
       companies: {
         Row: {
           bio: string
@@ -911,6 +950,93 @@ export type Database = {
           },
         ]
       }
+      word_of_mouth: {
+        Row: {
+          author: string
+          author_followers: number
+          author_handle: string
+          buzz_score: number
+          content: string
+          created_at: string
+          engagement_rate: number
+          hashtags: string[]
+          id: string
+          likes: number
+          mentions: string[]
+          platform: string
+          posted_at: string | null
+          query: string
+          quotes: number
+          raw: Json | null
+          replies: number
+          reposts: number
+          sentiment: string
+          source_url: string
+          theme: string
+          title: string
+          topic: string
+          updated_at: string
+          views: number
+          wom_key: string
+        }
+        Insert: {
+          author?: string
+          author_followers?: number
+          author_handle?: string
+          buzz_score?: number
+          content?: string
+          created_at?: string
+          engagement_rate?: number
+          hashtags?: string[]
+          id?: string
+          likes?: number
+          mentions?: string[]
+          platform?: string
+          posted_at?: string | null
+          query?: string
+          quotes?: number
+          raw?: Json | null
+          replies?: number
+          reposts?: number
+          sentiment?: string
+          source_url?: string
+          theme?: string
+          title?: string
+          topic?: string
+          updated_at?: string
+          views?: number
+          wom_key: string
+        }
+        Update: {
+          author?: string
+          author_followers?: number
+          author_handle?: string
+          buzz_score?: number
+          content?: string
+          created_at?: string
+          engagement_rate?: number
+          hashtags?: string[]
+          id?: string
+          likes?: number
+          mentions?: string[]
+          platform?: string
+          posted_at?: string | null
+          query?: string
+          quotes?: number
+          raw?: Json | null
+          replies?: number
+          reposts?: number
+          sentiment?: string
+          source_url?: string
+          theme?: string
+          title?: string
+          topic?: string
+          updated_at?: string
+          views?: number
+          wom_key?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -948,6 +1074,30 @@ export type Database = {
           trend_key: string
           trend_score: number
           views: number
+        }[]
+      }
+      company_word_of_mouth: {
+        Args: { _company_id: string; _limit?: number }
+        Returns: {
+          author: string
+          author_handle: string
+          buzz_score: number
+          content: string
+          engagement_rate: number
+          hashtags: string[]
+          likes: number
+          platform: string
+          posted_at: string
+          relevance_rank: number
+          replies: number
+          reposts: number
+          sentiment: string
+          source_url: string
+          theme: string
+          title: string
+          topic: string
+          views: number
+          wom_key: string
         }[]
       }
       match_company_knowledge: {

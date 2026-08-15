@@ -48,9 +48,6 @@ export function SiteHeader() {
               <Link to="/remix" className={cn(navLink, "hidden sm:inline-flex")}>
                 Remix studio
               </Link>
-              <Link to="/reviews" className={cn(navLink, "hidden sm:inline-flex")}>
-                Reviews
-              </Link>
               <Link to="/knowledge" className={cn(navLink, "hidden md:inline-flex")}>
                 Knowledge base
               </Link>
