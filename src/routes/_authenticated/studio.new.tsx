@@ -83,8 +83,9 @@ function NewCompany() {
   const [bio, setBio] = useState("");
   const [mission, setMission] = useState("");
 
-  async function handleFiles(files: FileList | null) {
-    if (!files?.length) return;
+  async function handleFiles(fileList: FileList | File[] | null) {
+    const files = fileList ? Array.from(fileList) : [];
+    if (!files.length) return;
     const room = 5 - photos.length;
     if (room <= 0) {
       toast.error("Five photos is the max.");
@@ -101,7 +102,7 @@ function NewCompany() {
     }
 
     const next: Photo[] = [];
-    for (const file of Array.from(files).slice(0, room)) {
+    for (const file of files.slice(0, room)) {
       if (file.size > 5_000_000) {
         toast.error(`${file.name} is larger than 5 MB.`);
         continue;
@@ -260,8 +261,11 @@ function NewCompany() {
               multiple
               className="hidden"
               onChange={(event) => {
-                void handleFiles(event.target.files);
-                event.target.value = "";
+                const input = event.currentTarget;
+                const picked = input.files ? Array.from(input.files) : [];
+                void handleFiles(picked).finally(() => {
+                  input.value = "";
+                });
               }}
             />
 
