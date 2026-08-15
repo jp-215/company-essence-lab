@@ -22,6 +22,8 @@ export type Database = {
           generation_spec: Json
           hook_text: string
           id: string
+          media_provider: string | null
+          media_status: string
           parent_video_id: string | null
           playback_id: string | null
           playback_url: string | null
@@ -37,6 +39,8 @@ export type Database = {
           generation_spec?: Json
           hook_text?: string
           id?: string
+          media_provider?: string | null
+          media_status?: string
           parent_video_id?: string | null
           playback_id?: string | null
           playback_url?: string | null
@@ -52,6 +56,8 @@ export type Database = {
           generation_spec?: Json
           hook_text?: string
           id?: string
+          media_provider?: string | null
+          media_status?: string
           parent_video_id?: string | null
           playback_id?: string | null
           playback_url?: string | null
@@ -513,6 +519,7 @@ export type Database = {
         Row: {
           consensus_themes: string[]
           created_at: string
+          engine: string
           id: string
           revision_directives: Json
           session_id: string
@@ -522,6 +529,7 @@ export type Database = {
         Insert: {
           consensus_themes?: string[]
           created_at?: string
+          engine?: string
           id?: string
           revision_directives?: Json
           session_id: string
@@ -531,6 +539,7 @@ export type Database = {
         Update: {
           consensus_themes?: string[]
           created_at?: string
+          engine?: string
           id?: string
           revision_directives?: Json
           session_id?: string
@@ -812,6 +821,8 @@ export type Database = {
           quorum: number
           reminded_at: string | null
           status: string
+          title: string
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -824,6 +835,8 @@ export type Database = {
           quorum?: number
           reminded_at?: string | null
           status?: string
+          title?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -836,6 +849,8 @@ export type Database = {
           quorum?: number
           reminded_at?: string | null
           status?: string
+          title?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -853,9 +868,11 @@ export type Database = {
           created_at: string
           id: string
           invite_token: string
+          is_adhoc: boolean
           judge_id: string
           opened_at: string | null
           overall_note: string
+          reminded_at: string | null
           session_id: string
           status: string
           submitted_at: string | null
@@ -865,9 +882,11 @@ export type Database = {
           created_at?: string
           id?: string
           invite_token: string
+          is_adhoc?: boolean
           judge_id: string
           opened_at?: string | null
           overall_note?: string
+          reminded_at?: string | null
           session_id: string
           status?: string
           submitted_at?: string | null
@@ -877,9 +896,11 @@ export type Database = {
           created_at?: string
           id?: string
           invite_token?: string
+          is_adhoc?: boolean
           judge_id?: string
           opened_at?: string | null
           overall_note?: string
+          reminded_at?: string | null
           session_id?: string
           status?: string
           submitted_at?: string | null
@@ -943,6 +964,63 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      terac_email_log: {
+        Row: {
+          body: string
+          created_at: string
+          driver: string
+          error: string | null
+          id: string
+          kind: string
+          provider_id: string | null
+          session_id: string | null
+          session_judge_id: string | null
+          subject: string
+          to_email: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          driver?: string
+          error?: string | null
+          id?: string
+          kind: string
+          provider_id?: string | null
+          session_id?: string | null
+          session_judge_id?: string | null
+          subject?: string
+          to_email: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          driver?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          provider_id?: string | null
+          session_id?: string | null
+          session_judge_id?: string | null
+          subject?: string
+          to_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terac_email_log_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "review_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "terac_email_log_session_judge_id_fkey"
+            columns: ["session_judge_id"]
+            isOneToOne: false
+            referencedRelation: "session_judges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trend_interactions: {
         Row: {
@@ -1075,6 +1153,7 @@ export type Database = {
           dimension_scores: Json
           id: string
           session_judge_id: string
+          updated_at: string
           video_id: string
         }
         Insert: {
@@ -1083,6 +1162,7 @@ export type Database = {
           dimension_scores?: Json
           id?: string
           session_judge_id: string
+          updated_at?: string
           video_id: string
         }
         Update: {
@@ -1091,6 +1171,7 @@ export type Database = {
           dimension_scores?: Json
           id?: string
           session_judge_id?: string
+          updated_at?: string
           video_id?: string
         }
         Relationships: [
@@ -1117,6 +1198,7 @@ export type Database = {
           is_pick: boolean
           rank: number | null
           session_judge_id: string
+          updated_at: string
           video_id: string
         }
         Insert: {
@@ -1125,6 +1207,7 @@ export type Database = {
           is_pick?: boolean
           rank?: number | null
           session_judge_id: string
+          updated_at?: string
           video_id: string
         }
         Update: {
@@ -1133,6 +1216,7 @@ export type Database = {
           is_pick?: boolean
           rank?: number | null
           session_judge_id?: string
+          updated_at?: string
           video_id?: string
         }
         Relationships: [
@@ -1446,6 +1530,62 @@ export type Database = {
           trend_score: number
           views: number
         }[]
+      }
+      terac_advance_session: {
+        Args: { _session_id: string; _to: string }
+        Returns: string
+      }
+      terac_can_transition: {
+        Args: { _from: string; _to: string }
+        Returns: boolean
+      }
+      terac_claim_session: {
+        Args: { _email: string; _name: string; _public_token: string }
+        Returns: Json
+      }
+      terac_maybe_complete: { Args: { _session_id: string }; Returns: string }
+      terac_open_session: { Args: { _token: string }; Returns: Json }
+      terac_resolve_token: {
+        Args: { _token: string }
+        Returns: {
+          created_at: string
+          id: string
+          invite_token: string
+          is_adhoc: boolean
+          judge_id: string
+          opened_at: string | null
+          overall_note: string
+          reminded_at: string | null
+          session_id: string
+          status: string
+          submitted_at: string | null
+          video_order: string[]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "session_judges"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      terac_save_ballot: {
+        Args: {
+          _body: string
+          _dimension_scores: Json
+          _is_pick: boolean
+          _token: string
+          _video_id: string
+        }
+        Returns: Json
+      }
+      terac_submit_ballot: {
+        Args: { _overall_note: string; _ranks: Json; _token: string }
+        Returns: Json
+      }
+      terac_sweep_deadlines: { Args: never; Returns: number }
+      terac_valid_dimension_scores: {
+        Args: { _scores: Json }
+        Returns: boolean
       }
       trend_social_proof: {
         Args: { _trend_keys: string[] }
