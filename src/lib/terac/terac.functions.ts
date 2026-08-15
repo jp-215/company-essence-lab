@@ -45,11 +45,6 @@ export const createAds = createServerFn({ method: "POST" })
       .parse(input),
   )
 
-        quorum: z.number().int().min(1).max(20).default(3),
-        deadlineHours: z.number().int().min(1).max(336).default(48),
-      })
-      .parse(input),
-  )
   .handler(async ({ context, data }) =>
     createReviewSession(context.supabase, context.userId, { ...data, origin: origin() }),
   );
