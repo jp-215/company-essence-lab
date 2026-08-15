@@ -14,6 +14,76 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_videos: {
+        Row: {
+          concept_title: string
+          created_at: string
+          display_order: number
+          generation_spec: Json
+          hook_text: string
+          id: string
+          parent_video_id: string | null
+          playback_id: string | null
+          playback_url: string | null
+          remix_id: string | null
+          session_id: string
+          thumbnail_url: string | null
+          version: number
+        }
+        Insert: {
+          concept_title?: string
+          created_at?: string
+          display_order?: number
+          generation_spec?: Json
+          hook_text?: string
+          id?: string
+          parent_video_id?: string | null
+          playback_id?: string | null
+          playback_url?: string | null
+          remix_id?: string | null
+          session_id: string
+          thumbnail_url?: string | null
+          version?: number
+        }
+        Update: {
+          concept_title?: string
+          created_at?: string
+          display_order?: number
+          generation_spec?: Json
+          hook_text?: string
+          id?: string
+          parent_video_id?: string | null
+          playback_id?: string | null
+          playback_url?: string | null
+          remix_id?: string | null
+          session_id?: string
+          thumbnail_url?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_videos_parent_video_id_fkey"
+            columns: ["parent_video_id"]
+            isOneToOne: false
+            referencedRelation: "ad_videos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_videos_remix_id_fkey"
+            columns: ["remix_id"]
+            isOneToOne: false
+            referencedRelation: "company_remixes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_videos_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "review_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -361,6 +431,74 @@ export type Database = {
           },
         ]
       }
+      feedback_syntheses: {
+        Row: {
+          consensus_themes: string[]
+          created_at: string
+          id: string
+          revision_directives: Json
+          session_id: string
+          summary: string
+          video_verdicts: Json
+        }
+        Insert: {
+          consensus_themes?: string[]
+          created_at?: string
+          id?: string
+          revision_directives?: Json
+          session_id: string
+          summary?: string
+          video_verdicts?: Json
+        }
+        Update: {
+          consensus_themes?: string[]
+          created_at?: string
+          id?: string
+          revision_directives?: Json
+          session_id?: string
+          summary?: string
+          video_verdicts?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_syntheses_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "review_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      judges: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string
+          expertise_tags: string[]
+          id: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email: string
+          expertise_tags?: string[]
+          id?: string
+          name: string
+          owner_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string
+          expertise_tags?: string[]
+          id?: string
+          name?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
       prescripts: {
         Row: {
           angle: string
@@ -513,6 +651,107 @@ export type Database = {
           },
         ]
       }
+      review_sessions: {
+        Row: {
+          closed_at: string | null
+          company_id: string
+          created_at: string
+          deadline_at: string
+          id: string
+          public_token: string
+          quorum: number
+          reminded_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          company_id: string
+          created_at?: string
+          deadline_at?: string
+          id?: string
+          public_token: string
+          quorum?: number
+          reminded_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          company_id?: string
+          created_at?: string
+          deadline_at?: string
+          id?: string
+          public_token?: string
+          quorum?: number
+          reminded_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_sessions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_judges: {
+        Row: {
+          created_at: string
+          id: string
+          invite_token: string
+          judge_id: string
+          opened_at: string | null
+          overall_note: string
+          session_id: string
+          status: string
+          submitted_at: string | null
+          video_order: string[]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invite_token: string
+          judge_id: string
+          opened_at?: string | null
+          overall_note?: string
+          session_id: string
+          status?: string
+          submitted_at?: string | null
+          video_order?: string[]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invite_token?: string
+          judge_id?: string
+          opened_at?: string | null
+          overall_note?: string
+          session_id?: string
+          status?: string
+          submitted_at?: string | null
+          video_order?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_judges_judge_id_fkey"
+            columns: ["judge_id"]
+            isOneToOne: false
+            referencedRelation: "judges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_judges_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "review_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trends: {
         Row: {
           author: string
@@ -587,6 +826,90 @@ export type Database = {
           views?: number
         }
         Relationships: []
+      }
+      video_comments: {
+        Row: {
+          body: string
+          created_at: string
+          dimension_scores: Json
+          id: string
+          session_judge_id: string
+          video_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          dimension_scores?: Json
+          id?: string
+          session_judge_id: string
+          video_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          dimension_scores?: Json
+          id?: string
+          session_judge_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_comments_session_judge_id_fkey"
+            columns: ["session_judge_id"]
+            isOneToOne: false
+            referencedRelation: "session_judges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "ad_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_votes: {
+        Row: {
+          created_at: string
+          id: string
+          is_pick: boolean
+          rank: number | null
+          session_judge_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_pick?: boolean
+          rank?: number | null
+          session_judge_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_pick?: boolean
+          rank?: number | null
+          session_judge_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_votes_session_judge_id_fkey"
+            columns: ["session_judge_id"]
+            isOneToOne: false
+            referencedRelation: "session_judges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_votes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "ad_videos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
