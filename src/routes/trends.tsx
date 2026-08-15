@@ -37,8 +37,11 @@ const trendsQuery = (categorySlug?: string) =>
         listWordOfMouth({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }).catch(
           () => [],
         ),
+        listImageAssets({ data: { limit: 36, ...(categorySlug ? { categorySlug } : {}) } }).catch(
+          () => [] as Awaited<ReturnType<typeof listImageAssets>>,
+        ),
       ]);
-      return { categories, trends, wordOfMouth };
+      return { categories, trends, wordOfMouth, images };
     },
     retry: 2,
   });
