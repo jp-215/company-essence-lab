@@ -399,20 +399,28 @@ function PersonalizedRail({
     <section className="mt-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-serif text-2xl font-semibold tracking-tight">For your brand</h2>
-        {(companies.data?.length ?? 0) > 1 ? (
-          <div className="flex flex-wrap gap-2">
-            {companies.data!.map((company) => (
-              <Button
-                key={company.id}
-                variant={company.id === companyId ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCompanyId(company.id)}
-              >
-                {company.name}
-              </Button>
-            ))}
-          </div>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {(companies.data?.length ?? 0) > 1
+            ? companies.data!.map((company) => (
+                <Button
+                  key={company.id}
+                  variant={company.id === companyId ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCompanyId(company.id)}
+                >
+                  {company.name}
+                </Button>
+              ))
+            : null}
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={recommendations.isFetching || chatter.isFetching}
+            onClick={() => setSeed(Math.floor(Math.random() * 100000))}
+          >
+            {recommendations.isFetching || chatter.isFetching ? "Mixing…" : "Shuffle mix"}
+          </Button>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-4 rounded-2xl border border-border bg-card p-5 sm:grid-cols-4">
@@ -424,7 +432,7 @@ function PersonalizedRail({
         <RagStat
           label="Source mix"
           value={`${(recommendations.data ?? []).length} video / ${(chatter.data ?? []).length} chatter`}
-          note="Video trends balanced with word of mouth"
+          note={videoLeads ? "Video leads this mix" : "Chatter leads this mix"}
         />
         <RagStat
           label="Index coverage"
@@ -439,10 +447,11 @@ function PersonalizedRail({
         />
         <RagStat
           label="Ranking blend"
-          value="0.8 / 0.2"
-          note="Cosine similarity vs. trend heat"
+          value="0.55 / 0.45"
+          note="Brand fit vs. fresh rotation · max 2 per creator"
         />
       </div>
+
 
       {recommendations.isLoading || chatter.isLoading || companies.isLoading ? (
         <div className="mt-4 flex gap-4 overflow-hidden">
