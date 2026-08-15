@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "crypto";
 import type { SubscriptionStatus } from "./billing-types";
 
 const STRIPE_API = "https://api.stripe.com/v1";
@@ -200,8 +201,6 @@ export function verifyStripeSignature(
   const age = Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp));
   if (!Number.isFinite(age) || age > toleranceSeconds) return false;
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { createHmac, timingSafeEqual } = require("crypto") as typeof import("crypto");
   const expected = createHmac("sha256", secret)
     .update(`${timestamp}.${payload}`)
     .digest("hex");
