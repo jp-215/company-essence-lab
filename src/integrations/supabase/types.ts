@@ -436,6 +436,7 @@ export type Database = {
           caption: string
           comments: number
           created_at: string
+          embedding: string | null
           engagement_rate: number
           format: string
           hashtags: string[]
@@ -459,6 +460,7 @@ export type Database = {
           caption?: string
           comments?: number
           created_at?: string
+          embedding?: string | null
           engagement_rate?: number
           format?: string
           hashtags?: string[]
@@ -482,6 +484,7 @@ export type Database = {
           caption?: string
           comments?: number
           created_at?: string
+          embedding?: string | null
           engagement_rate?: number
           format?: string
           hashtags?: string[]
@@ -555,6 +558,29 @@ export type Database = {
           similarity: number
           slug: string
           summary: string
+        }[]
+      }
+      recommend_company_trends: {
+        Args: {
+          _company_id: string
+          _limit?: number
+          _query_embedding?: string
+        }
+        Returns: {
+          author: string
+          caption: string
+          combined_score: number
+          engagement_rate: number
+          format: string
+          hashtags: string[]
+          likes: number
+          platform: string
+          similarity: number
+          source_url: string
+          title: string
+          trend_key: string
+          trend_score: number
+          views: number
         }[]
       }
     }
