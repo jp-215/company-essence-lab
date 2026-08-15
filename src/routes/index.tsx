@@ -5,10 +5,9 @@ import { useState } from "react";
 import { listCategories, listCompanies } from "@/lib/companies.functions";
 import { listTrendingNow } from "@/lib/trends.functions";
 import { CompanyCard } from "@/components/CompanyCard";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Eyebrow, Lead, PageShell, PageTitle, SectionTitle, Stat, StatRow } from "@/components/Page";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 const marketplaceQuery = queryOptions({
   queryKey: ["marketplace"],
@@ -42,14 +41,14 @@ export const Route = createFileRoute("/")({
     ],
   }),
   errorComponent: () => (
-    <div className="mx-auto max-w-2xl px-4 py-20 text-center">
-      <h1 className="font-serif text-2xl font-semibold">The marketplace didn't load</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Please refresh to try again.</p>
+    <div className="mx-auto max-w-2xl px-6 py-20 text-center">
+      <h1 className="font-serif text-3xl font-bold tracking-tight">The marketplace didn't load</h1>
+      <p className="mt-3 text-base text-muted-foreground">Please refresh to try again.</p>
     </div>
   ),
   notFoundComponent: () => (
-    <div className="mx-auto max-w-2xl px-4 py-20 text-center">
-      <h1 className="font-serif text-2xl font-semibold">Not found</h1>
+    <div className="mx-auto max-w-2xl px-6 py-20 text-center">
+      <h1 className="font-serif text-3xl font-bold tracking-tight">Not found</h1>
     </div>
   ),
   component: Home,
@@ -73,102 +72,148 @@ function Home() {
       )
     : data.companies;
 
-  return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-12">
-      <section className="max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
-          Viral ad remixing for early-stage brands
-        </p>
-        <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl">
-          Cut through the noise. Remix the ads that are already winning.
-        </h1>
-        <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-          Vira tracks the posts trending across social right now, maps every trend to the category
-          your company serves, and rewrites them around your own mission and positioning — so you
-          can ship your first campaign without an agency.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Button asChild>
-            <Link to="/auth">Start remixing</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/auth">Sign in</Link>
-          </Button>
-        </div>
-      </section>
+  const totalViews = data.trends.reduce((sum, trend) => sum + trend.views, 0);
 
-      <section className="mt-14">
+  return (
+    <PageShell>
+      <Eyebrow live>Vira marketplace</Eyebrow>
+
+      <div className="mt-8 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+        <div>
+          <PageTitle hero>
+            Cut through the noise.
+            <br />
+            Remix the ads already winning
+          </PageTitle>
+          <Lead className="mt-6">
+            Vira tracks the posts trending across social right now, maps every trend to the category
+            your company serves, and rewrites them around your own mission and positioning — so you
+            can ship your first campaign without an agency.
+          </Lead>
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <Link
+              to="/auth"
+              className="rounded-xl bg-foreground px-7 py-3.5 text-base font-medium text-background transition-opacity hover:opacity-90"
+            >
+              Start remixing
+            </Link>
+            <Link
+              to="/auth"
+              className="rounded-xl border border-border bg-card px-7 py-3.5 text-base font-medium text-foreground transition-colors hover:border-ring"
+            >
+              Sign in
+            </Link>
+          </div>
+        </div>
+
+        <div className="lg:pt-6">
+          <StatRow className="grid-cols-3">
+            <Stat label="Brands listed" value={String(data.companies.length)} />
+            <Stat label="Categories mapped" value={String(data.categories.length)} />
+            <Stat label="Trending views" value={compact.format(totalViews)} />
+          </StatRow>
+          <p className="mt-5 text-base text-muted-foreground">
+            One owner, many brands. Every listing carries its own purpose identity — owner, bio and
+            mission — mapped to the categories it competes in.
+          </p>
+        </div>
+      </div>
+
+      <section className="mt-16">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <h2 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-            Trending right now
-          </h2>
-          <p className="text-sm text-muted-foreground">
+          <SectionTitle>Trending right now</SectionTitle>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Live trends, mapped to consumer categories
           </p>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {data.trends.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No trends loaded yet.</p>
+            <p className="text-base text-muted-foreground">No trends loaded yet.</p>
           ) : (
             data.trends.map((trend) => (
-              <Card key={trend.trendKey} className="h-full">
-                <CardContent className="flex h-full flex-col gap-3 py-5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-                      {trend.trendKey}
+              <article
+                key={trend.trendKey}
+                className="flex h-full flex-col gap-4 rounded-2xl border border-border bg-card p-6"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-[10px] tracking-wider text-muted-foreground">
+                    {trend.trendKey}
+                  </span>
+                  <span className="rounded-full bg-secondary px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-foreground">
+                    {trend.platform}
+                  </span>
+                </div>
+                <h3 className="line-clamp-3 text-lg font-medium leading-snug text-foreground">
+                  {trend.caption || trend.title}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {trend.format ? (
+                    <span className="rounded-md bg-secondary px-3 py-1 text-sm text-foreground">
+                      {trend.format}
                     </span>
-                    <Badge variant="outline">{trend.platform}</Badge>
-                  </div>
-                  <h3 className="line-clamp-2 font-medium leading-snug text-foreground">
-                    {trend.title || trend.caption.slice(0, 70)}
-                  </h3>
-                  <p className="line-clamp-3 text-sm text-muted-foreground">{trend.caption}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {trend.format ? <Badge variant="secondary">{trend.format}</Badge> : null}
-                    {trend.hashtags.slice(0, 2).map((tag) => (
-                      <Badge key={tag} variant="secondary">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
-                  <p className="mt-auto text-xs text-muted-foreground">
-                    {compact.format(trend.views)} views · {compact.format(trend.likes)} likes
-                  </p>
-                </CardContent>
-              </Card>
+                  ) : null}
+                  {trend.hashtags.slice(0, 2).map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-md bg-secondary px-3 py-1 text-sm text-foreground"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-auto border-t border-border pt-4 font-mono text-xs text-muted-foreground">
+                  <span className="font-semibold text-foreground">
+                    {compact.format(trend.views)}
+                  </span>{" "}
+                  views{" "}
+                  <span className="font-semibold text-foreground">
+                    {compact.format(trend.likes)}
+                  </span>{" "}
+                  likes
+                </p>
+              </article>
             ))
           )}
         </div>
       </section>
 
-      <section className="mt-14">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <h2 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-            Browse the directory
-          </h2>
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search brands, owners, missions, categories"
-            className="w-full sm:w-72"
-            aria-label="Search companies"
-          />
+      <section className="mt-16">
+        <div className="flex flex-wrap items-center justify-between gap-6 border-y border-border py-6">
+          <SectionTitle>Browse the directory</SectionTitle>
+          <div className="relative min-w-[280px] flex-1 sm:max-w-md">
+            <span className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 font-mono text-sm text-muted-foreground">
+              /
+            </span>
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search brands, owners, missions, categories"
+              aria-label="Search companies"
+              className="h-12 rounded-full border-border bg-card pl-10 text-base"
+            />
+          </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap gap-3">
           {data.categories.map((category) => (
-            <Link key={category.id} to="/categories/$slug" params={{ slug: category.slug }}>
-              <Badge variant="outline" className="cursor-pointer hover:bg-secondary">
-                {category.name}
-              </Badge>
+            <Link
+              key={category.id}
+              to="/categories/$slug"
+              params={{ slug: category.slug }}
+              className={cn(
+                "rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground",
+                "transition-colors hover:border-ring",
+              )}
+            >
+              {category.name}
             </Link>
           ))}
         </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {companies.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               No companies match yet. Be the first to list your brand.
             </p>
           ) : (
@@ -176,6 +221,6 @@ function Home() {
           )}
         </div>
       </section>
-    </div>
+    </PageShell>
   );
 }
