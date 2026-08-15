@@ -19,6 +19,7 @@ const mainNav = [
   { to: "/dashboard", label: "Dashboard", auth: true },
   { to: "/community", label: "Community", auth: true },
   { to: "/remix", label: "Remix studio", auth: true },
+  { to: "/reviews", label: "Reviews", auth: true },
   { to: "/knowledge", label: "Knowledge base", auth: true },
   { to: "/billing", label: "Billing", auth: true },
 ] as const;
