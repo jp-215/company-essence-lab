@@ -1,14 +1,20 @@
-export type PrescriptDTO = {
-  /** Primary identifier key, e.g. VIRA-PS-042 — the join key between categories and prescripts. */
-  prescriptKey: string;
-  title: string;
+/**
+ * Trend mapping protocol: company -> category (company.category_id) -> category_trends
+ * -> trends, joined on trend_key (the trend primary identifier key).
+ */
+export type TrendDTO = {
+  /** Primary identifier key, e.g. VIRA-TR-0421. */
+  trendKey: string;
   platform: string;
+  title: string;
+  caption: string;
+  hashtags: string[];
   format: string;
-  angle: string;
-  hook: string;
-  rationale: string;
-  script: string;
-  cta: string;
+  sourceUrl: string;
+  author: string;
+  views: number;
+  likes: number;
+  engagementRate: number;
   trendScore: number;
   relevanceRank: number;
 };
@@ -16,7 +22,9 @@ export type PrescriptDTO = {
 export type RemixDTO = {
   id: string;
   companyId: string;
-  prescriptKey: string;
+  trendKey: string;
+  trendTitle: string;
+  sourceUrl: string;
   platform: string;
   hook: string;
   script: string;
