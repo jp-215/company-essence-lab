@@ -17,11 +17,12 @@ async function engineFetch<T>(
   path: string,
   init?: { method?: string; body?: unknown },
 ): Promise<T> {
-  const response = await fetch(`${baseUrl()}/v1${path}`, {
-    method: init?.method ?? "GET",
-    headers: init?.body ? { "Content-Type": "application/json" } : undefined,
-    body: init?.body ? JSON.stringify(init.body) : undefined,
-  });
+  const requestInit: RequestInit = { method: init?.method ?? "GET" };
+  if (init?.body !== undefined) {
+    requestInit.headers = { "Content-Type": "application/json" };
+    requestInit.body = JSON.stringify(init.body);
+  }
+  const response = await fetch(`${baseUrl()}/v1${path}`, requestInit);
 
   const text = await response.text();
   if (!response.ok) {
