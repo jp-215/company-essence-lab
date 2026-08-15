@@ -108,6 +108,45 @@ export type Database = {
         }
         Relationships: []
       }
+      category_image_assets: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          image_key: string
+          relevance_rank: number
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          image_key: string
+          relevance_rank?: number
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          image_key?: string
+          relevance_rank?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_image_assets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_image_assets_image_key_fkey"
+            columns: ["image_key"]
+            isOneToOne: false
+            referencedRelation: "image_assets"
+            referencedColumns: ["image_key"]
+          },
+        ]
+      }
       category_prescripts: {
         Row: {
           category_id: string
@@ -507,6 +546,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      image_assets: {
+        Row: {
+          author: string
+          author_handle: string
+          buzz_score: number
+          caption: string
+          comments: number
+          created_at: string
+          engagement_rate: number
+          format: string
+          hashtags: string[]
+          id: string
+          image_key: string
+          image_url: string
+          likes: number
+          platform: string
+          posted_at: string | null
+          query: string
+          raw: Json | null
+          source_url: string
+          thumbnail_url: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string
+          author_handle?: string
+          buzz_score?: number
+          caption?: string
+          comments?: number
+          created_at?: string
+          engagement_rate?: number
+          format?: string
+          hashtags?: string[]
+          id?: string
+          image_key: string
+          image_url?: string
+          likes?: number
+          platform?: string
+          posted_at?: string | null
+          query?: string
+          raw?: Json | null
+          source_url?: string
+          thumbnail_url?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          author_handle?: string
+          buzz_score?: number
+          caption?: string
+          comments?: number
+          created_at?: string
+          engagement_rate?: number
+          format?: string
+          hashtags?: string[]
+          id?: string
+          image_key?: string
+          image_url?: string
+          likes?: number
+          platform?: string
+          posted_at?: string | null
+          query?: string
+          raw?: Json | null
+          source_url?: string
+          thumbnail_url?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       judges: {
         Row: {
@@ -1147,6 +1258,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      company_image_assets: {
+        Args: { _company_id: string; _limit?: number }
+        Returns: {
+          author: string
+          author_handle: string
+          buzz_score: number
+          caption: string
+          comments: number
+          engagement_rate: number
+          hashtags: string[]
+          image_key: string
+          image_url: string
+          likes: number
+          platform: string
+          posted_at: string
+          relevance_rank: number
+          source_url: string
+          thumbnail_url: string
+          title: string
+        }[]
+      }
       company_prescripts: {
         Args: { _company_id: string; _limit?: number }
         Returns: {
