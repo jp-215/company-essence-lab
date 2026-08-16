@@ -302,7 +302,7 @@ function toDTO(row: Row): ImageRemixDTO {
 export async function listImageRemixes(
   admin: Client,
   ownerId: string,
-  options: { companyId?: string; limit?: number } = {},
+  options: { companyId?: string | undefined; limit?: number | undefined } = {},
 ): Promise<ImageRemixDTO[]> {
   let query = admin
     .from("image_remixes")
