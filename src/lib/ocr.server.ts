@@ -164,10 +164,22 @@ export async function readWithGemini(imageUrl: string, lovableKey: string): Prom
 
 /** Reads one image with the best available provider. */
 export async function readImageText(imageUrl: string): Promise<OcrReadResult> {
-  const googleKey = process.env["GOOGLE_CLOUD_VISION_API_KEY"] ?? process.env["GOOGLE_API_KEY"];
-  if (googleKey) return readWithGoogleVision(imageUrl, googleKey);
-
+  const googleKey =
+    process.env["GOOGLE_CLOUD_VISION_API_KEY"] ??
+    process.env["GOOGLE_API_KEY"] ??
+    process.env["GOOGLE_AI_STUDIO_API_KEY"];
   const lovableKey = process.env["LOVABLE_API_KEY"];
+
+  if (googleKey) {
+    try {
+      return await readWithGoogleVision(imageUrl, googleKey);
+    } catch (error) {
+      // Vision can reject the credential or the remote image; Gemini still reads it.
+      console.error("Google Vision OCR failed, falling back to Gemini", error);
+      if (!lovableKey) throw error;
+    }
+  }
+
   if (lovableKey) return readWithGemini(imageUrl, lovableKey);
 
   throw new Error("No OCR provider configured (set GOOGLE_CLOUD_VISION_API_KEY)");
