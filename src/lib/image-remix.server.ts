@@ -3,9 +3,10 @@
  *
  * Takes a scraped Instagram asset, the on-image copy we read with OCR, and the
  * brand context, then renders a brand-specific still creative with Gemini's
- * image model ("nano banana"). Renders go through the Lovable AI gateway; if a
- * Google AI Studio credential is present we fall back to Google directly so the
- * flow keeps working when the gateway is unavailable.
+ * image model ("nano banana"). Renders go through the Vira image proxy first
+ * (server-held Google key, no credential needed here); the Lovable AI gateway
+ * and a direct Google AI Studio call remain as fallbacks so the flow keeps
+ * working if the proxy is down or rate-limited.
  *
  * Output bytes land in the private `remix-images` bucket under the owner's id
  * and are handed to the client as short-lived signed URLs.
@@ -22,6 +23,10 @@ const GATEWAY_IMAGES = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const NANO_BANANA = "google/gemini-2.5-flash-image";
 const GOOGLE_DIRECT =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent";
+// Vira image proxy: nano banana behind a server-held key, no auth required.
+// Rate limits: 20 images/min, 500/day across all callers — the batch endpoint
+// caps at 6 serial renders per call, well inside the burst.
+const IMAGE_PROXY = "https://vira.ideaplaces.com/v1/image";
 const BUCKET = "remix-images";
 const SIGNED_URL_TTL = 60 * 60 * 6;
 
@@ -80,6 +85,42 @@ function decodeDataUrl(url: string): { bytes: Uint8Array; contentType: string } 
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
   return { bytes, contentType };
+}
+
+/**
+ * Nano banana render through the Vira image proxy. Text-to-image only — the
+ * reference creative reaches the model through the prompt (OCR copy, layout
+ * energy, brand context) rather than as attached bytes. `raw=true` returns the
+ * JPEG directly so storage stays in our own bucket (the proxy's disk is
+ * explicitly not guaranteed). `allow_text` is on because these creatives are
+ * asked to render the headline on the image.
+ */
+async function renderWithProxy(prompt: string): Promise<RenderedCreative> {
+  const response = await fetch(`${IMAGE_PROXY}?raw=true`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      prompt: prompt.slice(0, 4000),
+      // Closest supported ratio to the vertical 4:5 social creative.
+      aspect_ratio: "3:4",
+      model: "flash",
+      allow_text: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(friendlyProviderError(response.status, body));
+  }
+
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  if (!bytes.length) throw new Error("Image proxy returned an empty body.");
+  return {
+    bytes,
+    contentType: response.headers.get("content-type") ?? "image/jpeg",
+    provider: "nano-banana-proxy",
+    notes: "",
+  };
 }
 
 /** Nano banana render through the Lovable AI gateway (image-in, image-out). */
@@ -150,7 +191,9 @@ async function renderWithGoogle(
         ...(isApiKey ? {} : { Authorization: `Bearer ${googleKey}` }),
       },
       body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType, data: base64 } }] }],
+        contents: [
+          { role: "user", parts: [{ text: prompt }, { inlineData: { mimeType, data: base64 } }] },
+        ],
       }),
     },
   );
@@ -162,7 +205,9 @@ async function renderWithGoogle(
 
   const payload = (await response.json()) as {
     candidates?: Array<{
-      content?: { parts?: Array<{ text?: string; inlineData?: { data?: string; mimeType?: string } }> };
+      content?: {
+        parts?: Array<{ text?: string; inlineData?: { data?: string; mimeType?: string } }>;
+      };
     }>;
   };
   const parts = payload.candidates?.[0]?.content?.parts ?? [];
@@ -184,17 +229,39 @@ export async function renderCreative(
   const lovableKey = process.env["LOVABLE_API_KEY"];
   const googleKey =
     process.env["GOOGLE_AI_STUDIO_API_KEY"] ?? process.env["GOOGLE_API_KEY"] ?? undefined;
+  const failures: string[] = [];
 
+  // Primary: the Vira proxy — keyless, so it also works in local dev.
+  try {
+    return await renderWithProxy(prompt);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Proxy image remix failed, trying gateway", error);
+    failures.push(`proxy: ${message}`);
+  }
+
+  // Fallbacks keep image-in/image-out fidelity when credentials exist.
   if (lovableKey) {
     try {
       return await renderWithGateway(prompt, sourceImageUrl, lovableKey);
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       console.error("Gateway image remix failed, trying Google directly", error);
-      if (!googleKey) throw error;
+      failures.push(`gateway: ${message}`);
     }
   }
-  if (googleKey) return renderWithGoogle(prompt, sourceImageUrl, googleKey);
-  throw new Error("No image generation provider configured.");
+  if (googleKey) {
+    try {
+      return await renderWithGoogle(prompt, sourceImageUrl, googleKey);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      failures.push(`google: ${message}`);
+    }
+  }
+
+  throw new Error(
+    failures.length ? failures.join(" | ") : "No image generation provider configured.",
+  );
 }
 
 /* ------------------------------- persistence ------------------------------ */
