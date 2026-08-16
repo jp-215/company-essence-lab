@@ -277,6 +277,10 @@ export function AdPipeline({ companyId, companyName }: Props) {
             className="h-12 rounded-xl bg-background"
           />
         </div>
+        <div className="w-full max-w-sm">
+          <JudgeEmailsField value={judgeEmails} onChange={setJudgeEmails} />
+        </div>
+
         <div className="space-y-2">
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             Mode
