@@ -99,7 +99,7 @@ async function loadTrends(admin: Client, trendKeys: string[]) {
   if (!trendKeys.length) return [];
   const { data, error } = await admin
     .from("trends")
-    .select("trend_key, platform, title, caption, format, buzz_score")
+    .select("trend_key, platform, title, caption, format, trend_score")
     .in("trend_key", trendKeys);
   if (error) throw new Error(error.message);
   return data ?? [];
@@ -346,7 +346,9 @@ export async function prepareBrief(admin: Client, input: BriefInput): Promise<Pr
       duration_seconds: durationSeconds,
       aspect_ratio: brief.aspectRatio,
       status: "ready",
-      brief: brief as unknown as Database["public"]["Tables"]["video_briefs"]["Insert"]["brief"],
+      brief: brief as unknown as NonNullable<
+        Database["public"]["Tables"]["video_briefs"]["Insert"]["brief"]
+      >,
     })
     .select("id")
     .single();
