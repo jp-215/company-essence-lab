@@ -12,6 +12,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
+import { fetchImageAsBase64 } from "./image-fetch.server";
 import type { ImageOcrDTO, OcrBatchResult, OcrBlock, OcrCoverage, OcrStatus } from "./ocr-types";
 
 type Client = SupabaseClient<Database>;
@@ -70,7 +71,8 @@ export async function readWithGoogleVision(imageUrl: string, apiKey: string): Pr
     body: JSON.stringify({
       requests: [
         {
-          image: { source: { imageUri: imageUrl } },
+          // Inline bytes: the Instagram CDN blocks Google's fetcher.
+          image: { content: (await fetchImageAsBase64(imageUrl)).base64 },
           features: [{ type: "DOCUMENT_TEXT_DETECTION", maxResults: 1 }],
           imageContext: { languageHints: ["en"] },
         },
@@ -135,7 +137,7 @@ export async function readWithGemini(imageUrl: string, lovableKey: string): Prom
           role: "user",
           content: [
             { type: "text", text: "Transcribe all visible text in this image." },
-            { type: "image_url", image_url: { url: imageUrl } },
+            { type: "image_url", image_url: { url: (await fetchImageAsBase64(imageUrl)).dataUrl } },
           ],
         },
       ],

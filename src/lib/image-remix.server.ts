@@ -13,6 +13,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
+import { fetchImageAsBase64 } from "./image-fetch.server";
 import type { ImageRemixDTO } from "./image-remix-types";
 
 type Client = SupabaseClient<Database>;
@@ -98,7 +99,11 @@ async function renderWithGateway(
           role: "user",
           content: [
             { type: "text", text: prompt },
-            { type: "image_url", image_url: { url: sourceImageUrl } },
+            {
+              type: "image_url",
+              // Inline bytes: providers cannot crawl Instagram's CDN.
+              image_url: { url: (await fetchImageAsBase64(sourceImageUrl)).dataUrl },
+            },
           ],
         },
       ],
@@ -133,13 +138,7 @@ async function renderWithGoogle(
   sourceImageUrl: string,
   googleKey: string,
 ): Promise<RenderedCreative> {
-  const source = await fetch(sourceImageUrl);
-  if (!source.ok) throw new Error(`Could not download source image [${source.status}]`);
-  const buffer = new Uint8Array(await source.arrayBuffer());
-  let binary = "";
-  for (const byte of buffer) binary += String.fromCharCode(byte);
-  const base64 = btoa(binary);
-  const mimeType = source.headers.get("content-type") ?? "image/jpeg";
+  const { base64, mimeType } = await fetchImageAsBase64(sourceImageUrl);
 
   const isApiKey = googleKey.startsWith("AIza");
   const response = await fetch(
