@@ -22,7 +22,13 @@ import type { TrendDTO } from "../remix-types";
 import { generationSpecSchema, specFromRemix, type GenerationSpec } from "./spec";
 import { mintToken, judgeUrl } from "./tokens";
 import { createAsset } from "./video-provider.server";
-import { completionEmail, reminderEmail, sendMail } from "./mailer.server";
+import {
+  completionEmail,
+  inviteEmail,
+  mailDriver,
+  reminderEmail,
+  sendMail,
+} from "./mailer.server";
 import { terac, type SessionStatus, type TeracClient } from "./terac-db";
 
 type Client = SupabaseClient<Database>;
@@ -537,4 +543,136 @@ export async function notifyCompletion(
     sessionId,
   });
   return true;
+}
+
+// ---------------------------------------------------------------------------
+// Sending the link
+// ---------------------------------------------------------------------------
+
+export type InviteResult = {
+  invited: number;
+  driver: "log" | "resend";
+  failures: { email: string; error: string }[];
+};
+
+/**
+ * Emails an existing session's link to a list of judges.
+ *
+ * Each judge gets their OWN invite_token, so the link identifies them without a
+ * login and their ballot stays private. The judge row is reused when the
+ * founder has invited that address before, and re-sending to an address that
+ * already holds a token re-sends the same link rather than minting a new one.
+ *
+ * Delivery goes through sendMail/inviteEmail — TERAC_MAIL_DRIVER decides whether
+ * that is a real email (resend) or a row in terac_email_log (log).
+ */
+export async function inviteJudges(
+  base: Client,
+  userId: string,
+  input: { sessionId: string; emails: string[]; origin: string },
+): Promise<InviteResult> {
+  const client = terac(base);
+
+  const { data: session, error } = await client
+    .from("review_sessions")
+    .select("id, title, deadline_at, company_id, status")
+    .eq("id", input.sessionId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!session) throw new Error("Review session not found.");
+
+  const [{ data: company }, { count: videoCount }] = await Promise.all([
+    client.from("companies").select("name").eq("id", session.company_id).maybeSingle(),
+    client
+      .from("ad_videos")
+      .select("id", { count: "exact", head: true })
+      .eq("session_id", session.id),
+  ]);
+
+  const emails = Array.from(
+    new Set(
+      input.emails
+        .map((email) => email.trim().toLowerCase())
+        .filter((email) => /^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(email)),
+    ),
+  );
+
+  const failures: InviteResult["failures"] = [];
+  let invited = 0;
+
+  for (const email of emails) {
+    try {
+      const name = email.split("@")[0]!.replace(/[._-]+/g, " ").trim() || "Agent";
+
+      let judgeId: string | null = null;
+      const { data: existingJudge } = await client
+        .from("judges")
+        .select("id, name")
+        .eq("owner_id", userId)
+        .eq("email", email)
+        .maybeSingle();
+
+      if (existingJudge) {
+        judgeId = existingJudge.id;
+      } else {
+        const { data: created, error: judgeError } = await client
+          .from("judges")
+          .insert({ owner_id: userId, name, email })
+          .select("id")
+          .single();
+        if (judgeError) throw new Error(judgeError.message);
+        judgeId = created.id;
+      }
+
+      let inviteToken: string;
+      const { data: assignment } = await client
+        .from("session_judges")
+        .select("id, invite_token")
+        .eq("session_id", session.id)
+        .eq("judge_id", judgeId)
+        .maybeSingle();
+
+      let sessionJudgeId: string;
+      if (assignment) {
+        inviteToken = assignment.invite_token;
+        sessionJudgeId = assignment.id;
+      } else {
+        inviteToken = mintToken();
+        const { data: createdAssignment, error: assignError } = await client
+          .from("session_judges")
+          .insert({ session_id: session.id, judge_id: judgeId, invite_token: inviteToken })
+          .select("id")
+          .single();
+        if (assignError) throw new Error(assignError.message);
+        sessionJudgeId = createdAssignment.id;
+      }
+
+      const mail = inviteEmail({
+        judgeName: existingJudge?.name ?? name,
+        brandName: company?.name ?? "A brand",
+        videoCount: videoCount ?? 0,
+        url: judgeUrl(input.origin, inviteToken),
+        deadlineAt: session.deadline_at,
+      });
+
+      const result = await sendMail(base, {
+        kind: "invite",
+        to: email,
+        subject: mail.subject,
+        body: mail.body,
+        sessionId: session.id,
+        sessionJudgeId,
+      });
+      if (result.error) throw new Error(result.error);
+      invited += 1;
+    } catch (cause) {
+      failures.push({
+        email,
+        error: cause instanceof Error ? cause.message : "Could not send the invite.",
+      });
+    }
+  }
+
+  return { invited, driver: mailDriver(), failures };
 }
