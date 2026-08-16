@@ -6,7 +6,13 @@ import { TrendPreview } from "@/components/TrendPreview";
 import { toast } from "sonner";
 
 import { listMyCompanies } from "@/lib/owner.functions";
-import { generateRemix, listCompanyRemixes, listCompanyTrends } from "@/lib/remix.functions";
+import {
+  generateImageRemixBatch,
+  generateRemix,
+  listCompanyRemixes,
+  listCompanyTrends,
+} from "@/lib/remix.functions";
+import { listImageAssets } from "@/lib/images.functions";
 import { getRecommendations } from "@/lib/recommendations.functions";
 import { startVideoRender } from "@/lib/engine.functions";
 import { logTrendInteractions } from "@/lib/interactions.functions";
