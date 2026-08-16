@@ -436,6 +436,75 @@ function RemixStudio() {
               </div>
             </div>
 
+            {mode === "images" ? (
+              <section className="mt-12">
+                <div className="flex items-end justify-between gap-4">
+                  <h2 className="font-serif text-3xl font-bold tracking-tight text-foreground">
+                    ImageBase assets for your category
+                  </h2>
+                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    {images.data?.length ?? 0} assets
+                  </p>
+                </div>
+                <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+                  Pick up to six scraped creatives. Vira reads the on-image copy with OCR and
+                  rewrites it for {selectedCompany?.name ?? "your product"} — then turns the set into
+                  a video.
+                </p>
+
+                {images.isLoading ? (
+                  <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {[0, 1, 2, 3].map((key) => (
+                      <Skeleton key={key} className="h-[420px] w-full rounded-2xl" />
+                    ))}
+                  </div>
+                ) : !images.data?.length ? (
+                  <p className="mt-6 text-sm text-muted-foreground">
+                    No ImageBase assets for this category yet.
+                  </p>
+                ) : (
+                  <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {images.data.map((asset) => (
+                      <article
+                        key={asset.imageKey}
+                        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
+                      >
+                        <TrendPreview
+                          sourceUrl={asset.sourceUrl}
+                          platform={asset.platform}
+                          title={asset.title || asset.caption}
+                          imageUrl={asset.imageUrl}
+                          className="aspect-[4/5] border-b border-border"
+                        />
+                        <div className="flex flex-1 flex-col gap-3 p-5">
+                          <span className="font-mono text-[10px] tracking-wider text-muted-foreground">
+                            {asset.authorHandle ? `@${asset.authorHandle}` : asset.platform}
+                          </span>
+                          <p className="line-clamp-3 text-sm leading-relaxed text-foreground">
+                            {asset.caption || asset.title}
+                          </p>
+                          <div className="mt-auto pt-3">
+                            <Button
+                              variant={selectedImages.has(asset.imageKey) ? "default" : "outline"}
+                              className="h-12 w-full rounded-xl text-sm"
+                              aria-pressed={selectedImages.has(asset.imageKey)}
+                              onClick={() =>
+                                toggleSelectedImage(
+                                  asset.imageKey,
+                                  asset.caption || asset.title || asset.imageKey,
+                                )
+                              }
+                            >
+                              {selectedImages.has(asset.imageKey) ? "Selected ✓" : "Add to remix"}
+                            </Button>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ) : (
             <section className="mt-12">
               <div className="flex items-end justify-between gap-4">
                 <h2 className="font-serif text-3xl font-bold tracking-tight text-foreground">
@@ -554,6 +623,7 @@ function RemixStudio() {
                 </div>
               )}
             </section>
+            )}
           </>
         )}
       </div>
