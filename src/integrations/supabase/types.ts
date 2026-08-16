@@ -684,6 +684,72 @@ export type Database = {
           },
         ]
       }
+      image_remixes: {
+        Row: {
+          caption: string
+          company_id: string
+          created_at: string
+          error: string | null
+          headline: string
+          id: string
+          image_key: string
+          owner_id: string
+          prompt: string
+          provider: string
+          source_ocr_text: string
+          status: string
+          storage_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          caption?: string
+          company_id: string
+          created_at?: string
+          error?: string | null
+          headline?: string
+          id?: string
+          image_key: string
+          owner_id: string
+          prompt?: string
+          provider?: string
+          source_ocr_text?: string
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          caption?: string
+          company_id?: string
+          created_at?: string
+          error?: string | null
+          headline?: string
+          id?: string
+          image_key?: string
+          owner_id?: string
+          prompt?: string
+          provider?: string
+          source_ocr_text?: string
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_remixes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_remixes_image_key_fkey"
+            columns: ["image_key"]
+            isOneToOne: false
+            referencedRelation: "image_assets"
+            referencedColumns: ["image_key"]
+          },
+        ]
+      }
       judges: {
         Row: {
           active: boolean

@@ -13,6 +13,7 @@ import {
   listCompanyTrends,
 } from "@/lib/remix.functions";
 import { listImageAssets } from "@/lib/images.functions";
+import { generateImageCreatives } from "@/lib/image-remix.functions";
 import { getRecommendations } from "@/lib/recommendations.functions";
 import { startVideoRender } from "@/lib/engine.functions";
 import { logTrendInteractions } from "@/lib/interactions.functions";
@@ -67,6 +68,7 @@ function RemixStudio() {
   const startRender = useServerFn(startVideoRender);
   const fetchImages = useServerFn(listImageAssets);
   const runImageRemix = useServerFn(generateImageRemixBatch);
+  const runImageCreatives = useServerFn(generateImageCreatives);
 
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [productOpen, setProductOpen] = useState(false);
@@ -182,6 +184,29 @@ function RemixStudio() {
       toast.success(`${result.created.length} image remixes ready — opening Create ads.`);
       setSelectedImages(new Map());
       void navigate({ to: "/ads" });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Image remix failed."),
+  });
+
+  // Nano-banana pass: OCR the picks, rewrite the copy, then paint a new still ad.
+  const imageCreativeMutation = useMutation({
+    mutationFn: () =>
+      runImageCreatives({
+        data: { companyId: companyId!, imageKeys: [...selectedImages.keys()] },
+      }),
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: ["image-creatives", companyId] });
+      if (!result.created.length) {
+        const reason = result.failed[0]?.error;
+        toast.error(reason ?? "Those assets could not be remixed. Try different images.");
+        return;
+      }
+      toast.success(
+        `${result.created.length} branded creative${result.created.length === 1 ? "" : "s"} rendered — opening your gallery.`,
+      );
+      setSelectedImages(new Map());
+      void navigate({ to: "/creatives" });
     },
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "Image remix failed."),
@@ -651,14 +676,26 @@ function RemixStudio() {
                 Clear
               </Button>
               {selectedImages.size ? (
-                <Button
-                  variant="outline"
-                  className="h-12 rounded-xl px-6 text-base"
-                  disabled={imageRemixMutation.isPending}
-                  onClick={() => imageRemixMutation.mutate()}
-                >
-                  {imageRemixMutation.isPending ? "Reading images…" : "Remix images (OCR)"}
-                </Button>
+                <>
+                  <Button
+                    variant="ghost"
+                    className="h-12 rounded-xl px-5 text-base"
+                    disabled={imageRemixMutation.isPending}
+                    onClick={() => imageRemixMutation.mutate()}
+                  >
+                    {imageRemixMutation.isPending ? "Reading images…" : "Concepts only (OCR)"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-12 rounded-xl px-6 text-base"
+                    disabled={imageCreativeMutation.isPending}
+                    onClick={() => imageCreativeMutation.mutate()}
+                  >
+                    {imageCreativeMutation.isPending
+                      ? "Painting creatives…"
+                      : "Remix images →"}
+                  </Button>
+                </>
               ) : null}
               <Button
                 className="h-12 rounded-xl bg-foreground px-8 text-base text-background hover:bg-foreground/90"
