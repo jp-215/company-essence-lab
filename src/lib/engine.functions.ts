@@ -104,7 +104,6 @@ export const startVideoRender = createServerFn({ method: "POST" })
       });
       await attachBriefRender(supabaseAdmin, briefId, {
         engineJobId: job.job_id ?? null,
-        engineVideoId: job.video_id ?? null,
       });
       return { ...job, brief_id: briefId, brief_quality: brief.signalQuality, excluded: brief.excluded };
     } catch (cause) {
