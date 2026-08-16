@@ -15,7 +15,9 @@ import {
 import { listImageAssets } from "@/lib/images.functions";
 import { generateImageCreatives } from "@/lib/image-remix.functions";
 import { getRecommendations } from "@/lib/recommendations.functions";
-import { startVideoRender } from "@/lib/engine.functions";
+import { buildVideoBrief, startVideoRender } from "@/lib/engine.functions";
+import { BriefReview } from "@/components/BriefReview";
+import type { CreativeBrief } from "@/lib/brief-types";
 import { logTrendInteractions } from "@/lib/interactions.functions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,6 +68,7 @@ function RemixStudio() {
   const runRemix = useServerFn(generateRemix);
   const logTaps = useServerFn(logTrendInteractions);
   const startRender = useServerFn(startVideoRender);
+  const composeBrief = useServerFn(buildVideoBrief);
   const fetchImages = useServerFn(listImageAssets);
   const runImageRemix = useServerFn(generateImageRemixBatch);
   const runImageCreatives = useServerFn(generateImageCreatives);
@@ -81,6 +84,10 @@ function RemixStudio() {
   const [selected, setSelected] = useState<Map<string, string>>(new Map());
   // ImageBase picks are tracked separately: they remix through OCR, not captions.
   const [selectedImages, setSelectedImages] = useState<Map<string, string>>(new Map());
+  // Brief review gate: founders read the extracted signals before spending a render.
+  const [briefOpen, setBriefOpen] = useState(false);
+  const [brief, setBrief] = useState<CreativeBrief | null>(null);
+  const [briefError, setBriefError] = useState<string | null>(null);
 
   const totalPicked = selected.size + selectedImages.size;
 
@@ -212,6 +219,25 @@ function RemixStudio() {
       toast.error(error instanceof Error ? error.message : "Image remix failed."),
   });
 
+  const briefMutation = useMutation({
+    mutationFn: () =>
+      composeBrief({
+        data: {
+          companyId: companyId!,
+          imageKeys: [...selectedImages.keys()],
+          trendKeys: [...selected.keys()],
+        },
+      }),
+    onMutate: () => {
+      setBrief(null);
+      setBriefError(null);
+      setBriefOpen(true);
+    },
+    onSuccess: (prepared) => setBrief(prepared.brief as CreativeBrief),
+    onError: (error) =>
+      setBriefError(error instanceof Error ? error.message : "Could not build the brief."),
+  });
+
   const videoMutation = useMutation({
     mutationFn: () => {
       const trendKeys = [...selected.keys()];
@@ -246,6 +272,8 @@ function RemixStudio() {
       }
       setSelected(new Map());
       setSelectedImages(new Map());
+      setBriefOpen(false);
+      setBrief(null);
       // The brief is already on the engine — follow the job until the MP4 lands.
       const quality =
         "brief_quality" in accepted ? String(accepted.brief_quality ?? "") : "";
@@ -721,6 +749,16 @@ function RemixStudio() {
                   </Button>
                 </>
               ) : null}
+              {selectedImages.size ? (
+                <Button
+                  variant="outline"
+                  className="h-12 rounded-xl px-6 text-base"
+                  disabled={briefMutation.isPending}
+                  onClick={() => briefMutation.mutate()}
+                >
+                  {briefMutation.isPending ? "Reading signals…" : "Review brief"}
+                </Button>
+              ) : null}
               <Button
                 className="h-12 rounded-xl bg-foreground px-8 text-base text-background hover:bg-foreground/90"
                 disabled={videoMutation.isPending}
@@ -732,6 +770,16 @@ function RemixStudio() {
           </div>
         </div>
       ) : null}
+
+      <BriefReview
+        open={briefOpen}
+        onOpenChange={setBriefOpen}
+        loading={briefMutation.isPending}
+        error={briefError}
+        brief={brief}
+        rendering={videoMutation.isPending}
+        onRender={() => videoMutation.mutate()}
+      />
     </div>
 
   );
