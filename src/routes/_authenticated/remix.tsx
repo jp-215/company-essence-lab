@@ -253,12 +253,10 @@ function RemixStudio() {
       void navigate({
         to: "/render/$jobId",
         params: { jobId: accepted.job_id },
-        search: {
-          ...(quality ? { quality } : {}),
-          ...(briefId ? { brief: briefId } : {}),
-        },
+        search: { quality: quality || undefined, brief: briefId || undefined },
       });
     },
+
 
     onError: (error) => toast.error(error instanceof Error ? error.message : "Render failed."),
   });
