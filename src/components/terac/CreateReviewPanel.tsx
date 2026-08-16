@@ -218,7 +218,11 @@ export function CreateReviewPanel({ companyId }: { companyId: string }) {
                     className="mt-1 w-28"
                   />
                 </label>
+                <div className="w-full max-w-sm">
+                  <JudgeEmailsField value={judgeEmails} onChange={setJudgeEmails} />
+                </div>
               </div>
+
 
               <p className="mt-3 text-xs text-muted-foreground">
                 Closes on {quorum} submission{quorum === 1 ? "" : "s"} or after {deadlineHours}h,
