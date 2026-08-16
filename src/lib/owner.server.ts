@@ -6,7 +6,7 @@ import { slugify, type OwnerCompanyDTO } from "./company-types";
 type Client = SupabaseClient<Database>;
 
 const OWNER_SELECT =
-  "id, name, slug, bio, mission, website, owner_name, logo_url, status, category_id, categories(name)";
+  "id, name, slug, bio, mission, website, owner_name, logo_url, status, category_id, categories(name, slug)";
 
 type OwnerRow = {
   id: string;
@@ -19,7 +19,7 @@ type OwnerRow = {
   logo_url: string | null;
   status: string;
   category_id: string;
-  categories: { name: string } | null;
+  categories: { name: string; slug: string } | null;
 };
 
 function toOwnerDTO(
@@ -37,6 +37,7 @@ function toOwnerDTO(
     ownerName: row.owner_name,
     categoryId: row.category_id,
     categoryName: row.categories?.name ?? "Uncategorized",
+    categorySlug: row.categories?.slug ?? "",
     logoPath: row.logo_url,
     logoUrl,
     status: row.status === "draft" ? "draft" : "published",

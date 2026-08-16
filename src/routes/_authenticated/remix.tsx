@@ -6,7 +6,13 @@ import { TrendPreview } from "@/components/TrendPreview";
 import { toast } from "sonner";
 
 import { listMyCompanies } from "@/lib/owner.functions";
-import { generateRemix, listCompanyRemixes, listCompanyTrends } from "@/lib/remix.functions";
+import {
+  generateImageRemixBatch,
+  generateRemix,
+  listCompanyRemixes,
+  listCompanyTrends,
+} from "@/lib/remix.functions";
+import { listImageAssets } from "@/lib/images.functions";
 import { getRecommendations } from "@/lib/recommendations.functions";
 import { startVideoRender } from "@/lib/engine.functions";
 import { logTrendInteractions } from "@/lib/interactions.functions";
@@ -47,7 +53,7 @@ export const Route = createFileRoute("/_authenticated/remix")({
 
 const compact = new Intl.NumberFormat("en", { notation: "compact" });
 type SortKey = "views" | "likes" | "newest";
-type FeedMode = "foryou" | "browse";
+type FeedMode = "foryou" | "browse" | "images";
 
 function RemixStudio() {
   const queryClient = useQueryClient();
@@ -59,6 +65,8 @@ function RemixStudio() {
   const runRemix = useServerFn(generateRemix);
   const logTaps = useServerFn(logTrendInteractions);
   const startRender = useServerFn(startVideoRender);
+  const fetchImages = useServerFn(listImageAssets);
+  const runImageRemix = useServerFn(generateImageRemixBatch);
 
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [productOpen, setProductOpen] = useState(false);
@@ -69,6 +77,26 @@ function RemixStudio() {
   const [sort, setSort] = useState<SortKey>("views");
   // Up to six pieces of platform content ride along as influence for one render.
   const [selected, setSelected] = useState<Map<string, string>>(new Map());
+  // ImageBase picks are tracked separately: they remix through OCR, not captions.
+  const [selectedImages, setSelectedImages] = useState<Map<string, string>>(new Map());
+
+  const totalPicked = selected.size + selectedImages.size;
+
+  const toggleSelectedImage = (imageKey: string, line: string) => {
+    setSelectedImages((current) => {
+      const next = new Map(current);
+      if (next.has(imageKey)) {
+        next.delete(imageKey);
+        return next;
+      }
+      if (selected.size + next.size >= 6) {
+        toast.info("Six is the max influence set for one video.");
+        return current;
+      }
+      next.set(imageKey, line);
+      return next;
+    });
+  };
 
   const toggleSelected = (trendKey: string, line: string) => {
     setSelected((current) => {
@@ -77,7 +105,7 @@ function RemixStudio() {
         next.delete(trendKey);
         return next;
       }
-      if (next.size >= 6) {
+      if (next.size + selectedImages.size >= 6) {
         toast.info("Six is the max influence set for one video.");
         return current;
       }
@@ -88,6 +116,8 @@ function RemixStudio() {
 
 
   const companies = useQuery({ queryKey: ["my-companies"], queryFn: () => fetchCompanies() });
+  const selectedCompanySlug =
+    companies.data?.find((company) => company.id === companyId)?.categorySlug || undefined;
 
   useEffect(() => {
     if (!companyId && companies.data?.length) {
@@ -108,6 +138,12 @@ function RemixStudio() {
         data: { companyId: companyId!, limit: 24, seed, surface: "remix" },
       }),
     enabled: Boolean(companyId) && mode === "foryou",
+  });
+
+  const images = useQuery({
+    queryKey: ["remix-images", selectedCompanySlug],
+    queryFn: () => fetchImages({ data: { categorySlug: selectedCompanySlug, limit: 36 } }),
+    enabled: mode === "images" && Boolean(companyId),
   });
 
   const remixes = useQuery({
@@ -132,9 +168,29 @@ function RemixStudio() {
     onError: (error) => toast.error(error instanceof Error ? error.message : "Remix failed."),
   });
 
+  const imageRemixMutation = useMutation({
+    mutationFn: () =>
+      runImageRemix({
+        data: { companyId: companyId!, imageKeys: [...selectedImages.keys()] },
+      }),
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: ["remixes", companyId] });
+      if (!result.created.length) {
+        toast.error("Those assets could not be remixed. Try different images.");
+        return;
+      }
+      toast.success(`${result.created.length} image remixes ready — opening Create ads.`);
+      setSelectedImages(new Map());
+      void navigate({ to: "/ads" });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Image remix failed."),
+  });
+
   const videoMutation = useMutation({
     mutationFn: () => {
       const trendKeys = [...selected.keys()];
+      const influences = [...selected.values(), ...selectedImages.values()];
       void logTaps({
         data: { companyId: companyId!, surface: "remix", action: "remix", trendKeys },
       }).catch(() => undefined);
@@ -144,13 +200,14 @@ function RemixStudio() {
           lane: "founder-story",
           mode: "fast",
           product: selectedCompany?.name,
-          influences: [...selected.values()].map((line) => line.slice(0, 300)),
+          influences: influences.map((line) => line.slice(0, 300)),
         },
       });
     },
     onSuccess: (accepted) => {
       toast.success(`Rendering your video — about ${accepted.estimated_seconds}s.`);
       setSelected(new Map());
+      setSelectedImages(new Map());
       void navigate({ to: "/ads" });
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Render failed."),
@@ -308,6 +365,12 @@ function RemixStudio() {
                   count={mode === "browse" ? all.length : 24}
                   onClick={() => setMode("browse")}
                 />
+                <FilterPill
+                  active={mode === "images"}
+                  label="ImageBase"
+                  count={mode === "images" ? (images.data?.length ?? 0) : 36}
+                  onClick={() => setMode("images")}
+                />
                 {mode === "foryou" ? (
                   <button
                     type="button"
@@ -373,6 +436,75 @@ function RemixStudio() {
               </div>
             </div>
 
+            {mode === "images" ? (
+              <section className="mt-12">
+                <div className="flex items-end justify-between gap-4">
+                  <h2 className="font-serif text-3xl font-bold tracking-tight text-foreground">
+                    ImageBase assets for your category
+                  </h2>
+                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    {images.data?.length ?? 0} assets
+                  </p>
+                </div>
+                <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+                  Pick up to six scraped creatives. Vira reads the on-image copy with OCR and
+                  rewrites it for {selectedCompany?.name ?? "your product"} — then turns the set into
+                  a video.
+                </p>
+
+                {images.isLoading ? (
+                  <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {[0, 1, 2, 3].map((key) => (
+                      <Skeleton key={key} className="h-[420px] w-full rounded-2xl" />
+                    ))}
+                  </div>
+                ) : !images.data?.length ? (
+                  <p className="mt-6 text-sm text-muted-foreground">
+                    No ImageBase assets for this category yet.
+                  </p>
+                ) : (
+                  <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {images.data.map((asset) => (
+                      <article
+                        key={asset.imageKey}
+                        className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
+                      >
+                        <TrendPreview
+                          sourceUrl={asset.sourceUrl}
+                          platform={asset.platform}
+                          title={asset.title || asset.caption}
+                          imageUrl={asset.imageUrl}
+                          className="aspect-[4/5] border-b border-border"
+                        />
+                        <div className="flex flex-1 flex-col gap-3 p-5">
+                          <span className="font-mono text-[10px] tracking-wider text-muted-foreground">
+                            {asset.authorHandle ? `@${asset.authorHandle}` : asset.platform}
+                          </span>
+                          <p className="line-clamp-3 text-sm leading-relaxed text-foreground">
+                            {asset.caption || asset.title}
+                          </p>
+                          <div className="mt-auto pt-3">
+                            <Button
+                              variant={selectedImages.has(asset.imageKey) ? "default" : "outline"}
+                              className="h-12 w-full rounded-xl text-sm"
+                              aria-pressed={selectedImages.has(asset.imageKey)}
+                              onClick={() =>
+                                toggleSelectedImage(
+                                  asset.imageKey,
+                                  asset.caption || asset.title || asset.imageKey,
+                                )
+                              }
+                            >
+                              {selectedImages.has(asset.imageKey) ? "Selected ✓" : "Add to remix"}
+                            </Button>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ) : (
             <section className="mt-12">
               <div className="flex items-end justify-between gap-4">
                 <h2 className="font-serif text-3xl font-bold tracking-tight text-foreground">
@@ -491,16 +623,17 @@ function RemixStudio() {
                 </div>
               )}
             </section>
+            )}
           </>
         )}
       </div>
 
-      {selected.size ? (
+      {totalPicked ? (
         <div className="sticky bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur">
           <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-5">
             <div>
               <p className="font-serif text-xl font-bold text-foreground">
-                {selected.size} of 6 posts selected
+                {totalPicked} of 6 assets selected
               </p>
               <p className="text-sm text-muted-foreground">
                 Vira blends these into one AI video for{" "}
@@ -508,9 +641,25 @@ function RemixStudio() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="ghost" onClick={() => setSelected(new Map())}>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setSelected(new Map());
+                  setSelectedImages(new Map());
+                }}
+              >
                 Clear
               </Button>
+              {selectedImages.size ? (
+                <Button
+                  variant="outline"
+                  className="h-12 rounded-xl px-6 text-base"
+                  disabled={imageRemixMutation.isPending}
+                  onClick={() => imageRemixMutation.mutate()}
+                >
+                  {imageRemixMutation.isPending ? "Reading images…" : "Remix images (OCR)"}
+                </Button>
+              ) : null}
               <Button
                 className="h-12 rounded-xl bg-foreground px-8 text-base text-background hover:bg-foreground/90"
                 disabled={videoMutation.isPending}

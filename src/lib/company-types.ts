@@ -46,6 +46,7 @@ export type OwnerCompanyDTO = {
   ownerName: string;
   categoryId: string;
   categoryName: string;
+  categorySlug: string;
   logoPath: string | null;
   logoUrl: string | null;
   status: "draft" | "published";
