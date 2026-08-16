@@ -234,7 +234,10 @@ function RemixStudio() {
       });
     },
     onSuccess: (accepted) => {
-      const skipped = "excluded" in accepted ? accepted.excluded : [];
+      const skipped =
+        "excluded" in accepted
+          ? (accepted.excluded as Array<{ imageKey: string; reason: string }>)
+          : [];
       toast.success(`Rendering your video — about ${accepted.estimated_seconds}s.`);
       if (skipped?.length) {
         toast.message(`${skipped.length} reference skipped`, {
