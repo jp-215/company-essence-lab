@@ -77,7 +77,7 @@ export function CreateReviewPanel({ companyId }: { companyId: string }) {
   }
 
   return (
-    <section className="mt-16 border-t border-border pt-12">
+    <section id="open-review" className="mt-16 border-t border-border pt-12">
       <p className="font-mono text-xs uppercase tracking-[0.24em] text-muted-foreground">
         Terac · expert review
       </p>

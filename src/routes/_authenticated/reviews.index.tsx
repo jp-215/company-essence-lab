@@ -1,14 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { listReviewSessions, runReminders } from "@/lib/terac/terac.functions";
+import { listMyCompanies } from "@/lib/owner.functions";
+import { CreateReviewPanel } from "@/components/terac/CreateReviewPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 
 export const Route = createFileRoute("/_authenticated/reviews/")({
   head: () => ({
@@ -45,8 +56,16 @@ const STATUS_COPY: Record<string, string> = {
 function ReviewsIndex() {
   const fetchSessions = useServerFn(listReviewSessions);
   const nudge = useServerFn(runReminders);
+  const fetchCompanies = useServerFn(listMyCompanies);
 
   const sessions = useQuery({ queryKey: ["terac-sessions"], queryFn: () => fetchSessions() });
+  const companies = useQuery({ queryKey: ["my-companies"], queryFn: () => fetchCompanies() });
+
+  const [companyId, setCompanyId] = useState("");
+  useEffect(() => {
+    if (!companyId && companies.data?.length) setCompanyId(companies.data[0]!.id);
+  }, [companies.data, companyId]);
+
 
   const reminderMutation = useMutation({
     mutationFn: () => nudge({}),
@@ -85,7 +104,7 @@ function ReviewsIndex() {
               {reminderMutation.isPending ? "Sending…" : "Send due reminders"}
             </Button>
             <Button asChild size="sm">
-              <Link to="/remix">Create ads</Link>
+              <a href="#open-review">Open a review</a>
             </Button>
           </div>
         </div>
@@ -96,14 +115,15 @@ function ReviewsIndex() {
           <Card className="mt-4">
             <CardContent className="flex flex-col items-start gap-3 p-6">
               <p className="text-sm text-muted-foreground">
-                No review sessions yet. Pick concepts in the remix studio and open them to the agent
-                pool.
+                No review sessions yet. Pick concepts below and Vira opens one session with a
+                shareable Terac agent link.
               </p>
               <Button asChild size="sm">
-                <Link to="/remix">Go to remix studio</Link>
+                <a href="#open-review">Pick concepts</a>
               </Button>
             </CardContent>
           </Card>
+
         ) : (
           <div className="mt-4 space-y-3">
             {sessions.data.map((session) => (
@@ -195,6 +215,47 @@ function ReviewsIndex() {
           </div>
         )}
       </section>
+
+      <section className="mt-4">
+        {companies.isLoading ? (
+          <Skeleton className="mt-12 h-40 w-full" />
+        ) : !companies.data?.length ? (
+          <Card className="mt-12">
+            <CardContent className="flex flex-col items-start gap-3 p-6">
+              <p className="text-sm text-muted-foreground">
+                List a company first — Terac reviews are always tied to a brand.
+              </p>
+              <Button asChild size="sm">
+                <Link to="/studio/new">List a company</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {companies.data.length > 1 ? (
+              <div className="mt-12 max-w-xs">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  Brand
+                </p>
+                <Select value={companyId} onValueChange={setCompanyId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Pick a brand" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.data.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
+            {companyId ? <CreateReviewPanel companyId={companyId} /> : null}
+          </>
+        )}
+      </section>
     </div>
   );
 }
+
