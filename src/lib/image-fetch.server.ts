@@ -35,3 +35,16 @@ export async function fetchImageAsBase64(imageUrl: string): Promise<FetchedImage
 
   return { base64, mimeType, dataUrl: `data:${mimeType};base64,${base64}` };
 }
+
+/** Turn provider error bodies into something a founder can act on. */
+export function friendlyProviderError(status: number, body: string): string {
+  if (body.includes("credit_limit_reached") || body.includes("Workspace credit limit")) {
+    return "AI credits for this workspace are used up — top them up in workspace billing, then run the remix again.";
+  }
+  if (status === 429) return "The image model is rate limited right now. Try again in a minute.";
+  if (status === 401 || status === 403) {
+    return "The image provider rejected our credentials. Refresh the Google AI Studio key or use workspace credits.";
+  }
+  return `Image remix failed [${status}]: ${body.slice(0, 200)}`;
+}
+

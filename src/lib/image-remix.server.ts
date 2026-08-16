@@ -13,7 +13,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-import { fetchImageAsBase64 } from "./image-fetch.server";
+import { fetchImageAsBase64, friendlyProviderError } from "./image-fetch.server";
 import type { ImageRemixDTO } from "./image-remix-types";
 
 type Client = SupabaseClient<Database>;
@@ -112,7 +112,7 @@ async function renderWithGateway(
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`Image remix failed [${response.status}]: ${body.slice(0, 300)}`);
+    throw new Error(friendlyProviderError(response.status, body));
   }
 
   const payload = (await response.json()) as {
@@ -157,7 +157,7 @@ async function renderWithGoogle(
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`Google image remix failed [${response.status}]: ${body.slice(0, 300)}`);
+    throw new Error(friendlyProviderError(response.status, body));
   }
 
   const payload = (await response.json()) as {

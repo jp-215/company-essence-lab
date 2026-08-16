@@ -12,7 +12,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-import { fetchImageAsBase64 } from "./image-fetch.server";
+import { fetchImageAsBase64, friendlyProviderError } from "./image-fetch.server";
 import type { ImageOcrDTO, OcrBatchResult, OcrBlock, OcrCoverage, OcrStatus } from "./ocr-types";
 
 type Client = SupabaseClient<Database>;
@@ -146,7 +146,7 @@ export async function readWithGemini(imageUrl: string, lovableKey: string): Prom
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`Gemini OCR failed [${response.status}]: ${body.slice(0, 300)}`);
+    throw new Error(friendlyProviderError(response.status, body));
   }
 
   const payload = (await response.json()) as {
