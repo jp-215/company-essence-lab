@@ -9,6 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { revisionDirectiveSchema } from "./spec";
 import {
   createReviewSession,
+  inviteJudges,
   openReviewFromEngine,
   listSessions,
   notifyCompletion,
@@ -42,13 +43,24 @@ export const createAds = createServerFn({ method: "POST" })
         trendKeys: z.array(z.string().trim().min(3).max(40)).min(1).max(6),
         quorum: z.number().int().min(1).max(20).default(3),
         deadlineHours: z.number().int().min(1).max(336).default(48),
+        judgeEmails: z.array(z.string().trim().email().max(200)).max(20).default([]),
       })
       .parse(input),
   )
-
-  .handler(async ({ context, data }) =>
-    createReviewSession(context.supabase, context.userId, { ...data, origin: origin() }),
-  );
+  .handler(async ({ context, data }) => {
+    const session = await createReviewSession(context.supabase, context.userId, {
+      ...data,
+      origin: origin(),
+    });
+    const invited = data.judgeEmails.length
+      ? await inviteJudges(context.supabase, context.userId, {
+          sessionId: session.sessionId,
+          emails: data.judgeEmails,
+          origin: origin(),
+        })
+      : null;
+    return { ...session, invited };
+  });
 
 /**
  * The automatic path: called the moment a render job finishes, so a finished ad
@@ -63,11 +75,42 @@ export const openReviewForRenders = createServerFn({ method: "POST" })
         videoIds: z.array(z.string().trim().min(1).max(120)).max(24).default([]),
         quorum: z.number().int().min(1).max(20).default(3),
         deadlineHours: z.number().int().min(1).max(336).default(48),
+        judgeEmails: z.array(z.string().trim().email().max(200)).max(20).default([]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const session = await openReviewFromEngine(context.supabase, context.userId, {
+      ...data,
+      origin: origin(),
+    });
+    const invited = data.judgeEmails.length
+      ? await inviteJudges(context.supabase, context.userId, {
+          sessionId: session.sessionId,
+          emails: data.judgeEmails,
+          origin: origin(),
+        })
+      : null;
+    return { ...session, invited };
+  });
+
+/** Send (or re-send) an existing session's link to judge email addresses. */
+export const sendReviewInvites = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        sessionId: z.string().uuid(),
+        emails: z.array(z.string().trim().email().max(200)).min(1).max(20),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) =>
-    openReviewFromEngine(context.supabase, context.userId, { ...data, origin: origin() }),
+    inviteJudges(context.supabase, context.userId, {
+      sessionId: data.sessionId,
+      emails: data.emails,
+      origin: origin(),
+    }),
   );
 
 export const listReviewSessions = createServerFn({ method: "GET" })
