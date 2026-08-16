@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AdPipeline } from "@/components/AdPipeline";
 import { VideoStudio } from "@/components/VideoStudio";
-import { CreateReviewPanel } from "@/components/terac/CreateReviewPanel";
+
 import {
   Select,
   SelectContent,
