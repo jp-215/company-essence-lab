@@ -104,7 +104,7 @@ function ReviewsIndex() {
               {reminderMutation.isPending ? "Sending…" : "Send due reminders"}
             </Button>
             <Button asChild size="sm">
-              <Link to="/remix">Create ads</Link>
+              <a href="#open-review">Open a review</a>
             </Button>
           </div>
         </div>
@@ -115,14 +115,15 @@ function ReviewsIndex() {
           <Card className="mt-4">
             <CardContent className="flex flex-col items-start gap-3 p-6">
               <p className="text-sm text-muted-foreground">
-                No review sessions yet. Pick concepts in the remix studio and open them to the agent
-                pool.
+                No review sessions yet. Pick concepts below and Vira opens one session with a
+                shareable Terac agent link.
               </p>
               <Button asChild size="sm">
-                <Link to="/remix">Go to remix studio</Link>
+                <a href="#open-review">Pick concepts</a>
               </Button>
             </CardContent>
           </Card>
+
         ) : (
           <div className="mt-4 space-y-3">
             {sessions.data.map((session) => (
