@@ -214,6 +214,47 @@ function ReviewsIndex() {
           </div>
         )}
       </section>
+
+      <section className="mt-4">
+        {companies.isLoading ? (
+          <Skeleton className="mt-12 h-40 w-full" />
+        ) : !companies.data?.length ? (
+          <Card className="mt-12">
+            <CardContent className="flex flex-col items-start gap-3 p-6">
+              <p className="text-sm text-muted-foreground">
+                List a company first — Terac reviews are always tied to a brand.
+              </p>
+              <Button asChild size="sm">
+                <Link to="/studio/new">List a company</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {companies.data.length > 1 ? (
+              <div className="mt-12 max-w-xs">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  Brand
+                </p>
+                <Select value={companyId} onValueChange={setCompanyId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Pick a brand" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.data.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
+            {companyId ? <CreateReviewPanel companyId={companyId} /> : null}
+          </>
+        )}
+      </section>
     </div>
   );
 }
+
