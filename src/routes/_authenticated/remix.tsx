@@ -226,17 +226,28 @@ function RemixStudio() {
           mode: "fast",
           product: selectedCompany?.name,
           influences: influences.map((line) => line.slice(0, 300)),
+          // Picked references drive the full creative brief (OCR, sentiment,
+          // texture, composition, motion) the engine renders from.
+          imageKeys: [...selectedImages.keys()],
+          trendKeys,
         },
       });
     },
     onSuccess: (accepted) => {
+      const skipped = "excluded" in accepted ? accepted.excluded : [];
       toast.success(`Rendering your video — about ${accepted.estimated_seconds}s.`);
+      if (skipped?.length) {
+        toast.message(`${skipped.length} reference skipped`, {
+          description: skipped[0]?.reason ?? "Asset rejected by creative review.",
+        });
+      }
       setSelected(new Map());
       setSelectedImages(new Map());
       void navigate({ to: "/ads" });
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Render failed."),
   });
+
 
 
 
