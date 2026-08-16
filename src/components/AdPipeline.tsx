@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { getVideoJob, listVideoLanes, startVideoRender } from "@/lib/engine.functions";
 import { openReviewForRenders } from "@/lib/terac/terac.functions";
+import { JudgeEmailsField, SendInviteRow, parseEmails } from "@/components/terac/InviteJudges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,7 @@ export function AdPipeline({ companyId, companyName }: Props) {
   const [lanes, setLanes] = useState<string[]>([]);
   const [mode, setMode] = useState<"fast" | "agentic">("fast");
   const [product, setProduct] = useState("");
+  const [judgeEmails, setJudgeEmails] = useState("");
   const [jobs, setJobs] = useState<JobState[]>([]);
   const [stage, setStage] = useState<Stage>("idle");
   const [session, setSession] = useState<{ id: string; agentUrl: string; videoCount: number } | null>(
@@ -127,13 +129,21 @@ export function AdPipeline({ companyId, companyName }: Props) {
 
     const videoIds = done.map((job) => job.videoId).filter((id): id is string => Boolean(id));
 
-    void openReview({ data: { companyId, videoIds } })
+    void openReview({ data: { companyId, videoIds, judgeEmails: parseEmails(judgeEmails) } })
       .then((result) => {
         setSession({ id: result.sessionId, agentUrl: result.agentUrl, videoCount: result.videoCount });
         setStage("shared");
         void queryClient.invalidateQueries({ queryKey: ["terac-sessions"] });
         void queryClient.invalidateQueries({ queryKey: ["engine-videos", companyId] });
-        toast.success("Sent to Terac — the agent link is ready.");
+        const invited = result.invited?.invited ?? 0;
+        toast.success(
+          invited
+            ? `Sent to Terac — ${invited} judge${invited === 1 ? "" : "s"} emailed their own link.`
+            : "Sent to Terac — the agent link is ready.",
+        );
+        for (const failure of result.invited?.failures ?? []) {
+          toast.error(`${failure.email}: ${failure.error}`);
+        }
       })
       .catch((error: unknown) => {
         setStage("generating");
@@ -364,6 +374,9 @@ export function AdPipeline({ companyId, companyName }: Props) {
                 Watch the votes
               </Link>
             </Button>
+          </div>
+          <div className="mt-3">
+            <SendInviteRow sessionId={session.id} />
           </div>
         </div>
       ) : null}
