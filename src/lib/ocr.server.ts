@@ -55,9 +55,18 @@ function normalizedBox(
 
 /** Google Cloud Vision read. Accepts a public image URL (no upload needed). */
 export async function readWithGoogleVision(imageUrl: string, apiKey: string): Promise<OcrReadResult> {
-  const response = await fetch(`${VISION_ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
+  // Plain API keys (AIza...) go on the query string; OAuth-style access tokens
+  // (AQ..., ya29...) must be sent as a bearer token instead.
+  const isApiKey = apiKey.startsWith("AIza");
+  const endpoint = isApiKey
+    ? `${VISION_ENDPOINT}?key=${encodeURIComponent(apiKey)}`
+    : VISION_ENDPOINT;
+  const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(isApiKey ? {} : { Authorization: `Bearer ${apiKey}` }),
+    },
     body: JSON.stringify({
       requests: [
         {
