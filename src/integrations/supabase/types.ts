@@ -750,6 +750,63 @@ export type Database = {
           },
         ]
       }
+      image_signals: {
+        Row: {
+          analyzed_at: string | null
+          attempts: number
+          blockers: string[]
+          composition: Json
+          copy_roles: Json
+          created_at: string
+          error: string | null
+          image_key: string
+          model: string
+          motion: Json
+          sentiment: Json
+          signal_quality: string
+          status: string
+          texture: Json
+          updated_at: string
+          usable: boolean
+        }
+        Insert: {
+          analyzed_at?: string | null
+          attempts?: number
+          blockers?: string[]
+          composition?: Json
+          copy_roles?: Json
+          created_at?: string
+          error?: string | null
+          image_key: string
+          model?: string
+          motion?: Json
+          sentiment?: Json
+          signal_quality?: string
+          status?: string
+          texture?: Json
+          updated_at?: string
+          usable?: boolean
+        }
+        Update: {
+          analyzed_at?: string | null
+          attempts?: number
+          blockers?: string[]
+          composition?: Json
+          copy_roles?: Json
+          created_at?: string
+          error?: string | null
+          image_key?: string
+          model?: string
+          motion?: Json
+          sentiment?: Json
+          signal_quality?: string
+          status?: string
+          texture?: Json
+          updated_at?: string
+          usable?: boolean
+        }
+        Relationships: []
+      }
       judges: {
         Row: {
           active: boolean
@@ -1265,6 +1322,71 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "trends"
             referencedColumns: ["trend_key"]
+          },
+        ]
+      }
+      video_briefs: {
+        Row: {
+          aspect_ratio: string
+          brief: Json
+          company_id: string
+          created_at: string
+          duration_seconds: number
+          engine_job_id: string | null
+          engine_video_id: string | null
+          error: string | null
+          id: string
+          image_keys: string[]
+          lane: string
+          mode: string
+          owner_id: string
+          status: string
+          trend_keys: string[]
+          updated_at: string
+        }
+        Insert: {
+          aspect_ratio?: string
+          brief?: Json
+          company_id: string
+          created_at?: string
+          duration_seconds?: number
+          engine_job_id?: string | null
+          engine_video_id?: string | null
+          error?: string | null
+          id?: string
+          image_keys?: string[]
+          lane?: string
+          mode?: string
+          owner_id: string
+          status?: string
+          trend_keys?: string[]
+          updated_at?: string
+        }
+        Update: {
+          aspect_ratio?: string
+          brief?: Json
+          company_id?: string
+          created_at?: string
+          duration_seconds?: number
+          engine_job_id?: string | null
+          engine_video_id?: string | null
+          error?: string | null
+          id?: string
+          image_keys?: string[]
+          lane?: string
+          mode?: string
+          owner_id?: string
+          status?: string
+          trend_keys?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_briefs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
           },
         ]
       }
