@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { JudgeEmailsField, SendInviteRow, parseEmails } from "@/components/terac/InviteJudges";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const MAX_CONCEPTS = 6;
@@ -31,6 +32,8 @@ export function CreateReviewPanel({ companyId }: { companyId: string }) {
   const [quorum, setQuorum] = useState(3);
   const [deadlineHours, setDeadlineHours] = useState(48);
   const [agentUrl, setAgentUrl] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [judgeEmails, setJudgeEmails] = useState("");
 
   const trends = useQuery({
     queryKey: ["trends", companyId],
@@ -46,16 +49,24 @@ export function CreateReviewPanel({ companyId }: { companyId: string }) {
           trendKeys: Array.from(selected),
           quorum,
           deadlineHours,
+          judgeEmails: parseEmails(judgeEmails),
         },
       }),
     onSuccess: (result) => {
       setSelected(new Set());
       setAgentUrl(result.agentUrl);
+      setSessionId(result.sessionId);
       void queryClient.invalidateQueries({ queryKey: ["terac-sessions"] });
       void queryClient.invalidateQueries({ queryKey: ["remixes", companyId] });
+      const invited = result.invited?.invited ?? 0;
       toast.success(
-        `${result.videoCount} ad${result.videoCount === 1 ? "" : "s"} are open for review — share the agent link.`,
+        invited
+          ? `${result.videoCount} ad${result.videoCount === 1 ? "" : "s"} are open for review — ${invited} judge${invited === 1 ? "" : "s"} emailed their own link.`
+          : `${result.videoCount} ad${result.videoCount === 1 ? "" : "s"} are open for review — share the agent link.`,
       );
+      for (const failure of result.invited?.failures ?? []) {
+        toast.error(`${failure.email}: ${failure.error}`);
+      }
       if (result.aiUnavailable) {
         toast.warning(
           "AI personalisation was unavailable — concepts were scaffolded from the trend.",
@@ -157,6 +168,11 @@ export function CreateReviewPanel({ companyId }: { companyId: string }) {
                 <Link to="/reviews">See sessions</Link>
               </Button>
             </div>
+            {sessionId ? (
+              <div className="mt-3">
+                <SendInviteRow sessionId={sessionId} />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}

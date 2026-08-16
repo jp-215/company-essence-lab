@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { listReviewSessions, runReminders } from "@/lib/terac/terac.functions";
 import { listMyCompanies } from "@/lib/owner.functions";
 import { CreateReviewPanel } from "@/components/terac/CreateReviewPanel";
+import { SendInviteRow } from "@/components/terac/InviteJudges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -173,6 +174,10 @@ function ReviewsIndex() {
                     >
                       Copy agent link
                     </Button>
+                  </div>
+
+                  <div className="mt-2">
+                    <SendInviteRow sessionId={session.id} />
                   </div>
 
                   <div
