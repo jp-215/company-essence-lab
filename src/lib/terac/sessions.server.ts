@@ -9,6 +9,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
+import { fetchCompanyVideos } from "../engine.server";
+import type { EngineVideo } from "../engine-types";
 import {
   listMappedTrends,
   loadCompanyContext,
@@ -17,7 +19,7 @@ import {
   type RemixOutput,
 } from "../remix.server";
 import type { TrendDTO } from "../remix-types";
-import { specFromRemix, type GenerationSpec } from "./spec";
+import { generationSpecSchema, specFromRemix, type GenerationSpec } from "./spec";
 import { mintToken, judgeUrl } from "./tokens";
 import { createAsset } from "./video-provider.server";
 import { completionEmail, reminderEmail, sendMail } from "./mailer.server";
@@ -196,6 +198,132 @@ export async function createReviewSession(
     videoCount: selected.length,
     aiUnavailable,
   };
+}
+
+/**
+ * Opens a review session directly from videos vira-engine has already rendered.
+ *
+ * This is the automatic path: the moment a render job finishes, its video goes
+ * straight into the agent pool. Nothing about it requires the founder to visit
+ * Reviews, pick concepts, or press anything — they just get the link back.
+ *
+ * Unlike the trend path this writes real media: `playback_url` carries the
+ * engine's MP4, so agents watch the actual ad instead of a storyboard.
+ */
+export async function openReviewFromEngine(
+  base: Client,
+  userId: string,
+  input: {
+    companyId: string;
+    /** Restrict to these engine video ids. Empty means every rendered video. */
+    videoIds: string[];
+    quorum: number;
+    deadlineHours: number;
+    origin: string;
+  },
+): Promise<CreateSessionResult> {
+  const client = terac(base);
+
+  const { data: company, error: companyError } = await base
+    .from("companies")
+    .select("id, name, slug")
+    .eq("id", input.companyId)
+    .eq("owner_id", userId)
+    .maybeSingle();
+  if (companyError) throw new Error(companyError.message);
+  if (!company) throw new Error("Company not found.");
+
+  const rendered = await fetchCompanyVideos(company.slug);
+
+  const wanted = input.videoIds.length
+    ? input.videoIds
+        .map((id) => rendered.find((video) => video.id === id))
+        .filter((video): video is EngineVideo => Boolean(video))
+    : rendered;
+
+  const playable = wanted.filter((video) => Boolean(video.mp4_url));
+  if (playable.length === 0) {
+    throw new Error("No rendered videos are ready for this product yet.");
+  }
+
+  const deadlineAt = new Date(Date.now() + input.deadlineHours * 3600_000).toISOString();
+
+  const { data: session, error: sessionError } = await client
+    .from("review_sessions")
+    .insert({
+      user_id: userId,
+      company_id: input.companyId,
+      title: `${company.name} — ${playable.length} ad${playable.length === 1 ? "" : "s"}`,
+      status: "generating",
+      public_token: mintToken(),
+      quorum: input.quorum,
+      deadline_at: deadlineAt,
+    })
+    .select("*")
+    .single();
+  if (sessionError) throw new Error(sessionError.message);
+
+  for (const [index, video] of playable.entries()) {
+    const title = laneTitle(video.lane) || video.hook.slice(0, 120);
+
+    // The engine gives a finished film, not a shot list, so the spec records
+    // what it actually knows. Shots stay empty rather than being invented —
+    // applyDirectives refuses to touch shots that aren't really there.
+    const spec: GenerationSpec = generationSpecSchema.parse({
+      spec_version: 1,
+      concept: {
+        title,
+        angle: video.lane ?? "",
+        platform: "",
+        format: video.lane ?? "",
+        trend_key: "",
+      },
+      hook: { text: video.hook, delivery: "", on_screen_text: "" },
+      shots: [],
+      pacing: {
+        total_seconds: Math.min(Math.max(Math.round(video.duration_s || 30), 5), 120),
+        cut_rate: "medium",
+        energy: "steady",
+      },
+      style: { tone: "", palette: "", typography: "", music: "" },
+      cta: { text: video.cta ?? "", placement: "end" },
+      brand: { must_include: [company.name], must_avoid: [] },
+    });
+
+    const { error: videoError } = await client.from("ad_videos").insert({
+      session_id: session.id,
+      concept_title: title,
+      hook_text: video.hook,
+      generation_spec: spec as unknown as never,
+      version: 1,
+      display_order: index,
+      playback_id: null,
+      playback_url: video.mp4_url,
+      thumbnail_url: null,
+      media_status: "ready",
+      media_provider: "vira-engine",
+      remix_id: null,
+    });
+    if (videoError) throw new Error(videoError.message);
+  }
+
+  await advance(client, session.id, "ready");
+  await advance(client, session.id, "sent");
+
+  return {
+    sessionId: session.id,
+    publicToken: session.public_token,
+    agentUrl: judgeUrl(input.origin, session.public_token),
+    videoCount: playable.length,
+    aiUnavailable: false,
+  };
+}
+
+/** "founder-story" -> "Founder story". */
+function laneTitle(lane: string | null | undefined): string {
+  if (!lane) return "";
+  const words = lane.replace(/[-_]+/g, " ").trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : "";
 }
 
 async function advance(client: TeracClient, sessionId: string, to: SessionStatus): Promise<void> {

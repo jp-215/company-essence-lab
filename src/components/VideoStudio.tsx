@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -11,6 +11,7 @@ import {
   startVideoRender,
 } from "@/lib/engine.functions";
 import { engineScoreTotal } from "@/lib/engine-types";
+import { openReviewForRenders } from "@/lib/terac/terac.functions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +33,6 @@ function describeEngineError(raw?: string | null): string {
   return raw;
 }
 
-
 export function VideoStudio({ companyId, companyName }: Props) {
   const fetchLanes = useServerFn(listVideoLanes);
   const fetchVideos = useServerFn(listVideosForCompany);
@@ -45,6 +45,8 @@ export function VideoStudio({ companyId, companyName }: Props) {
   const [mode, setMode] = useState<"fast" | "agentic">("fast");
   const [product, setProduct] = useState("");
   const [jobId, setJobId] = useState<string | null>(null);
+  const [agentUrl, setAgentUrl] = useState<string | null>(null);
+  const openReview = useServerFn(openReviewForRenders);
 
   const lanes = useQuery({ queryKey: ["engine-lanes"], queryFn: () => fetchLanes() });
   const videos = useQuery({
@@ -71,22 +73,61 @@ export function VideoStudio({ companyId, companyName }: Props) {
     },
   });
 
+  // A finished render goes straight into the Terac agent pool. The founder does
+  // not open Reviews, pick concepts or press anything — the link comes to them.
+  const openedFor = useRef<string | null>(null);
+
   useEffect(() => {
     const status = job.data?.job.status;
-    if (status === "done") {
-      toast.success("Your video is ready.");
-      void queryClient.invalidateQueries({ queryKey: ["engine-videos", companyId] });
-    }
     if (status === "failed") {
       toast.error(describeEngineError(job.data?.job.error));
+      return;
     }
-  }, [job.data?.job.status, job.data?.job.error, companyId, queryClient]);
+    if (status !== "done") return;
 
+    void queryClient.invalidateQueries({ queryKey: ["engine-videos", companyId] });
+
+    const videoId = job.data?.job.video_id ?? null;
+    const key = job.data?.job.job_id ?? jobId;
+    if (!key || openedFor.current === key) return;
+    openedFor.current = key;
+
+    toast.success("Your video is ready — opening it for review.");
+
+    void openReview({ data: { companyId, videoIds: videoId ? [videoId] : [] } })
+      .then((result) => {
+        setAgentUrl(result.agentUrl);
+        void queryClient.invalidateQueries({ queryKey: ["terac-sessions"] });
+        toast.success("Review link ready. Share it with the agent pool.");
+      })
+      .catch((error: unknown) => {
+        // The render still succeeded — say what failed without losing the video.
+        toast.error(
+          error instanceof Error
+            ? `Video rendered, but opening the review failed: ${error.message}`
+            : "Video rendered, but opening the review failed.",
+        );
+      });
+  }, [
+    job.data?.job.status,
+    job.data?.job.error,
+    job.data?.job.video_id,
+    job.data?.job.job_id,
+    jobId,
+    companyId,
+    queryClient,
+    openReview,
+  ]);
 
   const render = useMutation({
     mutationFn: () =>
       startRender({
-        data: { companyId, lane: lane ?? "founder-story", mode, product: product.trim() || undefined },
+        data: {
+          companyId,
+          lane: lane ?? "founder-story",
+          mode,
+          product: product.trim() || undefined,
+        },
       }),
     onSuccess: (accepted) => {
       setJobId(accepted.job_id);
@@ -204,6 +245,35 @@ export function VideoStudio({ companyId, companyName }: Props) {
         </Button>
       </div>
 
+      {agentUrl ? (
+        <div className="mt-8 max-w-2xl rounded-2xl border border-foreground/20 bg-card p-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+            Open in the Terac agent pool
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Anyone with this link can watch every ad in this batch, score it and rank a favourite.
+            The leaderboard fills in as they submit.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Input
+              readOnly
+              value={agentUrl}
+              aria-label="Agent review link"
+              className="flex-1 min-w-[16rem] font-mono text-xs"
+            />
+            <Button
+              size="sm"
+              onClick={() => {
+                void navigator.clipboard.writeText(agentUrl);
+                toast.success("Link copied.");
+              }}
+            >
+              Copy link
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       {job.data ? (
         <div className="mt-8 max-w-2xl rounded-2xl border border-border bg-secondary p-5">
           <div className="flex items-center gap-3">
@@ -223,9 +293,7 @@ export function VideoStudio({ companyId, companyName }: Props) {
           ) : null}
           {job.data.job.error ? (
             <div className="mt-3">
-              <p className="text-sm text-destructive">
-                {describeEngineError(job.data.job.error)}
-              </p>
+              <p className="text-sm text-destructive">{describeEngineError(job.data.job.error)}</p>
               <details className="mt-2">
                 <summary className="cursor-pointer font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Engine detail
@@ -236,7 +304,6 @@ export function VideoStudio({ companyId, companyName }: Props) {
               </details>
             </div>
           ) : null}
-
         </div>
       ) : null}
 

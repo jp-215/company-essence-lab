@@ -9,6 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { revisionDirectiveSchema } from "./spec";
 import {
   createReviewSession,
+  openReviewFromEngine,
   listSessions,
   notifyCompletion,
   sendDueReminders,
@@ -47,6 +48,26 @@ export const createAds = createServerFn({ method: "POST" })
 
   .handler(async ({ context, data }) =>
     createReviewSession(context.supabase, context.userId, { ...data, origin: origin() }),
+  );
+
+/**
+ * The automatic path: called the moment a render job finishes, so a finished ad
+ * lands in the agent pool without the founder opening Reviews at all.
+ */
+export const openReviewForRenders = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        companyId: z.string().uuid(),
+        videoIds: z.array(z.string().trim().min(1).max(120)).max(24).default([]),
+        quorum: z.number().int().min(1).max(20).default(3),
+        deadlineHours: z.number().int().min(1).max(336).default(48),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) =>
+    openReviewFromEngine(context.supabase, context.userId, { ...data, origin: origin() }),
   );
 
 export const listReviewSessions = createServerFn({ method: "GET" })

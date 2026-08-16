@@ -15,6 +15,7 @@ export type PortalVideo = {
   concept_title: string;
   hook_text: string;
   playback_id: string | null;
+  playback_url: string | null;
   thumbnail_url: string | null;
   media_status: string;
   version: number;

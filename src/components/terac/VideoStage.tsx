@@ -13,6 +13,8 @@ export type StageVideo = {
   concept_title: string;
   hook_text: string;
   playback_id: string | null;
+  /** A directly-playable file — the vira-engine render. Used when there is no HLS ladder. */
+  playback_url: string | null;
   media_status: string;
   beats: StageBeat[] | null;
   cta: { text: string; placement: string } | null;
@@ -33,9 +35,12 @@ function hlsSrc(playbackId: string): string {
 }
 
 /**
- * Adaptive-bitrate HLS when a render exists, a readable storyboard when it does
- * not. Judges open this on a phone on cell data, so nothing here loads a raw
- * MP4 and the next video is warmed while the current one plays.
+ * HLS when there is a ladder, the engine's MP4 when there is only a file, a
+ * readable storyboard when there is neither.
+ *
+ * HLS stays preferred — judges open this on a phone on cell data — but a real
+ * render must never hide behind a storyboard just because it never went through
+ * Mux. vira-engine hands back a plain MP4 and that is what agents need to see.
  */
 export function VideoStage({
   video,
@@ -53,7 +58,13 @@ export function VideoStage({
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || !video.playback_id) return;
+    if (!el) return;
+
+    // A direct file needs no manifest handling at all.
+    if (!video.playback_id) {
+      if (video.playback_url) el.src = video.playback_url;
+      return;
+    }
 
     const src = hlsSrc(video.playback_id);
     let destroy: (() => void) | undefined;
@@ -88,16 +99,16 @@ export function VideoStage({
     return () => {
       destroy?.();
     };
-  }, [video.playback_id]);
+  }, [video.playback_id, video.playback_url]);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || !video.playback_id) return;
+    if (!el || (!video.playback_id && !video.playback_url)) return;
     if (active) void el.play().catch(() => undefined);
     else el.pause();
-  }, [active, video.playback_id]);
+  }, [active, video.playback_id, video.playback_url]);
 
-  const hasMedia = Boolean(video.playback_id) && !failed;
+  const hasMedia = Boolean(video.playback_id || video.playback_url) && !failed;
 
   if (hasMedia) {
     return (
@@ -109,6 +120,7 @@ export function VideoStage({
           muted={muted}
           loop
           preload={active ? "auto" : "metadata"}
+          onError={() => setFailed(true)}
           aria-label={`${video.concept_title} — ad concept`}
         />
         <button
