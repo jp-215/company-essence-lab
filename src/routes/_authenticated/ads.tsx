@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AdPipeline } from "@/components/AdPipeline";
 import { VideoStudio } from "@/components/VideoStudio";
-import { CreateReviewPanel } from "@/components/terac/CreateReviewPanel";
+
 import {
   Select,
   SelectContent,
@@ -115,7 +116,7 @@ function CreateAdsPage() {
             </div>
 
             {company ? (
-              <VideoStudio companyId={company.id} companyName={company.name} />
+              <AdPipeline companyId={company.id} companyName={company.name} />
             ) : null}
 
             <p className="mt-10 font-mono text-xs uppercase tracking-[0.24em] text-muted-foreground">
@@ -232,7 +233,9 @@ function CreateAdsPage() {
                 </div>
               </>
             )}
-            {companyId ? <CreateReviewPanel companyId={companyId} /> : null}
+            {company ? (
+              <VideoStudio companyId={company.id} companyName={company.name} />
+            ) : null}
           </>
         )}
       </div>
