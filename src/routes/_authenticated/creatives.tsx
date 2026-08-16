@@ -76,7 +76,7 @@ function CreativesPage() {
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
             {companies.data && companies.data.length > 1 ? (
-              <Select value={companyId ?? undefined} onValueChange={setCompanyId}>
+              <Select value={companyId ?? ""} onValueChange={setCompanyId}>
                 <SelectTrigger className="h-11 w-64 rounded-xl">
                   <SelectValue placeholder="Pick a product" />
                 </SelectTrigger>

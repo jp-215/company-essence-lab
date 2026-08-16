@@ -17,6 +17,7 @@ import { Route as TrendsRouteImport } from './routes/trends'
 import { Route as AuthenticatedAdsRouteImport } from './routes/_authenticated/ads'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat'
+import { Route as AuthenticatedCreativesRouteImport } from './routes/_authenticated/creatives'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authenticated/knowledge'
 import { Route as AuthenticatedRemixRouteImport } from './routes/_authenticated/remix'
@@ -69,6 +70,11 @@ const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
 const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   id: '/chat',
   path: '/chat',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCreativesRoute = AuthenticatedCreativesRouteImport.update({
+  id: '/creatives',
+  path: '/creatives',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/ads': typeof AuthenticatedAdsRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/chat': typeof AuthenticatedChatRoute
+  '/creatives': typeof AuthenticatedCreativesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/remix': typeof AuthenticatedRemixRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/ads': typeof AuthenticatedAdsRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/chat': typeof AuthenticatedChatRoute
+  '/creatives': typeof AuthenticatedCreativesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/knowledge': typeof AuthenticatedKnowledgeRoute
   '/remix': typeof AuthenticatedRemixRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/_authenticated/ads': typeof AuthenticatedAdsRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/chat': typeof AuthenticatedChatRoute
+  '/_authenticated/creatives': typeof AuthenticatedCreativesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/knowledge': typeof AuthenticatedKnowledgeRoute
   '/_authenticated/remix': typeof AuthenticatedRemixRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/ads'
     | '/billing'
     | '/chat'
+    | '/creatives'
     | '/dashboard'
     | '/knowledge'
     | '/remix'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/ads'
     | '/billing'
     | '/chat'
+    | '/creatives'
     | '/dashboard'
     | '/knowledge'
     | '/remix'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ads'
     | '/_authenticated/billing'
     | '/_authenticated/chat'
+    | '/_authenticated/creatives'
     | '/_authenticated/dashboard'
     | '/_authenticated/knowledge'
     | '/_authenticated/remix'
@@ -358,6 +370,13 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/chat'
       preLoaderRoute: typeof AuthenticatedChatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/creatives': {
+      id: '/_authenticated/creatives'
+      path: '/creatives'
+      fullPath: '/creatives'
+      preLoaderRoute: typeof AuthenticatedCreativesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -465,6 +484,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdsRoute: typeof AuthenticatedAdsRoute
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
+  AuthenticatedCreativesRoute: typeof AuthenticatedCreativesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedRemixRoute: typeof AuthenticatedRemixRoute
@@ -478,6 +498,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdsRoute: AuthenticatedAdsRoute,
   AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedChatRoute: AuthenticatedChatRoute,
+  AuthenticatedCreativesRoute: AuthenticatedCreativesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedRemixRoute: AuthenticatedRemixRoute,
