@@ -10,6 +10,7 @@ import {
   saveRemix,
   saveSourcedRemix,
   getWomAsTrend,
+  getImageAsTrend,
 } from "./remix.server";
 import { getTrendByKey } from "./recommendations.server";
 
@@ -66,7 +67,7 @@ export const generateRemixBatch = createServerFn({ method: "POST" })
         items: z
           .array(
             z.object({
-              kind: z.enum(["video", "chatter"]),
+              kind: z.enum(["video", "chatter", "image"]),
               key: z.string().trim().min(3).max(80),
             }),
           )
@@ -85,7 +86,9 @@ export const generateRemixBatch = createServerFn({ method: "POST" })
         const trend =
           item.kind === "video"
             ? await getTrendByKey(context.supabase, item.key)
-            : await getWomAsTrend(context.supabase, item.key);
+            : item.kind === "image"
+              ? await getImageAsTrend(context.supabase, item.key)
+              : await getWomAsTrend(context.supabase, item.key);
         if (!trend) {
           failed.push(item.key);
           continue;

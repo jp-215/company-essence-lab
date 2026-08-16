@@ -292,12 +292,60 @@ export async function getWomAsTrend(client: Client, womKey: string): Promise<Tre
  * Same insert as saveRemix, but chatter sources are stored with a null
  * trend_key because that column is a foreign key into `trends`.
  */
+/**
+ * ImageBase assets can be remixed too. The stored OCR text (copy that appears
+ * inside the creative) is folded into the caption so the remix prompt can react
+ * to the actual on-image headline, not just the post caption.
+ */
+export async function getImageAsTrend(client: Client, imageKey: string): Promise<TrendDTO | null> {
+  const { data, error } = await client
+    .from("image_assets")
+    .select(
+      "image_key, platform, title, caption, hashtags, format, source_url, author, likes, comments, engagement_rate, buzz_score",
+    )
+    .eq("image_key", imageKey)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  const { data: ocr } = await client
+    .from("image_ocr")
+    .select("ocr_text, status")
+    .eq("image_key", imageKey)
+    .maybeSingle();
+
+  const onImageText = (ocr?.ocr_text ?? "").trim();
+  const caption = [
+    data.caption,
+    onImageText ? `On-image text (OCR): ${onImageText.slice(0, 900)}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return {
+    trendKey: data.image_key,
+    platform: data.platform,
+    title: data.title,
+    caption,
+    hashtags: data.hashtags ?? [],
+    format: data.format || "image",
+    sourceUrl: data.source_url,
+    author: data.author,
+    views: 0,
+    likes: Number(data.likes ?? 0),
+    engagementRate: Number(data.engagement_rate ?? 0),
+    trendScore: Number(data.buzz_score ?? 0),
+    relevanceRank: 1,
+    comments: Number(data.comments ?? 0),
+  };
+}
+
 export async function saveSourcedRemix(
   client: Client,
   userId: string,
   input: {
     companyId: string;
-    kind: "video" | "chatter";
+    kind: "video" | "chatter" | "image";
     trend: TrendDTO;
     output: RemixOutput;
   },
