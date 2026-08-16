@@ -72,8 +72,9 @@ export function buildImagePrompt(input: {
 /* -------------------------------- rendering ------------------------------- */
 
 function decodeDataUrl(url: string): { bytes: Uint8Array; contentType: string } {
-  const [meta, payload] = url.startsWith("data:") ? url.split(";base64,") : ["", url];
-  const contentType = meta.replace("data:", "") || "image/png";
+  const parts = url.startsWith("data:") ? url.split(";base64,") : ["", url];
+  const payload = parts[1] ?? parts[0] ?? "";
+  const contentType = (parts[0] ?? "").replace("data:", "") || "image/png";
   const binary = atob(payload ?? "");
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
