@@ -56,8 +56,16 @@ const STATUS_COPY: Record<string, string> = {
 function ReviewsIndex() {
   const fetchSessions = useServerFn(listReviewSessions);
   const nudge = useServerFn(runReminders);
+  const fetchCompanies = useServerFn(listMyCompanies);
 
   const sessions = useQuery({ queryKey: ["terac-sessions"], queryFn: () => fetchSessions() });
+  const companies = useQuery({ queryKey: ["my-companies"], queryFn: () => fetchCompanies() });
+
+  const [companyId, setCompanyId] = useState("");
+  useEffect(() => {
+    if (!companyId && companies.data?.length) setCompanyId(companies.data[0]!.id);
+  }, [companies.data, companyId]);
+
 
   const reminderMutation = useMutation({
     mutationFn: () => nudge({}),
