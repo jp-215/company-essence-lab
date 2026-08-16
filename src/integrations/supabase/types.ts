@@ -628,6 +628,62 @@ export type Database = {
         }
         Relationships: []
       }
+      image_ocr: {
+        Row: {
+          attempts: number
+          blocks: Json
+          confidence: number
+          created_at: string
+          error: string | null
+          image_key: string
+          languages: string[]
+          ocr_text: string
+          provider: string
+          scanned_at: string | null
+          status: string
+          updated_at: string
+          word_count: number
+        }
+        Insert: {
+          attempts?: number
+          blocks?: Json
+          confidence?: number
+          created_at?: string
+          error?: string | null
+          image_key: string
+          languages?: string[]
+          ocr_text?: string
+          provider?: string
+          scanned_at?: string | null
+          status?: string
+          updated_at?: string
+          word_count?: number
+        }
+        Update: {
+          attempts?: number
+          blocks?: Json
+          confidence?: number
+          created_at?: string
+          error?: string | null
+          image_key?: string
+          languages?: string[]
+          ocr_text?: string
+          provider?: string
+          scanned_at?: string | null
+          status?: string
+          updated_at?: string
+          word_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_ocr_image_key_fkey"
+            columns: ["image_key"]
+            isOneToOne: true
+            referencedRelation: "image_assets"
+            referencedColumns: ["image_key"]
+          },
+        ]
+      }
       judges: {
         Row: {
           active: boolean
@@ -1451,6 +1507,22 @@ export type Database = {
           topic: string
           views: number
           wom_key: string
+        }[]
+      }
+      image_ocr_coverage: {
+        Args: never
+        Returns: {
+          failed: number
+          scanned: number
+          total_images: number
+          with_text: number
+        }[]
+      }
+      images_needing_ocr: {
+        Args: { _limit?: number; _max_attempts?: number }
+        Returns: {
+          image_key: string
+          image_url: string
         }[]
       }
       mark_trend_duplicates: { Args: { _threshold?: number }; Returns: number }

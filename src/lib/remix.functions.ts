@@ -10,6 +10,7 @@ import {
   saveRemix,
   saveSourcedRemix,
   getWomAsTrend,
+  getImageAsTrend,
 } from "./remix.server";
 import { getTrendByKey } from "./recommendations.server";
 
@@ -66,7 +67,7 @@ export const generateRemixBatch = createServerFn({ method: "POST" })
         items: z
           .array(
             z.object({
-              kind: z.enum(["video", "chatter"]),
+              kind: z.enum(["video", "chatter", "image"]),
               key: z.string().trim().min(3).max(80),
             }),
           )
@@ -85,7 +86,9 @@ export const generateRemixBatch = createServerFn({ method: "POST" })
         const trend =
           item.kind === "video"
             ? await getTrendByKey(context.supabase, item.key)
-            : await getWomAsTrend(context.supabase, item.key);
+            : item.kind === "image"
+              ? await getImageAsTrend(context.supabase, item.key)
+              : await getWomAsTrend(context.supabase, item.key);
         if (!trend) {
           failed.push(item.key);
           continue;
@@ -105,4 +108,60 @@ export const generateRemixBatch = createServerFn({ method: "POST" })
     }
 
     return { created, failed };
+  });
+
+/**
+ * ImageBase remix: OCRs the selected assets (reusing stored scans), then turns
+ * each one into a brand-specific concept. Up to 6 assets per run, matching the
+ * video generator's influence cap.
+ */
+export const generateImageRemixBatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        companyId: z.string().uuid(),
+        imageKeys: z.array(z.string().trim().min(3).max(80)).min(1).max(6),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    const company = await loadCompanyContext(context.supabase, context.userId, data.companyId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { scanImage } = await import("./ocr.server");
+
+    const created: string[] = [];
+    const failed: string[] = [];
+    const ocrText: Record<string, string> = {};
+
+    for (const imageKey of data.imageKeys) {
+      try {
+        // Best-effort OCR: a scan failure should not block the remix itself.
+        try {
+          const scan = await scanImage(supabaseAdmin, imageKey);
+          ocrText[imageKey] = scan.text;
+        } catch (scanError) {
+          console.error("OCR unavailable for", imageKey, scanError);
+        }
+
+        const trend = await getImageAsTrend(context.supabase, imageKey);
+        if (!trend) {
+          failed.push(imageKey);
+          continue;
+        }
+        const output = await remixTrend({ trend, company });
+        const saved = await saveSourcedRemix(context.supabase, context.userId, {
+          companyId: data.companyId,
+          kind: "image",
+          trend,
+          output,
+        });
+        created.push(saved.id);
+      } catch (error) {
+        console.error("Image remix failed", imageKey, error);
+        failed.push(imageKey);
+      }
+    }
+
+    return { created, failed, ocrText };
   });
