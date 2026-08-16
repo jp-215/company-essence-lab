@@ -198,7 +198,9 @@ export async function saveOcrResult(
         word_count: words(result.text),
         languages: result.languages,
         confidence: result.confidence,
-        blocks: result.blocks as unknown as Database["public"]["Tables"]["image_ocr"]["Insert"]["blocks"],
+        blocks: result.blocks as unknown as NonNullable<
+          Database["public"]["Tables"]["image_ocr"]["Insert"]["blocks"]
+        >,
         error: null,
         scanned_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
