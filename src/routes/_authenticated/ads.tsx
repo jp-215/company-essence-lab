@@ -116,7 +116,7 @@ function CreateAdsPage() {
             </div>
 
             {company ? (
-              <VideoStudio companyId={company.id} companyName={company.name} />
+              <AdPipeline companyId={company.id} companyName={company.name} />
             ) : null}
 
             <p className="mt-10 font-mono text-xs uppercase tracking-[0.24em] text-muted-foreground">
@@ -233,7 +233,9 @@ function CreateAdsPage() {
                 </div>
               </>
             )}
-            {companyId ? <CreateReviewPanel companyId={companyId} /> : null}
+            {company ? (
+              <VideoStudio companyId={company.id} companyName={company.name} />
+            ) : null}
           </>
         )}
       </div>
