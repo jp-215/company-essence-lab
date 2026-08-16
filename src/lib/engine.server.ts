@@ -49,6 +49,9 @@ export function requestVideo(input: {
   product: string;
   lane: string;
   mode: "fast" | "agentic";
+  /** Structured Creative Brief; ignored by engines that only read `product`. */
+  brief?: unknown;
+  briefId?: string | null;
 }) {
   return engineFetch<EngineJobAccepted>("/videos", {
     method: "POST",
@@ -57,6 +60,7 @@ export function requestVideo(input: {
       product: input.product,
       lane: input.lane,
       mode: input.mode,
+      ...(input.brief === undefined ? {} : { brief: input.brief, brief_id: input.briefId ?? null }),
     },
   });
 }
