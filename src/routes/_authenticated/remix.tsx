@@ -246,8 +246,20 @@ function RemixStudio() {
       }
       setSelected(new Map());
       setSelectedImages(new Map());
-      void navigate({ to: "/ads" });
+      // The brief is already on the engine — follow the job until the MP4 lands.
+      const quality =
+        "brief_quality" in accepted ? String(accepted.brief_quality ?? "") : "";
+      const briefId = "brief_id" in accepted ? String(accepted.brief_id ?? "") : "";
+      void navigate({
+        to: "/render/$jobId",
+        params: { jobId: accepted.job_id },
+        search: {
+          ...(quality ? { quality } : {}),
+          ...(briefId ? { brief: briefId } : {}),
+        },
+      });
     },
+
     onError: (error) => toast.error(error instanceof Error ? error.message : "Render failed."),
   });
 

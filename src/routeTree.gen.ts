@@ -23,6 +23,7 @@ import { Route as AuthenticatedKnowledgeRouteImport } from './routes/_authentica
 import { Route as AuthenticatedRemixRouteImport } from './routes/_authenticated/remix'
 import { Route as CategoriesSlugRouteImport } from './routes/categories.$slug'
 import { Route as CompaniesSlugRouteImport } from './routes/companies.$slug'
+import { Route as AuthenticatedRenderJobIdRouteImport } from './routes/_authenticated/render.$jobId'
 import { Route as AuthenticatedReviewsIndexRouteImport } from './routes/_authenticated/reviews.index'
 import { Route as AuthenticatedReviewsIdRouteImport } from './routes/_authenticated/reviews.$id'
 import { Route as AuthenticatedStudioIdRouteImport } from './routes/_authenticated/studio.$id'
@@ -102,6 +103,12 @@ const CompaniesSlugRoute = CompaniesSlugRouteImport.update({
   path: '/companies/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRenderJobIdRoute =
+  AuthenticatedRenderJobIdRouteImport.update({
+    id: '/render/$jobId',
+    path: '/render/$jobId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReviewsIndexRoute =
   AuthenticatedReviewsIndexRouteImport.update({
     id: '/reviews/',
@@ -163,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/remix': typeof AuthenticatedRemixRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/companies/$slug': typeof CompaniesSlugRoute
+  '/render/$jobId': typeof AuthenticatedRenderJobIdRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
@@ -187,6 +195,7 @@ export interface FileRoutesByTo {
   '/remix': typeof AuthenticatedRemixRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/companies/$slug': typeof CompaniesSlugRoute
+  '/render/$jobId': typeof AuthenticatedRenderJobIdRoute
   '/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/studio/$id': typeof AuthenticatedStudioIdRoute
   '/studio/new': typeof AuthenticatedStudioNewRoute
@@ -213,6 +222,7 @@ export interface FileRoutesById {
   '/_authenticated/remix': typeof AuthenticatedRemixRoute
   '/categories/$slug': typeof CategoriesSlugRoute
   '/companies/$slug': typeof CompaniesSlugRoute
+  '/_authenticated/render/$jobId': typeof AuthenticatedRenderJobIdRoute
   '/_authenticated/reviews/$id': typeof AuthenticatedReviewsIdRoute
   '/_authenticated/studio/$id': typeof AuthenticatedStudioIdRoute
   '/_authenticated/studio/new': typeof AuthenticatedStudioNewRoute
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/remix'
     | '/categories/$slug'
     | '/companies/$slug'
+    | '/render/$jobId'
     | '/reviews/$id'
     | '/studio/$id'
     | '/studio/new'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/remix'
     | '/categories/$slug'
     | '/companies/$slug'
+    | '/render/$jobId'
     | '/reviews/$id'
     | '/studio/$id'
     | '/studio/new'
@@ -288,6 +300,7 @@ export interface FileRouteTypes {
     | '/_authenticated/remix'
     | '/categories/$slug'
     | '/companies/$slug'
+    | '/_authenticated/render/$jobId'
     | '/_authenticated/reviews/$id'
     | '/_authenticated/studio/$id'
     | '/_authenticated/studio/new'
@@ -414,6 +427,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompaniesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/render/$jobId': {
+      id: '/_authenticated/render/$jobId'
+      path: '/render/$jobId'
+      fullPath: '/render/$jobId'
+      preLoaderRoute: typeof AuthenticatedRenderJobIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reviews/': {
       id: '/_authenticated/reviews/'
       path: '/reviews'
@@ -488,6 +508,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKnowledgeRoute: typeof AuthenticatedKnowledgeRoute
   AuthenticatedRemixRoute: typeof AuthenticatedRemixRoute
+  AuthenticatedRenderJobIdRoute: typeof AuthenticatedRenderJobIdRoute
   AuthenticatedReviewsIdRoute: typeof AuthenticatedReviewsIdRoute
   AuthenticatedStudioIdRoute: typeof AuthenticatedStudioIdRoute
   AuthenticatedStudioNewRoute: typeof AuthenticatedStudioNewRoute
@@ -502,6 +523,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKnowledgeRoute: AuthenticatedKnowledgeRoute,
   AuthenticatedRemixRoute: AuthenticatedRemixRoute,
+  AuthenticatedRenderJobIdRoute: AuthenticatedRenderJobIdRoute,
   AuthenticatedReviewsIdRoute: AuthenticatedReviewsIdRoute,
   AuthenticatedStudioIdRoute: AuthenticatedStudioIdRoute,
   AuthenticatedStudioNewRoute: AuthenticatedStudioNewRoute,
